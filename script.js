@@ -30,24 +30,77 @@ const sections = sectionLinks
   .map((link) => document.querySelector(link.getAttribute('href')))
   .filter(Boolean);
 
-if ('IntersectionObserver' in window && sections.length) {
-  const navObserver = new IntersectionObserver((entries) => {
-    const visible = entries
-      .filter((entry) => entry.isIntersecting)
-      .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+let lockedSectionId = null;
+let unlockTimer = null;
+let navFrameRequested = false;
 
-    if (!visible) return;
+function setActiveSection(sectionId) {
+  sectionLinks.forEach((link) => {
+    const active = link.getAttribute('href') === `#${sectionId}`;
+    link.classList.toggle('is-active', active);
 
-    sectionLinks.forEach((link) => {
-      const active = link.getAttribute('href') === `#${visible.target.id}`;
-      link.classList.toggle('is-active', active);
-      if (active) link.setAttribute('aria-current', 'page');
-      else link.removeAttribute('aria-current');
-    });
-  }, { rootMargin: '-24% 0px -58% 0px', threshold: [0, 0.2, 0.5] });
-
-  sections.forEach((section) => navObserver.observe(section));
+    if (active) link.setAttribute('aria-current', 'page');
+    else link.removeAttribute('aria-current');
+  });
 }
+
+function getCurrentSectionId() {
+  if (!sections.length) return null;
+
+  const headerHeight = header?.offsetHeight || 0;
+  const readingLine = window.scrollY + headerHeight + 150;
+  let currentSection = sections[0];
+
+  sections.forEach((section) => {
+    if (section.offsetTop <= readingLine) currentSection = section;
+  });
+
+  const nearPageBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 8;
+  if (nearPageBottom) currentSection = sections[sections.length - 1];
+
+  return currentSection.id;
+}
+
+function updateActiveNavigation() {
+  navFrameRequested = false;
+
+  if (lockedSectionId) {
+    setActiveSection(lockedSectionId);
+    return;
+  }
+
+  const currentSectionId = getCurrentSectionId();
+  if (currentSectionId) setActiveSection(currentSectionId);
+}
+
+function requestNavigationUpdate() {
+  if (navFrameRequested) return;
+  navFrameRequested = true;
+  window.requestAnimationFrame(updateActiveNavigation);
+}
+
+sectionLinks.forEach((link) => {
+  link.addEventListener('click', () => {
+    lockedSectionId = link.getAttribute('href').slice(1);
+    setActiveSection(lockedSectionId);
+
+    window.clearTimeout(unlockTimer);
+    unlockTimer = window.setTimeout(() => {
+      lockedSectionId = null;
+      updateActiveNavigation();
+    }, 1800);
+  });
+});
+
+window.addEventListener('scroll', requestNavigationUpdate, { passive: true });
+window.addEventListener('resize', requestNavigationUpdate, { passive: true });
+window.addEventListener('scrollend', () => {
+  lockedSectionId = null;
+  window.clearTimeout(unlockTimer);
+  updateActiveNavigation();
+});
+
+requestNavigationUpdate();
 
 if (!reducedMotion) {
   window.addEventListener('pointermove', (event) => {
