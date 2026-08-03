@@ -10,7 +10,7 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://danny4686.com">
   <title>Danny4686 | CloudLab</title>
-  <link rel="icon" href="cloudlab-logo.svg" type="image/svg+xml">
+  <link rel="icon" href="assets/images/cloudlab-logo.png" type="image/png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -23,11 +23,8 @@
 
   <header class="site-header" id="top">
     <a class="brand" href="#top" aria-label="Danny4686 home">
-      <img class="brand-logo" src="cloudlab-logo.svg" alt="CloudLab logo">
-      <span class="brand-copy">
-        <strong>Danny4686</strong>
-        <small>CloudLab</small>
-      </span>
+      <img class="brand-logo" src="assets/images/cloudlab-logo.png" alt="CloudLab logo">
+      <span class="brand-copy"><strong>Danny4686</strong><small>CloudLab</small></span>
     </a>
 
     <nav class="nav-links" aria-label="Main navigation">
@@ -37,7 +34,8 @@
     </nav>
 
     <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light mode" aria-pressed="false">
-      <span class="theme-icon" aria-hidden="true">☀</span>
+      <svg class="sun-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <svg class="moon-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 15.1A8 8 0 0 1 8.9 3.8 8.7 8.7 0 1 0 20.2 15Z"/></svg>
     </button>
   </header>
 
@@ -46,9 +44,7 @@
       <div class="hero-copy reveal">
         <p class="eyebrow">CREATOR · DEVELOPER · COMMUNITY BUILDER</p>
         <h1>Hey, I’m <span>Danny.</span></h1>
-        <p class="hero-text">
-          I build games, communities, tools, and online spaces that feel friendly, polished, and fun to be in. CloudLab is where a lot of those ideas come together.
-        </p>
+        <p class="hero-text">I build games, communities, tools, and online spaces that feel friendly, polished, and fun to be in. CloudLab is where a lot of those ideas come together.</p>
         <div class="hero-actions">
           <a class="button primary" href="#projects">See my projects</a>
           <a class="button secondary" href="https://discord.com/invite/CloudLab" target="_blank" rel="noopener noreferrer">Join CloudLab</a>
@@ -57,26 +53,16 @@
 
       <aside class="hero-card reveal" aria-label="Danny4686 profile card">
         <div class="profile-row">
-          <img class="avatar" src="https://avatars.githubusercontent.com/u/176429540?v=4" alt="Danny4686 profile image">
+          <img class="avatar" src="assets/images/profile-placeholder.svg" alt="Danny4686 profile image placeholder">
           <div>
             <p class="status"><span></span> Building something new</p>
             <h2>Danny4686</h2>
+            <p>Creator behind CloudLab and Rocket Tycoon.</p>
           </div>
         </div>
-        <p>Creator behind CloudLab, Rocket Tycoon, and the tools and ideas that connect them.</p>
         <div class="quick-links">
-          <a href="https://www.tiktok.com/@danny4686" target="_blank" rel="noopener noreferrer">
-            <span class="quick-icon pink" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><path d="M14.6 4c.5 2 1.8 3.3 3.9 3.8v2.8a7.2 7.2 0 0 1-3.5-.9v5.8a5.5 5.5 0 1 1-5.5-5.5c.4 0 .8 0 1.2.1v3a2.5 2.5 0 1 0 1.3 2.2V4h2.6Z"/></svg>
-            </span>
-            <span>TikTok</span>
-          </a>
-          <a href="https://www.roblox.com/users/178415120/profile" target="_blank" rel="noopener noreferrer">
-            <span class="quick-icon green" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><path d="m5 5 14 2-2 12-12-2L5 5Zm5 5-1 4 4 .6.6-4-3.6-.6Z"/></svg>
-            </span>
-            <span>Roblox</span>
-          </a>
+          <a href="https://www.tiktok.com/@danny4686" target="_blank" rel="noopener noreferrer"><img src="assets/images/tiktok-placeholder.svg" alt=""><span>TikTok</span></a>
+          <a href="https://www.roblox.com/users/178415120/profile" target="_blank" rel="noopener noreferrer"><img src="assets/images/roblox-placeholder.svg" alt=""><span>Roblox</span></a>
         </div>
       </aside>
     </section>
@@ -90,25 +76,17 @@
 
       <div class="about-grid">
         <article class="glass-card reveal">
-          <div class="soft-icon blue" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="M5 17h14"/><path d="M7 14V9a5 5 0 0 1 10 0v5"/><path d="M10 17a2 2 0 0 0 4 0"/></svg>
-          </div>
+          <div class="soft-icon blue" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 17h14"/><path d="M7 14V9a5 5 0 0 1 10 0v5"/><path d="M10 17a2 2 0 0 0 4 0"/></svg></div>
           <h3>What I build</h3>
           <p>Games, communities, interfaces, and useful tools that make things cleaner and easier to use.</p>
         </article>
-
         <article class="glass-card reveal">
-          <div class="soft-icon logo-icon" aria-hidden="true">
-            <img src="cloudlab-logo.svg" alt="">
-          </div>
+          <div class="soft-icon logo-icon" aria-hidden="true"><img src="assets/images/cloudlab-logo.png" alt=""></div>
           <h3>CloudLab</h3>
-          <p>CloudLab is my creative space for community projects, ideas, and the things I’m always improving.</p>
+          <p>My creative space for community projects, new ideas, and the things I’m always improving.</p>
         </article>
-
         <article class="glass-card reveal">
-          <div class="soft-icon purple" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="M7 18h10"/><path d="M9 18v-2.5a3 3 0 0 1 6 0V18"/><path d="M12 4v6"/><path d="m9 8 3-4 3 4"/></svg>
-          </div>
+          <div class="soft-icon purple" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 18h10"/><path d="M9 18v-2.5a3 3 0 0 1 6 0V18"/><path d="M12 4v6"/><path d="m9 8 3-4 3 4"/></svg></div>
           <h3>How I work</h3>
           <p>I like polished details, soft visuals, and experiences that feel welcoming instead of overly corporate.</p>
         </article>
@@ -122,25 +100,23 @@
         <p class="section-copy">The main projects I’m actively improving and expanding.</p>
       </div>
 
-      <div class="projects-grid">
-        <article class="project-card featured reveal">
-          <div class="project-visual cloudlab-visual">
-            <img src="cloudlab-logo.svg" alt="CloudLab logo">
+      <div class="project-list">
+        <article class="project-card reveal">
+          <div class="project-visual cloudlab-visual"><img src="assets/images/cloudlab-logo.png" alt="CloudLab logo"></div>
+          <div class="project-content">
+            <h3>CloudLab</h3>
+            <p>A growing community space built around projects, friends, gaming, and everything I’m creating across platforms.</p>
+            <a class="project-button" href="https://discord.com/invite/CloudLab" target="_blank" rel="noopener noreferrer">Open CloudLab</a>
           </div>
-          <h3>CloudLab</h3>
-          <p>A growing community space built around projects, friends, gaming, and everything I’m creating across platforms.</p>
-          <a class="project-button" href="https://discord.com/invite/CloudLab" target="_blank" rel="noopener noreferrer">Open CloudLab</a>
         </article>
 
         <article class="project-card reveal">
-          <div class="project-visual rocket-visual" aria-hidden="true">
-            <div class="rocket-bubble">
-              <svg viewBox="0 0 64 64"><path d="M34 10c8 4 14 12 16 24-7 3-14 5-21 5-1 7-4 13-8 17l-4-4c4-4 7-10 7-17-7-7-5-15-2-20 4-2 8-4 12-5Z"/><path d="M28 43 18 53"/><circle cx="38" cy="24" r="4"/></svg>
-            </div>
+          <div class="project-visual"><img class="project-placeholder" src="assets/images/rocket-tycoon-placeholder.svg" alt="Rocket Tycoon image placeholder"></div>
+          <div class="project-content">
+            <h3>Rocket Tycoon</h3>
+            <p>A Roblox tycoon experience with progression systems, events, leaderboards, custom interfaces, and more still being improved.</p>
+            <a class="project-button" href="https://www.roblox.com/games/846133735/Rocket-Tycoon" target="_blank" rel="noopener noreferrer">Play Rocket Tycoon</a>
           </div>
-          <h3>Rocket Tycoon</h3>
-          <p>A Roblox tycoon experience with progression systems, events, leaderboards, custom interfaces, and more still being improved.</p>
-          <a class="project-button" href="https://www.roblox.com/games/846133735/Rocket-Tycoon" target="_blank" rel="noopener noreferrer">Play Rocket Tycoon</a>
         </article>
       </div>
     </section>
@@ -151,54 +127,21 @@
           <p class="eyebrow">FIND ME AROUND THE WEB</p>
           <h2>Where you can find me.</h2>
           <p>Follow what I’m building, join the community, or check out my profiles on the platforms I use most.</p>
-          <div class="founder-badge">
-            <img class="avatar small" src="https://avatars.githubusercontent.com/u/176429540?v=4" alt="Danny4686 profile image">
-            <div>
-              <strong>Danny4686</strong>
-              <span>CloudLab creator</span>
-            </div>
-          </div>
+          <div class="founder-badge"><img class="avatar small" src="assets/images/profile-placeholder.svg" alt="Danny4686 profile image placeholder"><div><strong>Danny4686</strong><span>CloudLab creator</span></div></div>
         </div>
 
         <div class="social-grid">
-          <a href="https://discord.com/invite/CloudLab" target="_blank" rel="noopener noreferrer">
-            <span class="social-icon logo-bubble" aria-hidden="true"><img src="cloudlab-logo.svg" alt=""></span>
-            <span><strong>Discord</strong><small>CloudLab community</small></span>
-          </a>
-
-          <a href="https://www.roblox.com/users/178415120/profile" target="_blank" rel="noopener noreferrer">
-            <span class="social-icon green" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><path d="m5 5 14 2-2 12-12-2L5 5Zm5 5-1 4 4 .6.6-4-3.6-.6Z"/></svg>
-            </span>
-            <span><strong>Roblox</strong><small>Player profile</small></span>
-          </a>
-
-          <a href="https://www.tiktok.com/@danny4686" target="_blank" rel="noopener noreferrer">
-            <span class="social-icon pink" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><path d="M14.6 4c.5 2 1.8 3.3 3.9 3.8v2.8a7.2 7.2 0 0 1-3.5-.9v5.8a5.5 5.5 0 1 1-5.5-5.5c.4 0 .8 0 1.2.1v3a2.5 2.5 0 1 0 1.3 2.2V4h2.6Z"/></svg>
-            </span>
-            <span><strong>TikTok</strong><small>@danny4686</small></span>
-          </a>
-
-          <a href="https://github.com/Danny-4686" target="_blank" rel="noopener noreferrer">
-            <span class="social-icon blue" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><path d="M12 3.8a8.7 8.7 0 0 0-2.8 16.9v-3c-2.4.5-2.9-1.1-2.9-1.1-.4-1-.9-1.2-.9-1.2-.7-.5 0-.5 0-.5.8 0 1.3.8 1.3.8.7 1.2 1.9.9 2.4.7.1-.5.3-.9.5-1.2-1.9-.2-4-.9-4-4.2 0-.9.3-1.7.8-2.3-.1-.2-.4-1.1.1-2.2 0 0 .7-.2 2.4.9a8.5 8.5 0 0 1 4.3 0c1.7-1.1 2.4-.9 2.4-.9.5 1.1.2 2 .1 2.2.5.6.8 1.4.8 2.3 0 3.3-2.1 4-4 4.2.3.2.6.8.6 1.7v2.8A8.7 8.7 0 0 0 12 3.8Z"/></svg>
-            </span>
-            <span><strong>GitHub</strong><small>Danny-4686</small></span>
-          </a>
+          <a href="https://discord.com/invite/CloudLab" target="_blank" rel="noopener noreferrer"><img src="assets/images/discord-placeholder.svg" alt=""><span><strong>Discord</strong><small>CloudLab community</small></span></a>
+          <a href="https://www.roblox.com/users/178415120/profile" target="_blank" rel="noopener noreferrer"><img src="assets/images/roblox-placeholder.svg" alt=""><span><strong>Roblox</strong><small>Player profile</small></span></a>
+          <a href="https://www.tiktok.com/@danny4686" target="_blank" rel="noopener noreferrer"><img src="assets/images/tiktok-placeholder.svg" alt=""><span><strong>TikTok</strong><small>@danny4686</small></span></a>
+          <a href="https://github.com/Danny-4686" target="_blank" rel="noopener noreferrer"><img src="assets/images/github-placeholder.svg" alt=""><span><strong>GitHub</strong><small>Danny-4686</small></span></a>
         </div>
       </div>
     </section>
   </main>
 
   <footer>
-    <div class="footer-brand">
-      <img src="cloudlab-logo.svg" alt="CloudLab logo">
-      <div>
-        <strong>Danny4686</strong>
-        <span>CloudLab</span>
-      </div>
-    </div>
+    <div class="footer-brand"><img src="assets/images/cloudlab-logo.png" alt="CloudLab logo"><div><strong>Danny4686</strong><span>CloudLab</span></div></div>
     <p>© <span id="year"></span> Danny4686.</p>
   </footer>
 
