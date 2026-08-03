@@ -1,0 +1,45 @@
+name: Import glossy website assets
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/import-gloss-assets.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  import-assets:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download supplied glossy assets
+        shell: bash
+        run: |
+          mkdir -p assets/images
+          curl --fail --location --retry 3 'https://cdn.discordapp.com/attachments/1138912646943473785/1533890044371407079/ChatGPT_Image_Aug_3_2026_12_27_08_PM.png?ex=6a7221ec&is=6a70d06c&hm=dae4c7670dee61e2ebde3470abb377d8044f16b0c2cbeb01b658352d936097a2&' --output assets/images/discord-gloss.png
+          curl --fail --location --retry 3 'https://media.discordapp.net/attachments/1138912646943473785/1533890123245293578/ChatGPT_Image_Aug_3_2026_12_31_34_PM.png?ex=6a7221ff&is=6a70d07f&hm=27458e6e611d85f16680ea99af18d70c6e8e74b7d591d5d081bdd5065631e39e&=&format=webp&quality=lossless' --output assets/images/github-gloss.webp
+          curl --fail --location --retry 3 'https://media.discordapp.net/attachments/1138912646943473785/1533890771365925054/ChatGPT_Image_Aug_3_2026_12_34_11_PM.png?ex=6a72229a&is=6a70d11a&hm=3806e330a54b9426ab548a68e54a94e78f78617137e188d3a0e41d54af9810d6&=&format=webp&quality=lossless' --output assets/images/tools-gloss.webp
+          curl --fail --location --retry 3 'https://media.discordapp.net/attachments/1138912646943473785/1533891063578755142/ChatGPT_Image_Aug_3_2026_12_35_22_PM.png?ex=6a7222df&is=6a70d15f&hm=f2bbf2d828fe49071625ba4c60c2c7b808310f2558e84480b620de8188bb9495&=&format=webp&quality=lossless' --output assets/images/tiktok-gloss.webp
+          curl --fail --location --retry 3 'https://cdn.discordapp.com/attachments/1138912646943473785/1533896672533418204/ChatGPT_Image_Aug_3_2026_12_57_41_PM.png?ex=6a722819&is=6a70d699&hm=43311b101484a824bcf5f4a881f990cb7e1248ab320373b351bee0be0093701e&' --output assets/images/roblox-gloss.png
+          curl --fail --location --retry 3 'https://media.discordapp.net/attachments/1138912646943473785/1533896857644957697/ChatGPT_Image_Aug_3_2026_12_49_38_PM.png?ex=6a722845&is=6a70d6c5&hm=ba9c7214d7be330638d5d45a6fdcdf71aefdb9d5c753e2f55614b4d0bd7aec06&=&format=webp&quality=lossless' --output assets/images/profile-gloss.webp
+          file assets/images/discord-gloss.png assets/images/github-gloss.webp assets/images/tools-gloss.webp assets/images/tiktok-gloss.webp assets/images/roblox-gloss.png assets/images/profile-gloss.webp
+
+      - name: Commit assets
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/images/discord-gloss.png assets/images/github-gloss.webp assets/images/tools-gloss.webp assets/images/tiktok-gloss.webp assets/images/roblox-gloss.png assets/images/profile-gloss.webp
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m 'Import supplied glossy website assets'
+          git push origin HEAD:main
