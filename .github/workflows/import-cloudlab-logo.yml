@@ -1,0 +1,40 @@
+name: Import CloudLab logo
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/import-cloudlab-logo.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  import-logo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download exact CloudLab logo
+        shell: bash
+        run: |
+          mkdir -p assets/images
+          curl --fail --location --retry 3 --retry-delay 2 'https://cdn.discordapp.com/attachments/1138912646943473785/1278358066055741571/Earth.png?ex=6a71f4b9&is=6a70a339&hm=6b66429eb808154ac1bbcce1c68b7220f18189cf0ccd6351cc60bfb673d71982&' --output assets/images/cloudlab-logo.png
+          file assets/images/cloudlab-logo.png
+
+      - name: Commit logo to the image library
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/images/cloudlab-logo.png
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m 'Import exact CloudLab logo image'
+          git push origin HEAD:main
