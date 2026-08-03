@@ -1,25 +1,3 @@
-const body = document.body;
-const themeToggle = document.getElementById('themeToggle');
-const savedTheme = localStorage.getItem('theme');
-const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
-
-function applyTheme(theme) {
-  const isLight = theme === 'light';
-  body.classList.toggle('light', isLight);
-  if (themeToggle) {
-    themeToggle.setAttribute('aria-pressed', String(isLight));
-    themeToggle.setAttribute('aria-label', isLight ? 'Switch to dark mode' : 'Switch to light mode');
-  }
-}
-
-applyTheme(savedTheme || (prefersLight ? 'light' : 'dark'));
-
-themeToggle?.addEventListener('click', () => {
-  const nextTheme = body.classList.contains('light') ? 'dark' : 'light';
-  localStorage.setItem('theme', nextTheme);
-  applyTheme(nextTheme);
-});
-
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 if (reducedMotion || !('IntersectionObserver' in window)) {
@@ -33,6 +11,7 @@ if (reducedMotion || !('IntersectionObserver' in window)) {
       }
     });
   }, { threshold: 0.12 });
+
   document.querySelectorAll('.reveal').forEach((element) => observer.observe(element));
 }
 
