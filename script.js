@@ -43,4 +43,14 @@ if (reducedMotion || !('IntersectionObserver' in window)) {
   document.querySelectorAll('.reveal').forEach((element) => observer.observe(element));
 }
 
-document.getElementById('year').textContent = new Date().getFullYear();
+if (!reducedMotion) {
+  window.addEventListener('pointermove', (event) => {
+    const x = `${(event.clientX / window.innerWidth) * 100}%`;
+    const y = `${(event.clientY / window.innerHeight) * 100}%`;
+    document.documentElement.style.setProperty('--mouse-x', x);
+    document.documentElement.style.setProperty('--mouse-y', y);
+  });
+}
+
+const year = document.getElementById('year');
+if (year) year.textContent = new Date().getFullYear();
