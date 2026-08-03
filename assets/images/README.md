@@ -2,16 +2,16 @@
 
 This folder is the image library for Danny4686.com.
 
-Replace a placeholder by uploading a new file with the same filename. The website will update without changing the HTML.
+## Active glossy assets
 
-Current files:
+- `cloudlab-logo.png` — CloudLab logo used in the header, projects, and footer.
+- `profile-gloss.webp` — Danny4686 character/profile artwork.
+- `discord-gloss.png` — glossy Discord icon.
+- `github-gloss.webp` — glossy GitHub icon.
+- `tools-gloss.webp` — glossy tools/development icon.
+- `tiktok-gloss.webp` — glossy TikTok icon.
+- `roblox-gloss.png` — glossy Roblox icon.
 
-- `cloudlab-logo.png` — exact CloudLab logo used throughout the site.
-- `profile-placeholder.svg` — replace with Danny's preferred profile image.
-- `rocket-tycoon-placeholder.svg` — replace with a Rocket Tycoon screenshot or icon.
-- `discord-placeholder.svg` — replace with a preferred Discord/server icon.
-- `roblox-placeholder.svg` — replace with a preferred Roblox icon or avatar image.
-- `tiktok-placeholder.svg` — replace with a preferred TikTok icon or profile image.
-- `github-placeholder.svg` — replace with a preferred GitHub icon.
+The website reads these files directly from `assets/images/`. Replacing an image while keeping the same filename updates every place where that asset is used.
 
-PNG, WebP, JPG, and SVG files work. When changing a filename or extension, update the matching path in `index.html`.
+PNG, WebP, JPG, and SVG files are supported. When changing a filename or extension, update the matching path in `index.html`.
