@@ -15,6 +15,124 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <style>
+    .hero h1 {
+      line-height: 1.02;
+      padding-bottom: 0.08em;
+    }
+
+    .rocket-banner-slot {
+      position: relative;
+      min-height: 220px;
+      overflow: hidden;
+      border-radius: 20px;
+      border: 1px solid var(--line);
+      background:
+        linear-gradient(135deg, rgba(40, 198, 255, 0.12), rgba(74, 93, 255, 0.12)),
+        rgba(255, 255, 255, 0.025);
+      background-image:
+        linear-gradient(135deg, rgba(40, 198, 255, 0.12), rgba(74, 93, 255, 0.12)),
+        url("assets/images/rocket-tycoon-banner.png");
+      background-position: center;
+      background-size: cover;
+      background-repeat: no-repeat;
+    }
+
+    .rocket-banner-slot::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(4, 9, 22, 0.04), rgba(4, 9, 22, 0.38));
+      pointer-events: none;
+    }
+
+    .rocket-banner-slot::after {
+      content: "Rocket Tycoon banner";
+      position: absolute;
+      left: 16px;
+      bottom: 14px;
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.76rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      pointer-events: none;
+    }
+
+    .rocket-play-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 11px;
+      color: #ffffff;
+      font-weight: 800;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+    }
+
+    .rocket-play-overlay::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(2, 8, 22, 0.06);
+      transition: background 0.18s ease;
+    }
+
+    .rocket-play-overlay:hover::before,
+    .rocket-play-overlay:focus-visible::before {
+      background: rgba(2, 8, 22, 0.18);
+    }
+
+    .rocket-play-control {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 17px 11px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 999px;
+      background: rgba(18, 29, 59, 0.78);
+      box-shadow: 0 15px 36px rgba(0, 0, 0, 0.3), inset 0 1px rgba(255, 255, 255, 0.16);
+      backdrop-filter: blur(14px);
+      transition: transform 0.18s ease, background 0.18s ease;
+    }
+
+    .rocket-play-overlay:hover .rocket-play-control,
+    .rocket-play-overlay:focus-visible .rocket-play-control {
+      transform: translateY(-2px) scale(1.02);
+      background: rgba(37, 88, 255, 0.88);
+    }
+
+    .rocket-play-circle {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: #2858ff;
+      background: #ffffff;
+      box-shadow: 0 7px 18px rgba(0, 0, 0, 0.24);
+    }
+
+    .rocket-play-circle svg {
+      width: 17px;
+      height: 17px;
+      margin-left: 2px;
+      fill: currentColor;
+      stroke: none;
+    }
+
+    @media (max-width: 720px) {
+      .rocket-banner-slot {
+        min-height: 210px;
+      }
+
+      .rocket-play-control {
+        padding-right: 15px;
+      }
+    }
+  </style>
 </head>
 <body>
   <div class="background-glow glow-blue" aria-hidden="true"></div>
@@ -46,7 +164,7 @@
     <section class="hero section-shell">
       <div class="hero-copy reveal">
         <p class="eyebrow">CREATOR · DEVELOPER · COMMUNITY BUILDER</p>
-        <h1>Hey, I’m <span>Danny.</span></h1>
+        <h1>Hey, I’m <span>Danny4686.</span></h1>
         <p class="hero-text">I build games, communities, tools, and online spaces that feel friendly, polished, and fun to be in. CloudLab is where a lot of those ideas come together.</p>
         <div class="hero-actions">
           <a class="button primary" href="#projects">See my projects</a>
@@ -75,7 +193,7 @@
     <section class="section-shell" id="about">
       <div class="section-heading reveal">
         <p class="eyebrow">ABOUT ME</p>
-        <h2>Cute visuals. Serious work behind them.</h2>
+        <h2>Ideas built into experiences people enjoy.</h2>
         <p class="section-copy">I like projects that feel approachable and fun on the surface, while the systems underneath stay organized, useful, and reliable.</p>
       </div>
 
@@ -88,7 +206,7 @@
 
         <article class="gloss-card reveal">
           <div class="card-icon cloud-icon"><img src="assets/images/cloudlab-logo.png" alt="CloudLab logo"></div>
-          <h3>CloudLab</h3>
+          <h3>CloudLab Studio</h3>
           <p>My creative home for community projects, games, experiments, and the people who follow what I’m building.</p>
         </article>
 
@@ -121,14 +239,19 @@
         </article>
 
         <article class="project-card reveal">
-          <div class="project-art rocket-art">
-            <div class="art-glow" aria-hidden="true"></div>
-            <img src="assets/images/roblox-gloss.png" alt="Roblox glossy icon">
+          <div class="rocket-banner-slot">
+            <a class="rocket-play-overlay" href="https://www.roblox.com/games/846133735/Rocket-Tycoon" target="_blank" rel="noopener noreferrer" aria-label="Play Rocket Tycoon on Roblox">
+              <span class="rocket-play-control">
+                <span class="rocket-play-circle" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="M8 5.5v13l10-6.5-10-6.5Z"/></svg>
+                </span>
+                <span>Play Rocket Tycoon</span>
+              </span>
+            </a>
           </div>
           <div class="project-content">
             <h3>Rocket Tycoon</h3>
             <p>A Roblox tycoon experience with progression systems, events, leaderboards, custom interfaces, and more still being improved.</p>
-            <a class="project-button" href="https://www.roblox.com/games/846133735/Rocket-Tycoon" target="_blank" rel="noopener noreferrer">Play Rocket Tycoon</a>
           </div>
         </article>
       </div>
