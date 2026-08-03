@@ -36,8 +36,8 @@ let navFrameRequested = false;
 
 function setActiveSection(sectionId) {
   sectionLinks.forEach((link) => {
-    const active = link.getAttribute('href') === `#${sectionId}`;
-    link.classList.toggle('is-active', active);
+    const active = sectionId && link.getAttribute('href') === `#${sectionId}`;
+    link.classList.toggle('is-active', Boolean(active));
 
     if (active) link.setAttribute('aria-current', 'page');
     else link.removeAttribute('aria-current');
@@ -49,7 +49,7 @@ function getCurrentSectionId() {
 
   const headerHeight = header?.offsetHeight || 0;
   const readingLine = window.scrollY + headerHeight + 150;
-  let currentSection = sections[0];
+  let currentSection = null;
 
   sections.forEach((section) => {
     if (section.offsetTop <= readingLine) currentSection = section;
@@ -58,7 +58,7 @@ function getCurrentSectionId() {
   const nearPageBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 8;
   if (nearPageBottom) currentSection = sections[sections.length - 1];
 
-  return currentSection.id;
+  return currentSection?.id || null;
 }
 
 function updateActiveNavigation() {
@@ -69,8 +69,7 @@ function updateActiveNavigation() {
     return;
   }
 
-  const currentSectionId = getCurrentSectionId();
-  if (currentSectionId) setActiveSection(currentSectionId);
+  setActiveSection(getCurrentSectionId());
 }
 
 function requestNavigationUpdate() {
@@ -90,6 +89,24 @@ sectionLinks.forEach((link) => {
       updateActiveNavigation();
     }, 1800);
   });
+});
+
+const brandLink = document.querySelector('.brand');
+brandLink?.addEventListener('click', (event) => {
+  event.preventDefault();
+  lockedSectionId = null;
+  window.clearTimeout(unlockTimer);
+  setActiveSection(null);
+
+  window.scrollTo({
+    top: 0,
+    left: 0,
+    behavior: reducedMotion ? 'auto' : 'smooth'
+  });
+
+  if (window.location.hash) {
+    window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+  }
 });
 
 window.addEventListener('scroll', requestNavigationUpdate, { passive: true });
