@@ -16,6 +16,9 @@
   const gridSize = 24;
   const tileSize = canvas.width / gridSize;
   const storageKey = 'cloudlab-snake-best';
+  const appleImage = new Image();
+  appleImage.decoding = 'async';
+  appleImage.src = '../../assets/images/memory/apple.png';
 
   let snake = [];
   let food = { x: 17, y: 10 };
@@ -138,7 +141,8 @@
         vx: Math.cos(angle) * (1.5 + Math.random() * 1.7),
         vy: Math.sin(angle) * (1.5 + Math.random() * 1.7),
         life: 1,
-        size: 2 + Math.random() * 3
+        size: 2 + Math.random() * 3,
+        color: index % 3 === 0 ? '#8bcf9b' : '#ef6d68'
       });
     }
   }
@@ -190,22 +194,31 @@
   }
 
   function drawFood(time) {
-    const pulse = 1 + Math.sin(time / 180) * 0.08;
+    const pulse = 1 + Math.sin(time / 180) * 0.055;
     const centerX = food.x * tileSize + tileSize / 2;
     const centerY = food.y * tileSize + tileSize / 2;
-    const radius = tileSize * 0.31 * pulse;
+    const size = tileSize * 0.92 * pulse;
+    const x = centerX - size / 2;
+    const y = centerY - size / 2;
 
     context.save();
-    context.shadowColor = 'rgba(242, 199, 92, 0.8)';
-    context.shadowBlur = 20;
-    const foodGradient = context.createRadialGradient(centerX - 4, centerY - 5, 2, centerX, centerY, radius);
-    foodGradient.addColorStop(0, '#fff2a6');
-    foodGradient.addColorStop(0.45, '#f2c75c');
-    foodGradient.addColorStop(1, '#d99f2b');
-    context.fillStyle = foodGradient;
-    context.beginPath();
-    context.arc(centerX, centerY, radius, 0, Math.PI * 2);
-    context.fill();
+    context.shadowColor = 'rgba(239, 109, 104, 0.55)';
+    context.shadowBlur = 16;
+
+    if (appleImage.complete && appleImage.naturalWidth > 0) {
+      context.drawImage(appleImage, x, y, size, size);
+    } else {
+      const radius = tileSize * 0.31 * pulse;
+      const fallback = context.createRadialGradient(centerX - 4, centerY - 5, 2, centerX, centerY, radius);
+      fallback.addColorStop(0, '#ffd3d0');
+      fallback.addColorStop(0.45, '#ef6d68');
+      fallback.addColorStop(1, '#b63f3d');
+      context.fillStyle = fallback;
+      context.beginPath();
+      context.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      context.fill();
+    }
+
     context.restore();
   }
 
@@ -257,8 +270,8 @@
     particles.forEach((particle) => {
       context.save();
       context.globalAlpha = Math.max(0, particle.life);
-      context.fillStyle = '#f2c75c';
-      context.shadowColor = '#f2c75c';
+      context.fillStyle = particle.color;
+      context.shadowColor = particle.color;
       context.shadowBlur = 8;
       context.beginPath();
       context.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
