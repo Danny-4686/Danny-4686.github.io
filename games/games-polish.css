@@ -62,31 +62,17 @@
   background: rgba(7,20,27,.96) !important;
 }
 
-.memory-sprite {
+.image-card img {
   display: block;
   width: 100%;
-  aspect-ratio: 1;
-  background-image: url("../assets/images/memory/memory-sprites.png");
-  background-repeat: no-repeat;
-  background-size: 500% 200%;
+  height: 100%;
+  object-fit: contain;
   filter: drop-shadow(0 7px 9px rgba(0,0,0,.2));
 }
 
-.sprite-cyan { background-position: 0% 0%; }
-.sprite-gray { background-position: 25% 0%; }
-.sprite-lime { background-position: 50% 0%; }
-.sprite-blue { background-position: 75% 0%; }
-.sprite-red { background-position: 100% 0%; }
-.sprite-purple { background-position: 0% 100%; }
-.sprite-earth { background-position: 25% 100%; }
-.sprite-mint { background-position: 50% 100%; }
-.sprite-gloss-cyan { background-position: 75% 100%; }
-.sprite-gloss-gold { background-position: 100% 100%; }
-
 .back-card {
   background:
-    url("../assets/images/cloudlab-logo.png") center/48% no-repeat,
-    radial-gradient(circle at 66% 24%, rgba(104,208,223,.18), transparent 42%),
+    url("../assets/images/memory/Earth.png") center/58% no-repeat,
     #102731 !important;
 }
 
