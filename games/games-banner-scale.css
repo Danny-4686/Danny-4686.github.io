@@ -30,13 +30,21 @@
 .upgraded-snake-preview .s4 { left: 45%; top: 53%; }
 .upgraded-snake-preview .s5 { left: 45%; top: 38%; }
 
-.snake-banner-apple {
-  width: clamp(52px, 23cqw, 76px);
+.arcade-grid .card-media .snake-banner-apple {
+  width: clamp(34px, 12.5cqw, 46px);
   height: auto;
+  max-width: 46px;
+  max-height: 46px;
   aspect-ratio: 1;
-  right: 10%;
-  top: 17%;
+  right: 16%;
+  top: 25%;
   object-fit: contain;
+  transform: rotate(4deg);
+  transform-origin: center;
+}
+
+.game-card:hover .card-media .snake-banner-apple {
+  transform: translateY(-4px) rotate(-3deg) scale(1.05);
 }
 
 /* 2048 */
@@ -99,9 +107,12 @@
 }
 
 @media (max-width: 720px) {
-  .snake-banner-apple {
-    width: clamp(50px, 21cqw, 68px);
-    right: 11%;
+  .arcade-grid .card-media .snake-banner-apple {
+    width: clamp(32px, 11cqw, 42px);
+    max-width: 42px;
+    max-height: 42px;
+    right: 15%;
+    top: 26%;
   }
 
   .polished-2048-preview {
@@ -121,6 +132,12 @@
   .upgraded-snake-preview .s3 { left: 33%; }
   .upgraded-snake-preview .s4,
   .upgraded-snake-preview .s5 { left: 43%; }
+
+  .arcade-grid .card-media .snake-banner-apple {
+    width: 34px;
+    max-width: 34px;
+    max-height: 34px;
+  }
 
   .polished-2048-preview .tile-1024,
   .polished-2048-preview .tile-2048 {
