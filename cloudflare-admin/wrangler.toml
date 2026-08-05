@@ -1,7 +1,8 @@
 name = "cloudlab-journal-admin"
-main = "src/index.js"
+main = "src/worker.js"
 compatibility_date = "2026-08-01"
 workers_dev = false
+keep_vars = true
 
 routes = [
   { pattern = "admin.danny4686.com", custom_domain = true }
