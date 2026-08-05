@@ -1,0 +1,103 @@
+.memory-stage {
+  width: min(760px, 100%);
+  margin: 0 auto;
+}
+
+.memory-board {
+  width: 100%;
+  padding: 14px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  border: 1px solid rgba(145, 190, 202, 0.2);
+  border-radius: 24px;
+  background: linear-gradient(145deg, #0a2028, #07151b);
+  box-shadow: inset 0 1px rgba(255,255,255,.04), 0 24px 50px rgba(0,0,0,.25);
+}
+
+.memory-card {
+  position: relative;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 0;
+  border-radius: 16px;
+  background: transparent;
+  cursor: pointer;
+  perspective: 900px;
+}
+
+.memory-card:disabled { cursor: default; }
+.memory-card-inner {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transition: transform .42s cubic-bezier(.2,.75,.25,1);
+}
+.memory-card.is-flipped .memory-card-inner,
+.memory-card.is-matched .memory-card-inner { transform: rotateY(180deg); }
+
+.memory-card-face {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(145, 190, 202, 0.18);
+  border-radius: 16px;
+  backface-visibility: hidden;
+  box-shadow: inset 0 1px rgba(255,255,255,.06), 0 10px 22px rgba(0,0,0,.18);
+}
+
+.memory-card-front {
+  background:
+    radial-gradient(circle at 65% 25%, rgba(104,208,223,.18), transparent 42%),
+    linear-gradient(145deg, #112934, #0b1b23);
+}
+.memory-card-front::before {
+  content: "CL";
+  width: 44%;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(104,208,223,.2);
+  border-radius: 50%;
+  color: rgba(104,208,223,.55);
+  font-size: clamp(.7rem, 2vw, 1rem);
+  font-weight: 900;
+  letter-spacing: -.04em;
+}
+
+.memory-card-back {
+  transform: rotateY(180deg);
+  color: #061117;
+  font-size: clamp(.72rem, 2.5vw, 1.15rem);
+  font-weight: 900;
+  letter-spacing: -.035em;
+}
+.memory-card[data-style="0"] .memory-card-back { background: #68d0df; }
+.memory-card[data-style="1"] .memory-card-back { background: #8bcf9b; }
+.memory-card[data-style="2"] .memory-card-back { background: #f2c75c; }
+.memory-card[data-style="3"] .memory-card-back { background: #ed8b45; }
+.memory-card[data-style="4"] .memory-card-back { color: #fff; background: #df6d67; }
+.memory-card[data-style="5"] .memory-card-back { color: #fff; background: #6f83d8; }
+.memory-card[data-style="6"] .memory-card-back { color: #fff; background: #8f69be; }
+.memory-card[data-style="7"] .memory-card-back { background: #9de0e8; }
+
+.memory-card.is-matched { animation: matchedPulse .38s ease; }
+.memory-card.is-matched .memory-card-back { box-shadow: 0 0 28px rgba(104,208,223,.26), inset 0 1px rgba(255,255,255,.42); }
+.game-message.hidden { display: none; }
+
+@keyframes matchedPulse {
+  50% { transform: scale(1.045); }
+}
+
+@media (max-width: 620px) {
+  .memory-board { padding: 9px; gap: 7px; border-radius: 18px; }
+  .memory-card,
+  .memory-card-face { border-radius: 11px; }
+  .score-row { grid-template-columns: repeat(3, minmax(80px, 1fr)); width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .memory-card-inner { transition: none; }
+  .memory-card.is-matched { animation: none; }
+}
