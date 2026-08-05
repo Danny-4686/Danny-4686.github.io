@@ -84,11 +84,27 @@
     rgba(8,22,28,.96);
 }
 
-.memory-card-back .memory-sprite {
+.memory-sprite {
+  display: block;
   width: 100%;
-  height: 100%;
+  aspect-ratio: 1;
+  background-image: url("../../assets/images/memory/memory-sprites.png");
+  background-repeat: no-repeat;
+  background-size: 500% 200%;
   filter: drop-shadow(0 10px 13px rgba(0,0,0,.22));
+  transform: translateZ(0);
 }
+
+.sprite-earth { background-position: 0% 0%; }
+.sprite-gloss-cyan { background-position: 25% 0%; }
+.sprite-gray { background-position: 50% 0%; }
+.sprite-gloss-gold { background-position: 75% 0%; }
+.sprite-cyan { background-position: 100% 0%; }
+.sprite-red { background-position: 0% 100%; }
+.sprite-blue { background-position: 25% 100%; }
+.sprite-mint { background-position: 50% 100%; }
+.sprite-purple { background-position: 75% 100%; }
+.sprite-lime { background-position: 100% 100%; }
 
 .memory-card.is-matched { animation: matchedPulse .4s ease; }
 .memory-card.is-matched .memory-card-back {
