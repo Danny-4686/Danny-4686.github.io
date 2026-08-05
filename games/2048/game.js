@@ -16,10 +16,10 @@
   const size = 4;
   const bestKey = 'cloudlab-2048-best';
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const motionDuration = reducedMotion ? 0 : 190;
+  const motionDuration = 190;
   let board = [];
   let score = 0;
-  let bestScore = Number.parseInt(localStorage.getItem(bestKey) || '0', 10);
+  let bestScore = loadBestScore();
   let previousState = null;
   let winShown = false;
   let touchStart = null;
@@ -27,6 +27,14 @@
   let motionTimer = null;
 
   bestElement.textContent = formatNumber(bestScore);
+
+  function loadBestScore() {
+    try {
+      return Number.parseInt(localStorage.getItem(bestKey) || '0', 10) || 0;
+    } catch (_) {
+      return 0;
+    }
+  }
 
   function formatNumber(value) {
     return Number(value).toLocaleString('en-US');
@@ -160,18 +168,14 @@
     score += gained;
     const newTile = addRandomTile();
     const bestImproved = updateBest();
+    inputLocked = true;
     render({ mergedCells, newCells: newTile ? [newTile] : [] });
     playMoveFeedback(direction, gained, bestImproved);
   }
 
   function playMoveFeedback(direction, gained, bestImproved) {
-    inputLocked = true;
     window.clearTimeout(motionTimer);
     boardElement.classList.remove('is-moving', 'is-blocked', 'move-left', 'move-right', 'move-up', 'move-down');
-
-    requestAnimationFrame(() => {
-      boardElement.classList.add('is-moving', `move-${direction}`);
-    });
 
     if (gained > 0) {
       showScoreGain(gained);
@@ -180,21 +184,36 @@
     }
     if (bestImproved) bumpScore(bestElement);
 
+    if (reducedMotion) {
+      inputLocked = false;
+      undoButton.disabled = !previousState;
+      checkGameState();
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      boardElement.classList.add('is-moving', `move-${direction}`);
+    });
+
     motionTimer = window.setTimeout(() => {
       boardElement.classList.remove('is-moving', `move-${direction}`);
       inputLocked = false;
+      undoButton.disabled = !previousState;
       checkGameState();
     }, motionDuration);
   }
 
   function showBlockedMove(direction) {
+    if (reducedMotion) return;
     inputLocked = true;
+    undoButton.disabled = true;
     boardElement.classList.remove('is-moving', 'is-blocked', 'move-left', 'move-right', 'move-up', 'move-down');
     requestAnimationFrame(() => boardElement.classList.add('is-blocked', `move-${direction}`));
     window.setTimeout(() => {
       boardElement.classList.remove('is-blocked', `move-${direction}`);
       inputLocked = false;
-    }, reducedMotion ? 0 : 235);
+      undoButton.disabled = !previousState;
+    }, 235);
   }
 
   function bumpScore(element) {
@@ -263,7 +282,7 @@
         if (value > 2048) tile.dataset.large = 'true';
         if (mergedSet.has(key)) tile.classList.add('is-merged');
         else if (newSet.has(key)) tile.classList.add('is-new');
-        tile.textContent = value ? formatNumber(value) : '';
+        tile.textContent = value ? String(value) : '';
         tile.setAttribute('aria-label', value ? String(value) : 'Empty tile');
         fragment.append(tile);
       });
@@ -294,9 +313,10 @@
     hideMessage();
     render();
 
+    if (reducedMotion) return;
     boardElement.classList.remove('is-undoing');
     requestAnimationFrame(() => boardElement.classList.add('is-undoing'));
-    window.setTimeout(() => boardElement.classList.remove('is-undoing'), reducedMotion ? 0 : 300);
+    window.setTimeout(() => boardElement.classList.remove('is-undoing'), 300);
   }
 
   function directionFromKey(key) {
