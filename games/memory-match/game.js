@@ -11,14 +11,22 @@
   const playAgainButton = document.getElementById('playAgainButton');
   const peekButton = document.getElementById('peekButton');
 
-  const images = [
-    ['cyan', 'Cyan globe'], ['gray', 'Gray globe'], ['lime', 'Lime globe'],
-    ['blue', 'Blue globe'], ['red', 'Red globe'], ['purple', 'Purple globe'],
-    ['earth', 'Multicolor globe'], ['mint', 'Mint globe'],
-    ['gloss-cyan', 'Glossy cyan globe'], ['gloss-gold', 'Glossy gold globe']
-  ].map(([key, label]) => ({ key, label }));
+  const imageDefinitions = [
+    ['cyan', 'Cyan globe', 0, 0],
+    ['gray', 'Gray globe', 1, 0],
+    ['lime', 'Lime globe', 2, 0],
+    ['blue', 'Blue globe', 3, 0],
+    ['red', 'Red globe', 4, 0],
+    ['purple', 'Purple globe', 0, 1],
+    ['earth', 'Multicolor globe', 1, 1],
+    ['mint', 'Mint globe', 2, 1],
+    ['gloss-cyan', 'Glossy cyan globe', 3, 1],
+    ['gloss-gold', 'Glossy gold globe', 4, 1]
+  ];
 
+  const spriteUrl = '../../assets/images/memory/memory-sprites.png';
   const bestKey = 'cloudlab-memory-image-best';
+  let images = [];
   let firstCard = null;
   let secondCard = null;
   let moves = 0;
@@ -34,7 +42,9 @@
     try {
       const saved = JSON.parse(localStorage.getItem(bestKey) || 'null');
       return saved && Number.isFinite(saved.moves) && Number.isFinite(saved.time) ? saved : null;
-    } catch (_) { return null; }
+    } catch (_) {
+      return null;
+    }
   }
 
   function saveBest() {
@@ -74,6 +84,46 @@
     timer = null;
   }
 
+  function loadSpriteImage() {
+    return new Promise((resolve, reject) => {
+      const sprite = new Image();
+      sprite.onload = () => resolve(sprite);
+      sprite.onerror = reject;
+      sprite.src = `${spriteUrl}?v=3`;
+    });
+  }
+
+  function cropImage(sprite, column, row) {
+    const tileWidth = sprite.naturalWidth / 5;
+    const tileHeight = sprite.naturalHeight / 2;
+    const canvas = document.createElement('canvas');
+    canvas.width = tileWidth;
+    canvas.height = tileHeight;
+    const context = canvas.getContext('2d');
+    context.clearRect(0, 0, tileWidth, tileHeight);
+    context.drawImage(
+      sprite,
+      column * tileWidth,
+      row * tileHeight,
+      tileWidth,
+      tileHeight,
+      0,
+      0,
+      tileWidth,
+      tileHeight
+    );
+    return canvas.toDataURL('image/png');
+  }
+
+  async function prepareImages() {
+    const sprite = await loadSpriteImage();
+    images = imageDefinitions.map(([key, label, column, row]) => ({
+      key,
+      label,
+      src: cropImage(sprite, column, row)
+    }));
+  }
+
   function buildCard(cardData, index) {
     const button = document.createElement('button');
     button.className = 'memory-card';
@@ -93,9 +143,13 @@
     back.className = 'memory-card-face memory-card-back';
     back.setAttribute('aria-hidden', 'true');
 
-    const art = document.createElement('span');
-    art.className = `memory-sprite sprite-${cardData.key}`;
-    back.append(art);
+    const image = document.createElement('img');
+    image.className = 'memory-card-image';
+    image.src = cardData.src;
+    image.alt = '';
+    image.draggable = false;
+    back.append(image);
+
     inner.append(front, back);
     button.append(inner);
     button.addEventListener('click', () => chooseCard(button));
@@ -103,6 +157,7 @@
   }
 
   function newGame() {
+    if (!images.length) return;
     roundId += 1;
     stopTimer();
     firstCard = null;
@@ -190,8 +245,19 @@
     }, 1100);
   }
 
+  newGameButton.disabled = true;
+  peekButton.disabled = true;
   newGameButton.addEventListener('click', newGame);
   playAgainButton.addEventListener('click', newGame);
   peekButton.addEventListener('click', quickPeek);
-  newGame();
+
+  prepareImages()
+    .then(() => {
+      newGameButton.disabled = false;
+      peekButton.disabled = false;
+      newGame();
+    })
+    .catch(() => {
+      boardElement.innerHTML = '<p class="memory-load-error">The card artwork could not load. Refresh the page to try again.</p>';
+    });
 })();
