@@ -25,7 +25,7 @@ const updateHeader = () => header?.classList.toggle('is-scrolled', window.scroll
 updateHeader();
 window.addEventListener('scroll', updateHeader, { passive: true });
 
-const sectionLinks = [...document.querySelectorAll('.nav-links a')];
+const sectionLinks = [...document.querySelectorAll('.nav-links a[href^="#"]')];
 const sections = sectionLinks
   .map((link) => document.querySelector(link.getAttribute('href')))
   .filter(Boolean);
@@ -126,7 +126,7 @@ if (!reducedMotion) {
   }, { passive: true });
 
   const spotlightTargets = document.querySelectorAll(
-    '.hero-portrait, .studio-strip-inner, .gloss-card, .project-card, .connect-card'
+    '.hero-portrait, .studio-strip-inner, .gloss-card, .project-card, .connect-card, .destination-card'
   );
 
   spotlightTargets.forEach((element) => {
