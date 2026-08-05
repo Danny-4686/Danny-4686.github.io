@@ -15,6 +15,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="home-additions.css">
 </head>
 <body id="top">
   <div class="background-glow glow-blue" aria-hidden="true"></div>
@@ -34,6 +35,8 @@
     <nav class="nav-links" aria-label="Main navigation">
       <a href="#about">About</a>
       <a href="#projects">Projects</a>
+      <a href="/games/">Games</a>
+      <a href="/journal/">Journal</a>
       <a href="#connect">Connect</a>
     </nav>
 
@@ -48,8 +51,6 @@
         <p class="hero-text">I build games, communities, and tools that bring people together. CloudLab Studio is where those ideas grow into polished experiences people can enjoy.</p>
         <div class="hero-actions">
           <a class="button primary" href="#projects">Explore my projects</a>
-          <a class="button secondary" href="/games/">Play browser games</a>
-          <a class="button secondary" href="/journal/">Open studio journal</a>
           <a class="button secondary" href="https://www.roblox.com/users/178415120/profile" target="_blank" rel="noopener noreferrer">View Roblox profile</a>
         </div>
         <div class="hero-links" aria-label="Profile links">
@@ -80,6 +81,43 @@
           <h2>Games, tools, and communities built to keep growing.</h2>
         </div>
         <a href="#projects">See what I’m building</a>
+      </div>
+    </section>
+
+    <section class="section-shell home-destinations" aria-labelledby="explore-heading">
+      <div class="destination-heading reveal">
+        <p class="eyebrow">EXPLORE MORE</p>
+        <h2 id="explore-heading">Two more places inside the studio.</h2>
+        <p>The arcade is for quick browser games, while the journal keeps project updates, milestones, and memories organized by date.</p>
+      </div>
+
+      <div class="destination-grid">
+        <a class="destination-card reveal" href="/games/">
+          <div class="destination-copy">
+            <p class="eyebrow">CLOUDLAB ARCADE</p>
+            <h3>Play browser games.</h3>
+            <p>Open Snake, 2048, Memory Match, Pong, Tic-Tac-Toe, Minesweeper, and anything added later.</p>
+            <span class="destination-link">Browse the arcade <span>→</span></span>
+          </div>
+          <div class="destination-art arcade-mini" aria-hidden="true">
+            <span></span><span class="cyan"></span><span></span><span class="gold"></span>
+            <span class="mint"></span><span></span><span class="cyan"></span><span></span>
+            <span></span><span class="gold"></span><span></span><span class="mint"></span>
+            <span class="cyan"></span><span></span><span></span><span></span>
+          </div>
+        </a>
+
+        <a class="destination-card journal reveal" href="/journal/">
+          <div class="destination-copy">
+            <p class="eyebrow">STUDIO JOURNAL</p>
+            <h3>Read the latest posts.</h3>
+            <p>A dated timeline for development updates, personal milestones, photos, videos, and memories worth keeping.</p>
+            <span class="destination-link">Open the journal <span>→</span></span>
+          </div>
+          <div class="destination-art journal-mini" aria-hidden="true">
+            <div class="journal-sheet"><span></span><span></span><span></span><span></span></div>
+          </div>
+        </a>
       </div>
     </section>
 
