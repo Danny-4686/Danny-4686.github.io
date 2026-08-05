@@ -23,15 +23,14 @@
   box-shadow: 0 0 12px rgba(104, 208, 223, .72);
 }
 
-/* The uploaded PNGs include generous transparent padding. Zoom only the art,
-   while keeping the Minesweeper banner cells at their approved size. */
+/* Keep the complete flag and bomb visible inside their preview cells. */
 .arcade-grid .card-media .upgraded-mine-preview .flag img {
   width: 100%;
   height: 100%;
   max-width: none;
   max-height: none;
   object-fit: contain;
-  transform: translateY(2%) scale(2.7);
+  transform: translateY(1%) scale(1.55);
   transform-origin: center;
 }
 
@@ -41,16 +40,16 @@
   max-width: none;
   max-height: none;
   object-fit: contain;
-  transform: scale(2.05);
+  transform: scale(1.35);
   transform-origin: center;
 }
 
 .arcade-grid .game-card:hover .card-media .upgraded-mine-preview .flag img {
-  transform: translateY(-1%) rotate(-4deg) scale(2.82);
+  transform: translateY(-1%) rotate(-3deg) scale(1.62);
 }
 
 .arcade-grid .game-card:hover .card-media .upgraded-mine-preview .mine img {
-  transform: rotate(4deg) scale(2.16);
+  transform: rotate(3deg) scale(1.42);
 }
 
 @media (max-width: 900px) {
@@ -118,19 +117,19 @@
   }
 
   .arcade-grid .card-media .upgraded-mine-preview .flag img {
-    transform: translateY(2%) scale(2.5);
+    transform: translateY(1%) scale(1.46);
   }
 
   .arcade-grid .card-media .upgraded-mine-preview .mine img {
-    transform: scale(1.95);
+    transform: scale(1.28);
   }
 
   .arcade-grid .game-card:hover .card-media .upgraded-mine-preview .flag img {
-    transform: translateY(-1%) rotate(-4deg) scale(2.6);
+    transform: translateY(-1%) rotate(-3deg) scale(1.52);
   }
 
   .arcade-grid .game-card:hover .card-media .upgraded-mine-preview .mine img {
-    transform: rotate(4deg) scale(2.05);
+    transform: rotate(3deg) scale(1.34);
   }
 }
 
