@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Play simple browser games from CloudLab Studio.">
+  <meta name="description" content="Browse and play simple browser games from CloudLab Studio.">
   <meta name="theme-color" content="#061117">
-  <title>Browser Games | Danny4686</title>
+  <title>CloudLab Arcade | Danny4686</title>
   <link rel="icon" href="../assets/images/cloudlab-logo.png" type="image/png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,45 +24,56 @@
       <a href="/journal/">Journal</a>
       <a href="/">Home</a>
     </nav>
-    <a class="header-action" href="/journal/">Open Journal</a>
+    <a class="header-action" href="/">Main Website</a>
   </header>
 
   <main>
-    <section class="page-shell page-hero reveal">
-      <p class="eyebrow">CLOUDLAB ARCADE</p>
-      <h1>Simple games, built to be played.</h1>
-      <p class="lead">A growing collection of browser games you can open instantly on desktop or mobile. Personal bests are saved on your device.</p>
-      <div class="hero-actions">
-        <a class="primary-action" href="/games/snake/">Play Snake</a>
-        <a class="secondary-action" href="/">Back to Danny4686.com</a>
+    <section class="page-shell arcade-hero reveal">
+      <div class="arcade-hero-copy">
+        <p class="eyebrow">CLOUDLAB ARCADE</p>
+        <h1>Pick a game and play.</h1>
+        <p class="lead">A small collection of browser games built for quick sessions on desktop or mobile. Every game opens instantly, and useful scores stay saved on your device.</p>
+      </div>
+      <div class="arcade-summary" aria-label="Arcade summary">
+        <div><strong>6</strong><span>Playable games</span></div>
+        <div><strong>0</strong><span>Downloads needed</span></div>
+        <div><strong>100%</strong><span>Browser based</span></div>
       </div>
     </section>
 
-    <section class="page-shell section-block">
-      <div class="section-heading reveal">
+    <section class="page-shell arcade-library">
+      <div class="library-heading reveal">
         <div>
-          <p class="eyebrow">PLAY NOW</p>
-          <h2>Choose a game.</h2>
+          <p class="eyebrow">GAME LIBRARY</p>
+          <h2>Find something to play.</h2>
         </div>
-        <p>Snake, 2048, and Memory Match are fully playable with controls designed for both desktop and mobile.</p>
+        <input class="search-box" id="gameSearch" type="search" placeholder="Search games" aria-label="Search games">
       </div>
 
-      <div class="card-grid">
-        <a class="game-card reveal" href="/games/snake/">
+      <div class="filters reveal" id="gameFilters" aria-label="Filter games">
+        <button class="filter-button active" type="button" data-filter="all" aria-pressed="true">All</button>
+        <button class="filter-button" type="button" data-filter="arcade" aria-pressed="false">Arcade</button>
+        <button class="filter-button" type="button" data-filter="puzzle" aria-pressed="false">Puzzle</button>
+        <button class="filter-button" type="button" data-filter="strategy" aria-pressed="false">Strategy</button>
+        <button class="filter-button" type="button" data-filter="memory" aria-pressed="false">Memory</button>
+      </div>
+
+      <div class="card-grid arcade-grid" id="gameGrid">
+        <a class="game-card reveal" href="/games/snake/" data-title="Snake" data-genre="arcade" data-keywords="classic score food tail">
           <div class="card-media">
             <div class="snake-preview" aria-label="Snake game preview">
               <span class="s1"></span><span class="s2"></span><span class="s3"></span><span class="s4"></span><span class="s5"></span><span class="food"></span>
             </div>
           </div>
           <div class="card-body">
-            <div class="card-meta"><span class="badge">ARCADE</span><span>Playable</span></div>
+            <div class="card-meta"><span class="badge">ARCADE</span><span>Solo</span></div>
             <h3>Snake</h3>
-            <p>Guide the snake, collect glowing food, build your score, and try to beat your personal best.</p>
-            <span class="card-link">Play game <span>→</span></span>
+            <p>Collect glowing food, grow longer, and avoid the walls and your own tail.</p>
+            <span class="card-link">Open game <span>→</span></span>
           </div>
         </a>
 
-        <a class="game-card reveal" href="/games/2048/">
+        <a class="game-card reveal" href="/games/2048/" data-title="2048" data-genre="puzzle" data-keywords="tiles numbers merge swipe">
           <div class="card-media">
             <div class="preview-2048" aria-label="2048 game preview">
               <span></span><span class="tile-2">2</span><span></span><span class="tile-4">4</span>
@@ -72,14 +83,14 @@
             </div>
           </div>
           <div class="card-body">
-            <div class="card-meta"><span class="badge">PUZZLE</span><span>Playable</span></div>
+            <div class="card-meta"><span class="badge">PUZZLE</span><span>Solo</span></div>
             <h3>2048</h3>
-            <p>Slide matching tiles together, combine their values, and keep building toward 2048 and beyond.</p>
-            <span class="card-link">Play game <span>→</span></span>
+            <p>Slide and merge matching tiles while building toward 2048 and beyond.</p>
+            <span class="card-link">Open game <span>→</span></span>
           </div>
         </a>
 
-        <a class="game-card reveal" href="/games/memory-match/">
+        <a class="game-card reveal" href="/games/memory-match/" data-title="Memory Match" data-genre="memory" data-keywords="cards pairs timer moves">
           <div class="card-media">
             <div class="memory-preview" aria-label="Memory Match game preview">
               <span></span><span class="face-up">LAB</span><span></span><span></span>
@@ -89,21 +100,60 @@
             </div>
           </div>
           <div class="card-body">
-            <div class="card-meta"><span class="badge">MEMORY</span><span>Playable</span></div>
+            <div class="card-meta"><span class="badge">MEMORY</span><span>Solo</span></div>
             <h3>Memory Match</h3>
-            <p>Reveal cards, remember their positions, and clear every pair in as few moves as possible.</p>
-            <span class="card-link">Play game <span>→</span></span>
+            <p>Remember each card position and clear every pair in as few moves as possible.</p>
+            <span class="card-link">Open game <span>→</span></span>
+          </div>
+        </a>
+
+        <a class="game-card reveal" href="/games/pong/" data-title="Pong" data-genre="arcade" data-keywords="paddle ball cpu reflex">
+          <div class="card-media">
+            <div class="pong-preview" aria-label="Pong game preview"><span class="paddle left"></span><span class="paddle right"></span><span class="pong-ball"></span><i></i></div>
+          </div>
+          <div class="card-body">
+            <div class="card-meta"><span class="badge">ARCADE</span><span>Vs CPU</span></div>
+            <h3>Pong</h3>
+            <p>Control your paddle, return the ball, and race the computer to seven points.</p>
+            <span class="card-link">Open game <span>→</span></span>
+          </div>
+        </a>
+
+        <a class="game-card reveal" href="/games/tic-tac-toe/" data-title="Tic-Tac-Toe" data-genre="strategy" data-keywords="x o computer two player board">
+          <div class="card-media">
+            <div class="ttt-preview" aria-label="Tic-Tac-Toe game preview"><span class="x">X</span><span></span><span class="o">O</span><span></span><span class="x">X</span><span></span><span class="o">O</span><span></span><span class="x">X</span></div>
+          </div>
+          <div class="card-body">
+            <div class="card-meta"><span class="badge">STRATEGY</span><span>1–2 players</span></div>
+            <h3>Tic-Tac-Toe</h3>
+            <p>Build a row of three against the computer or share the board with a friend.</p>
+            <span class="card-link">Open game <span>→</span></span>
+          </div>
+        </a>
+
+        <a class="game-card reveal" href="/games/minesweeper/" data-title="Minesweeper" data-genre="strategy" data-keywords="mines flags numbers logic timer">
+          <div class="card-media">
+            <div class="mine-preview" aria-label="Minesweeper game preview"><span></span><span class="one">1</span><span class="flag">◆</span><span></span><span class="two">2</span><span></span><span class="one">1</span><span></span><span></span><span class="mine">●</span><span class="two">2</span><span></span><span></span><span class="one">1</span><span></span><span></span></div>
+          </div>
+          <div class="card-body">
+            <div class="card-meta"><span class="badge">STRATEGY</span><span>Solo</span></div>
+            <h3>Minesweeper</h3>
+            <p>Use numbers and flags to reveal every safe tile without triggering a mine.</p>
+            <span class="card-link">Open game <span>→</span></span>
           </div>
         </a>
       </div>
+
+      <div class="empty-state" id="gameEmpty" hidden>No games match that search or category.</div>
     </section>
   </main>
 
   <footer class="site-footer">
-    <a class="footer-brand" href="/"><img src="../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>Browser Games</small></span></a>
+    <a class="footer-brand" href="/"><img src="../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>CloudLab Arcade</small></span></a>
     <p>© <span id="year"></span> Danny4686.</p>
   </footer>
 
+  <script src="games.js"></script>
   <script src="../hub.js"></script>
 </body>
 </html>
