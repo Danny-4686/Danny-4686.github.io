@@ -123,7 +123,7 @@ async function startLogin(request, env) {
 }
 
 async function finishLogin(request, env) {
-  requireEnv(env, ['GITHUB_CLIENT_ID', 'GITHUB_CLIENT_SECRET', 'SESSION_SECRET', 'ALLOWED_GITHUB_LOGIN']);
+  requireEnv(env, ['GITHUB_CLIENT_ID', 'GITHUB_CLIENT_SECRET', 'SESSION_SECRET', 'ALLOWED_GITHUB_LOGIN', 'ALLOWED_GITHUB_ID']);
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
   const state = url.searchParams.get('state');
@@ -150,7 +150,9 @@ async function finishLogin(request, env) {
   });
   const user = await userResponse.json();
   if (!userResponse.ok || !user.login) return html(loginPage('Your GitHub account could not be verified.'), 401);
-  if (String(user.login).toLowerCase() !== String(env.ALLOWED_GITHUB_LOGIN).trim().toLowerCase()) {
+  const allowedLogin = String(env.ALLOWED_GITHUB_LOGIN).trim().toLowerCase();
+  const allowedId = String(env.ALLOWED_GITHUB_ID).trim();
+  if (String(user.login).toLowerCase() !== allowedLogin || String(user.id) !== allowedId) {
     return html(loginPage('This GitHub account is not authorized.'), 403);
   }
 
@@ -172,12 +174,12 @@ function logout(request) {
 }
 
 async function getSession(request, env) {
-  if (!env.SESSION_SECRET || !env.ALLOWED_GITHUB_LOGIN) return null;
+  if (!env.SESSION_SECRET || !env.ALLOWED_GITHUB_LOGIN || !env.ALLOWED_GITHUB_ID) return null;
   const token = parseCookies(request.headers.get('Cookie'))[SESSION_COOKIE];
   if (!token) return null;
   try {
     const session = await verifySession(token, env.SESSION_SECRET);
-    if (!session || String(session.login).toLowerCase() !== String(env.ALLOWED_GITHUB_LOGIN).trim().toLowerCase()) return null;
+    if (!session || String(session.login).toLowerCase() !== String(env.ALLOWED_GITHUB_LOGIN).trim().toLowerCase() || String(session.githubId) !== String(env.ALLOWED_GITHUB_ID).trim()) return null;
     return session;
   } catch {
     return null;
