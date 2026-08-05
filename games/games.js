@@ -10,7 +10,7 @@
   if (!document.querySelector('link[data-arcade-scale]')) {
     const scaleStyles = document.createElement('link');
     scaleStyles.rel = 'stylesheet';
-    scaleStyles.href = 'games-banner-scale.css?v=1';
+    scaleStyles.href = 'games-banner-scale.css?v=2';
     scaleStyles.dataset.arcadeScale = 'true';
     document.head.append(scaleStyles);
   }
