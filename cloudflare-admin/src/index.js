@@ -219,6 +219,7 @@ async function publish(request, env, session) {
   if (uploaded.some((file) => file.size > MAX_FILE_BYTES)) return json({ error: 'Each uploaded file must be 10 MB or smaller.' }, 413);
   if (uploaded.reduce((sum, file) => sum + file.size, 0) > MAX_TOTAL_BYTES) return json({ error: 'The total upload must be 30 MB or smaller.' }, 413);
 
+  const existingSource = await readJsonFile(env, `journal/posts/${slug}/post.json`, null);
   const files = [];
   const usedNames = new Set();
   const newMediaPaths = [];
@@ -257,7 +258,8 @@ async function publish(request, env, session) {
   const post = {
     slug, title, description, date, displayDate: displayDate(date), tags,
     thumbnail, hero, fit, comingSoon, sections: resolvedSections,
-    updatedBy: session.login, updatedAt: new Date().toISOString(), mediaPaths: newMediaPaths
+    updatedBy: session.login, updatedAt: new Date().toISOString(),
+    mediaPaths: [...new Set([...(existingSource?.mediaPaths || []), ...newMediaPaths])]
   };
 
   const posts = await getPosts(env);
@@ -272,6 +274,9 @@ async function publish(request, env, session) {
   if (!comingSoon) {
     files.push({ path: `journal/posts/${slug}/post.json`, text: `${JSON.stringify(post, null, 2)}\n` });
     files.push({ path: `journal/posts/${slug}/index.html`, text: buildPostHtml(post) });
+  } else if (existingSource) {
+    files.push({ path: `journal/posts/${slug}/index.html`, delete: true });
+    files.push({ path: `journal/posts/${slug}/post.json`, delete: true });
   }
 
   const commit = await commitFiles(env, files, `${comingSoon ? 'Schedule' : 'Publish'} journal post: ${title}`);
@@ -298,10 +303,12 @@ async function unpublish(env, rawSlug, session) {
   if (!posts.some((post) => post.slug === slug)) return json({ error: 'Post not found.' }, 404);
   const source = await readJsonFile(env, `journal/posts/${slug}/post.json`, null);
   const files = [
-    { path: 'journal/posts.json', text: `${JSON.stringify(posts.filter((post) => post.slug !== slug), null, 2)}\n` },
-    { path: `journal/posts/${slug}/index.html`, delete: true },
-    { path: `journal/posts/${slug}/post.json`, delete: true }
+    { path: 'journal/posts.json', text: `${JSON.stringify(posts.filter((post) => post.slug !== slug), null, 2)}\n` }
   ];
+  if (source) {
+    files.push({ path: `journal/posts/${slug}/index.html`, delete: true });
+    files.push({ path: `journal/posts/${slug}/post.json`, delete: true });
+  }
   for (const media of source?.mediaPaths || []) {
     const path = String(media).replace(/^\//, '');
     if (path.startsWith(`assets/images/journal/${slug}/`)) files.push({ path, delete: true });
