@@ -1,22 +1,5 @@
 [
   {
-    "slug": "website-launch",
-    "title": "Danny4686.com Is Live",
-    "description": "A new home for CloudLab Studio, Rocket Tycoon, the journal, and the memories still ahead.",
-    "date": "2026-08-04",
-    "displayDate": "August 4, 2026",
-    "tags": [
-      "Website",
-      "CloudLab Studio"
-    ],
-    "mediaType": "image",
-    "thumbnail": "../assets/images/profile-gloss.webp",
-    "fit": "contain",
-    "mode": "coming-soon",
-    "comingSoon": true,
-    "cardOnly": false
-  },
-  {
     "slug": "test",
     "title": "Test",
     "description": "This is a test",
