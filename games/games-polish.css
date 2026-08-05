@@ -1,0 +1,90 @@
+.arcade-grid .game-card {
+  height: 100%;
+  border-color: rgba(145,190,202,.2);
+  background: linear-gradient(180deg, rgba(255,255,255,.02), transparent 28%), var(--surface);
+}
+
+.arcade-grid .game-card:hover {
+  border-color: rgba(104,208,223,.38);
+  box-shadow: 0 22px 46px rgba(0,0,0,.28);
+}
+
+.arcade-grid .card-media {
+  min-height: 230px;
+  border-bottom-color: rgba(145,190,202,.16);
+}
+
+.arcade-grid .card-body { min-height: 228px; }
+
+.polished-memory-preview {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  padding: 0;
+  background:
+    radial-gradient(circle at 72% 24%, rgba(104,208,223,.14), transparent 38%),
+    linear-gradient(145deg, #0b222b, #07151b);
+  isolation: isolate;
+}
+
+.polished-memory-preview::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  background: linear-gradient(135deg, rgba(255,255,255,.035), transparent 35%);
+}
+
+.preview-card {
+  position: absolute !important;
+  width: 31%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  display: grid !important;
+  place-items: center;
+  border: 1px solid rgba(145,190,202,.24) !important;
+  border-radius: 17px !important;
+  box-shadow: 0 16px 26px rgba(0,0,0,.28), inset 0 1px rgba(255,255,255,.08) !important;
+  transition: transform .3s ease;
+}
+
+.image-card {
+  padding: 7px;
+  background: rgba(7,20,27,.94) !important;
+}
+
+.image-card .memory-sprite {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 7px 9px rgba(0,0,0,.2));
+}
+
+.back-card {
+  background:
+    url("../assets/images/cloudlab-logo.png") center/48% no-repeat,
+    radial-gradient(circle at 66% 24%, rgba(104,208,223,.18), transparent 42%),
+    #102731 !important;
+}
+
+.preview-card.one { left: 7%; top: 22%; transform: rotate(-11deg); }
+.preview-card.two { left: 25%; top: 11%; z-index: 2; transform: rotate(-3deg); }
+.preview-card.three { left: 47%; top: 20%; z-index: 3; transform: rotate(7deg); }
+.preview-card.four { right: 7%; top: 10%; transform: rotate(12deg); }
+.preview-card.five { left: 35%; bottom: 4%; z-index: 4; transform: rotate(2deg); }
+
+.game-card:hover .preview-card.one { transform: rotate(-13deg) translateY(-3px); }
+.game-card:hover .preview-card.two { transform: rotate(-4deg) translateY(-5px); }
+.game-card:hover .preview-card.three { transform: rotate(8deg) translateY(-4px); }
+.game-card:hover .preview-card.four { transform: rotate(14deg) translateY(-3px); }
+.game-card:hover .preview-card.five { transform: rotate(1deg) translateY(-6px); }
+
+@media (max-width: 720px) {
+  .arcade-grid .card-media { min-height: 210px; }
+  .arcade-grid .card-body { min-height: 0; }
+  .preview-card { border-radius: 13px !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .preview-card { transition: none; }
+}
