@@ -1,18 +1,1 @@
-[
-  {
-    "slug": "test",
-    "title": "Test",
-    "description": "This is a test",
-    "date": "2026-08-01",
-    "displayDate": "August 1, 2026",
-    "tags": [
-      "Test"
-    ],
-    "mediaType": "image",
-    "thumbnail": "/assets/images/journal/test/earth.png",
-    "fit": "contain",
-    "mode": "article",
-    "comingSoon": false,
-    "cardOnly": false
-  }
-]
+[]
