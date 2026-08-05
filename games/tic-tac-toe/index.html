@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Play Tic-Tac-Toe in the CloudLab Arcade.">
+  <meta name="theme-color" content="#061117">
+  <title>Tic-Tac-Toe | CloudLab Arcade</title>
+  <link rel="icon" href="../../assets/images/cloudlab-logo.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../hub.css">
+  <link rel="stylesheet" href="game.css">
+</head>
+<body>
+  <header class="hub-header">
+    <a class="hub-brand" href="/" aria-label="Return to Danny4686.com">
+      <img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo">
+      <span><strong>Danny4686</strong><small>CloudLab Studio</small></span>
+    </a>
+    <nav class="hub-nav" aria-label="Site navigation">
+      <a class="active" href="/games/">Games</a>
+      <a href="/journal/">Journal</a>
+      <a href="/">Home</a>
+    </nav>
+    <a class="header-action" href="/games/">All Games</a>
+  </header>
+
+  <main class="page-shell game-page">
+    <a class="back-link reveal" href="/games/">← Back to Browser Games</a>
+
+    <div class="game-heading reveal">
+      <div>
+        <p class="eyebrow">CLOUDLAB ARCADE</p>
+        <h1>Tic-Tac-Toe</h1>
+        <p>Build a row of three before your opponent. Play against the computer or share the board with a friend.</p>
+      </div>
+      <div class="score-row" aria-label="Tic-Tac-Toe statistics">
+        <div class="score-chip"><small>X WINS</small><strong id="xWins">0</strong></div>
+        <div class="score-chip"><small>O WINS</small><strong id="oWins">0</strong></div>
+        <div class="score-chip"><small>DRAWS</small><strong id="draws">0</strong></div>
+      </div>
+    </div>
+
+    <section class="game-panel reveal" aria-label="Tic-Tac-Toe game">
+      <div class="ttt-status" id="status" aria-live="polite">Your turn as X</div>
+      <div class="ttt-board" id="board" role="grid" aria-label="Tic-Tac-Toe board">
+        <button type="button" data-cell="0" aria-label="Top left cell"></button>
+        <button type="button" data-cell="1" aria-label="Top middle cell"></button>
+        <button type="button" data-cell="2" aria-label="Top right cell"></button>
+        <button type="button" data-cell="3" aria-label="Middle left cell"></button>
+        <button type="button" data-cell="4" aria-label="Center cell"></button>
+        <button type="button" data-cell="5" aria-label="Middle right cell"></button>
+        <button type="button" data-cell="6" aria-label="Bottom left cell"></button>
+        <button type="button" data-cell="7" aria-label="Bottom middle cell"></button>
+        <button type="button" data-cell="8" aria-label="Bottom right cell"></button>
+      </div>
+
+      <div class="game-toolbar">
+        <button class="game-button primary" id="newRoundButton" type="button">New Round</button>
+        <button class="game-button" id="resetStatsButton" type="button">Reset Score</button>
+        <label>
+          <span class="visually-hidden">Game mode</span>
+          <select class="difficulty-select" id="mode" aria-label="Game mode">
+            <option value="computer" selected>Vs Computer</option>
+            <option value="local">Two Players</option>
+          </select>
+        </label>
+      </div>
+
+      <p class="control-note">X always starts. In computer mode, you play as X.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <a class="footer-brand" href="/"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>Tic-Tac-Toe</small></span></a>
+    <p>© <span id="year"></span> Danny4686.</p>
+  </footer>
+
+  <script src="../../hub.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
