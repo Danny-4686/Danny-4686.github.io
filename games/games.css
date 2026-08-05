@@ -109,19 +109,24 @@
 .memory-preview span {
   position: relative;
   z-index: 1;
+  min-width: 0;
   display: grid;
   place-items: center;
+  overflow: hidden;
   border: 1px solid rgba(145, 190, 202, 0.18);
   border-radius: 11px;
-  color: transparent;
   background: linear-gradient(145deg, rgba(104, 208, 223, 0.16), rgba(255, 255, 255, 0.035));
   box-shadow: inset 0 1px rgba(255, 255, 255, 0.06);
 }
 .memory-preview .face-up {
-  color: #061117;
-  background: #68d0df;
-  font-size: clamp(0.58rem, 1.4vw, 0.86rem);
-  font-weight: 900;
+  padding: 4px;
+  background: #eafcfe;
+}
+.memory-preview .face-up img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,.16));
 }
 
 .pong-preview {
