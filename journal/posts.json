@@ -8,6 +8,7 @@
     "tags": ["Website", "CloudLab Studio"],
     "mediaType": "image",
     "thumbnail": "../assets/images/profile-gloss.webp",
-    "fit": "contain"
+    "fit": "contain",
+    "comingSoon": true
   }
 ]
