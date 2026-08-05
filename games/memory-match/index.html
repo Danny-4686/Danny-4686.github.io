@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Play Memory Match in the CloudLab Arcade.">
+  <meta name="theme-color" content="#061117">
+  <title>Memory Match | CloudLab Arcade</title>
+  <link rel="icon" href="../../assets/images/cloudlab-logo.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../hub.css">
+  <link rel="stylesheet" href="game.css">
+</head>
+<body>
+  <header class="hub-header">
+    <a class="hub-brand" href="/" aria-label="Return to Danny4686.com">
+      <img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo">
+      <span><strong>Danny4686</strong><small>CloudLab Studio</small></span>
+    </a>
+    <nav class="hub-nav" aria-label="Site navigation">
+      <a class="active" href="/games/">Games</a>
+      <a href="/journal/">Journal</a>
+      <a href="/">Home</a>
+    </nav>
+    <a class="header-action" href="/games/">All Games</a>
+  </header>
+
+  <main class="page-shell game-page">
+    <a class="back-link reveal" href="/games/">← Back to Browser Games</a>
+
+    <div class="game-heading reveal">
+      <div>
+        <p class="eyebrow">CLOUDLAB ARCADE</p>
+        <h1>Memory Match</h1>
+        <p>Reveal two cards at a time, remember their positions, and match every pair using as few moves as possible.</p>
+      </div>
+      <div class="score-row" aria-label="Game progress">
+        <div class="score-chip"><small>MOVES</small><strong id="moves">0</strong></div>
+        <div class="score-chip"><small>TIME</small><strong id="time">0:00</strong></div>
+        <div class="score-chip"><small>BEST</small><strong id="best">--</strong></div>
+      </div>
+    </div>
+
+    <section class="game-panel reveal" aria-label="Memory Match game">
+      <div class="game-stage memory-stage">
+        <div class="memory-board" id="memoryBoard" aria-label="Memory Match cards"></div>
+        <div class="game-message hidden" id="gameMessage">
+          <div>
+            <h2>Board cleared</h2>
+            <p id="completionText">You matched every pair.</p>
+            <button class="game-button primary" id="playAgainButton" type="button">Play Again</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="game-toolbar">
+        <button class="game-button primary" id="newGameButton" type="button">New Game</button>
+        <button class="game-button" id="peekButton" type="button">Quick Peek</button>
+      </div>
+
+      <p class="control-note">Tap or click two cards to reveal them. The timer starts with your first card.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <a class="footer-brand" href="/"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>Memory Match</small></span></a>
+    <p>© <span id="year"></span> Danny4686.</p>
+  </footer>
+
+  <script src="../../hub.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
