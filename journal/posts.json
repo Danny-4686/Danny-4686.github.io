@@ -1,1 +1,18 @@
-[]
+[
+  {
+    "slug": "danny4686-com-is-officially-live",
+    "title": "Danny4686.com is officially live",
+    "description": "This is the start of something bigger, with new projects, updates, features, and upgrades coming soon. The site is ready to grow, improve, and become something amazing.",
+    "date": "2026-08-01",
+    "displayDate": "August 1, 2026",
+    "tags": [
+      "Website"
+    ],
+    "mediaType": "image",
+    "thumbnail": "/assets/images/journal/danny4686-com-is-officially-live/live-website.png",
+    "fit": "contain",
+    "mode": "card",
+    "comingSoon": false,
+    "cardOnly": true
+  }
+]
