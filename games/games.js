@@ -1,4 +1,11 @@
 (() => {
+  if (!document.querySelector('link[href="games-polish.css"]')) {
+    const polishStyles = document.createElement('link');
+    polishStyles.rel = 'stylesheet';
+    polishStyles.href = 'games-polish.css';
+    document.head.append(polishStyles);
+  }
+
   const search = document.getElementById('gameSearch');
   const filters = document.getElementById('gameFilters');
   const cards = [...document.querySelectorAll('.game-card[data-genre]')];
