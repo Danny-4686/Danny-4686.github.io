@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Play Minesweeper in the CloudLab Arcade.">
+  <meta name="theme-color" content="#061117">
+  <title>Minesweeper | CloudLab Arcade</title>
+  <link rel="icon" href="../../assets/images/cloudlab-logo.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../hub.css">
+  <link rel="stylesheet" href="game.css">
+</head>
+<body>
+  <header class="hub-header">
+    <a class="hub-brand" href="/" aria-label="Return to Danny4686.com">
+      <img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo">
+      <span><strong>Danny4686</strong><small>CloudLab Studio</small></span>
+    </a>
+    <nav class="hub-nav" aria-label="Site navigation">
+      <a class="active" href="/games/">Games</a>
+      <a href="/journal/">Journal</a>
+      <a href="/">Home</a>
+    </nav>
+    <a class="header-action" href="/games/">All Games</a>
+  </header>
+
+  <main class="page-shell game-page">
+    <a class="back-link reveal" href="/games/">← Back to Browser Games</a>
+
+    <div class="game-heading reveal">
+      <div>
+        <p class="eyebrow">CLOUDLAB ARCADE</p>
+        <h1>Minesweeper</h1>
+        <p>Reveal every safe tile, use the numbers to locate hidden mines, and flag anything dangerous.</p>
+      </div>
+      <div class="score-row" aria-label="Minesweeper statistics">
+        <div class="score-chip"><small>MINES</small><strong id="mineCount">10</strong></div>
+        <div class="score-chip"><small>TIME</small><strong id="time">0</strong></div>
+        <div class="score-chip"><small>BEST</small><strong id="best">--</strong></div>
+      </div>
+    </div>
+
+    <section class="game-panel reveal" aria-label="Minesweeper game">
+      <div class="mine-status" id="status" aria-live="polite">Choose a tile to begin.</div>
+      <div class="mine-board" id="board" role="grid" aria-label="Minesweeper board"></div>
+
+      <div class="game-toolbar">
+        <button class="game-button primary" id="newGameButton" type="button">New Game</button>
+        <button class="game-button" id="flagModeButton" type="button" aria-pressed="false">Flag Mode: Off</button>
+      </div>
+
+      <p class="control-note"><span class="desktop-only">Left-click to reveal and right-click to flag.</span> On mobile, turn on Flag Mode before tapping a tile.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <a class="footer-brand" href="/"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>Minesweeper</small></span></a>
+    <p>© <span id="year"></span> Danny4686.</p>
+  </footer>
+
+  <script src="../../hub.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
