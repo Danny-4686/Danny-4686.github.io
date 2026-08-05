@@ -1,8 +1,9 @@
 (() => {
-  if (!document.querySelector('link[href="games-polish.css"]')) {
+  if (!document.querySelector('link[data-arcade-polish]')) {
     const polishStyles = document.createElement('link');
     polishStyles.rel = 'stylesheet';
-    polishStyles.href = 'games-polish.css';
+    polishStyles.href = 'games-polish.css?v=2';
+    polishStyles.dataset.arcadePolish = 'true';
     document.head.append(polishStyles);
   }
 
