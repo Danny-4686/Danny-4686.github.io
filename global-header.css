@@ -23,6 +23,36 @@
   box-shadow: 0 0 12px rgba(104, 208, 223, .72);
 }
 
+/* The uploaded PNGs include generous transparent padding. Zoom only the art,
+   while keeping the Minesweeper banner cells at their approved size. */
+.arcade-grid .card-media .upgraded-mine-preview .flag img {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  object-fit: contain;
+  transform: translateY(2%) scale(2.7);
+  transform-origin: center;
+}
+
+.arcade-grid .card-media .upgraded-mine-preview .mine img {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  object-fit: contain;
+  transform: scale(2.05);
+  transform-origin: center;
+}
+
+.arcade-grid .game-card:hover .card-media .upgraded-mine-preview .flag img {
+  transform: translateY(-1%) rotate(-4deg) scale(2.82);
+}
+
+.arcade-grid .game-card:hover .card-media .upgraded-mine-preview .mine img {
+  transform: rotate(4deg) scale(2.16);
+}
+
 @media (max-width: 900px) {
   .hub-header {
     grid-template-columns: minmax(0, 1fr) auto !important;
@@ -85,6 +115,22 @@
     min-height: 40px;
     padding: 9px 11px;
     font-size: .76rem;
+  }
+
+  .arcade-grid .card-media .upgraded-mine-preview .flag img {
+    transform: translateY(2%) scale(2.5);
+  }
+
+  .arcade-grid .card-media .upgraded-mine-preview .mine img {
+    transform: scale(1.95);
+  }
+
+  .arcade-grid .game-card:hover .card-media .upgraded-mine-preview .flag img {
+    transform: translateY(-1%) rotate(-4deg) scale(2.6);
+  }
+
+  .arcade-grid .game-card:hover .card-media .upgraded-mine-preview .mine img {
+    transform: rotate(4deg) scale(2.05);
   }
 }
 
