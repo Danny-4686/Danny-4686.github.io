@@ -11,6 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../hub.css">
+  <link rel="stylesheet" href="games.css">
 </head>
 <body>
   <header class="hub-header">
@@ -30,7 +31,7 @@
     <section class="page-shell page-hero reveal">
       <p class="eyebrow">CLOUDLAB ARCADE</p>
       <h1>Simple games, built to be played.</h1>
-      <p class="lead">A growing collection of small browser games you can open instantly on desktop or mobile. Your scores and settings stay saved on your device.</p>
+      <p class="lead">A growing collection of browser games you can open instantly on desktop or mobile. Personal bests are saved on your device.</p>
       <div class="hero-actions">
         <a class="primary-action" href="/games/snake/">Play Snake</a>
         <a class="secondary-action" href="/">Back to Danny4686.com</a>
@@ -41,9 +42,9 @@
       <div class="section-heading reveal">
         <div>
           <p class="eyebrow">PLAY NOW</p>
-          <h2>The arcade starts here.</h2>
+          <h2>Choose a game.</h2>
         </div>
-        <p>Snake is the first playable game. More games can be added to this same library without changing the layout.</p>
+        <p>Snake, 2048, and Memory Match are fully playable with controls designed for both desktop and mobile.</p>
       </div>
 
       <div class="card-grid">
@@ -61,23 +62,39 @@
           </div>
         </a>
 
-        <article class="game-card coming-soon reveal" aria-disabled="true">
-          <div class="card-media"><div class="placeholder-art">2048</div></div>
+        <a class="game-card reveal" href="/games/2048/">
+          <div class="card-media">
+            <div class="preview-2048" aria-label="2048 game preview">
+              <span></span><span class="tile-2">2</span><span></span><span class="tile-4">4</span>
+              <span class="tile-8">8</span><span></span><span class="tile-16">16</span><span></span>
+              <span></span><span class="tile-32">32</span><span></span><span class="tile-64">64</span>
+              <span class="tile-4">4</span><span></span><span class="tile-8">8</span><span></span>
+            </div>
+          </div>
           <div class="card-body">
-            <div class="card-meta"><span class="badge">PUZZLE</span><span>Coming soon</span></div>
+            <div class="card-meta"><span class="badge">PUZZLE</span><span>Playable</span></div>
             <h3>2048</h3>
-            <p>Slide matching tiles together and keep building toward the highest number you can reach.</p>
+            <p>Slide matching tiles together, combine their values, and keep building toward 2048 and beyond.</p>
+            <span class="card-link">Play game <span>→</span></span>
           </div>
-        </article>
+        </a>
 
-        <article class="game-card coming-soon reveal" aria-disabled="true">
-          <div class="card-media"><div class="placeholder-art">?</div></div>
-          <div class="card-body">
-            <div class="card-meta"><span class="badge">MEMORY</span><span>Coming soon</span></div>
-            <h3>Memory Match</h3>
-            <p>Flip cards, remember their positions, and clear the board in as few moves as possible.</p>
+        <a class="game-card reveal" href="/games/memory-match/">
+          <div class="card-media">
+            <div class="memory-preview" aria-label="Memory Match game preview">
+              <span></span><span class="face-up">LAB</span><span></span><span></span>
+              <span class="face-up">WEB</span><span></span><span></span><span class="face-up">LAB</span>
+              <span></span><span></span><span class="face-up">WEB</span><span></span>
+              <span></span><span></span><span></span><span></span>
+            </div>
           </div>
-        </article>
+          <div class="card-body">
+            <div class="card-meta"><span class="badge">MEMORY</span><span>Playable</span></div>
+            <h3>Memory Match</h3>
+            <p>Reveal cards, remember their positions, and clear every pair in as few moves as possible.</p>
+            <span class="card-link">Play game <span>→</span></span>
+          </div>
+        </a>
       </div>
     </section>
   </main>
