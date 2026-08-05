@@ -1,0 +1,14 @@
+name = "cloudlab-journal-admin"
+main = "src/index.js"
+compatibility_date = "2026-08-01"
+workers_dev = true
+
+routes = [
+  { pattern = "admin.danny4686.com/*", zone_name = "danny4686.com" }
+]
+
+[vars]
+GITHUB_OWNER = "Danny-4686"
+GITHUB_REPO = "Danny-4686.github.io"
+GITHUB_BRANCH = "main"
+ALLOWED_GITHUB_LOGIN = "Danny-4686"
