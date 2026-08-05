@@ -89,12 +89,206 @@
 .game-card:hover .preview-card.five { transform: rotate(1deg) translateY(-6px); }
 .game-card:hover .preview-card { box-shadow: 0 20px 34px rgba(0,0,0,.34), inset 0 1px rgba(255,255,255,.1) !important; }
 
+/* Snake banner */
+.upgraded-snake-preview {
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 77% 31%, rgba(239,109,104,.12), transparent 24%),
+    radial-gradient(circle at 22% 83%, rgba(104,208,223,.12), transparent 34%),
+    linear-gradient(145deg, #0b222b, #07151b 72%);
+}
+
+.upgraded-snake-preview::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  background: linear-gradient(132deg, rgba(255,255,255,.06), transparent 31%);
+}
+
+.upgraded-snake-preview span {
+  width: 31px;
+  height: 31px;
+  border-radius: 10px;
+  background: linear-gradient(145deg, #9aebf1, #45b8cd);
+  box-shadow:
+    inset 0 2px rgba(255,255,255,.36),
+    inset 0 -2px rgba(0,0,0,.11),
+    0 9px 20px rgba(72,186,208,.24);
+  transition: transform .34s cubic-bezier(.2,.8,.2,1), box-shadow .34s ease;
+}
+
+.upgraded-snake-preview .s1 { left: 16%; top: 62%; }
+.upgraded-snake-preview .s2 { left: 25%; top: 62%; }
+.upgraded-snake-preview .s3 { left: 34%; top: 62%; }
+.upgraded-snake-preview .s4 { left: 43%; top: 53%; }
+.upgraded-snake-preview .s5 { left: 43%; top: 39%; }
+
+.upgraded-snake-preview .snake-head {
+  z-index: 3;
+  width: 35px;
+  height: 35px;
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 72% 32%, #061117 0 2px, transparent 2.8px),
+    radial-gradient(circle at 72% 68%, #061117 0 2px, transparent 2.8px),
+    linear-gradient(145deg, #b6f2f5, #4fc0d3);
+  box-shadow:
+    inset 0 2px rgba(255,255,255,.42),
+    0 0 0 1px rgba(104,208,223,.16),
+    0 13px 24px rgba(72,186,208,.32);
+}
+
+.snake-banner-apple {
+  position: absolute;
+  right: 14%;
+  top: 20%;
+  z-index: 2;
+  width: 76px;
+  height: 76px;
+  object-fit: contain;
+  filter: drop-shadow(0 14px 16px rgba(0,0,0,.28)) drop-shadow(0 0 15px rgba(239,109,104,.16));
+  transform: rotate(4deg);
+  transition: transform .38s cubic-bezier(.2,.8,.2,1), filter .38s ease;
+}
+
+.game-card:hover .upgraded-snake-preview .s1 { transform: translateX(2px); }
+.game-card:hover .upgraded-snake-preview .s2 { transform: translateX(4px); }
+.game-card:hover .upgraded-snake-preview .s3 { transform: translate(5px,-1px); }
+.game-card:hover .upgraded-snake-preview .s4 { transform: translate(5px,-4px); }
+.game-card:hover .upgraded-snake-preview .s5 { transform: translate(6px,-6px) rotate(2deg); box-shadow: inset 0 2px rgba(255,255,255,.42), 0 0 26px rgba(104,208,223,.28), 0 15px 26px rgba(72,186,208,.3); }
+.game-card:hover .snake-banner-apple { transform: translateY(-6px) rotate(-3deg) scale(1.07); filter: drop-shadow(0 18px 19px rgba(0,0,0,.32)) drop-shadow(0 0 23px rgba(239,109,104,.24)); }
+
+/* 2048 banner */
+.polished-2048-preview {
+  isolation: isolate;
+  overflow: hidden;
+  padding: 22px;
+  gap: 8px;
+  background:
+    radial-gradient(circle at 84% 80%, rgba(242,199,92,.1), transparent 34%),
+    radial-gradient(circle at 18% 12%, rgba(104,208,223,.11), transparent 36%),
+    linear-gradient(145deg, #0b222b, #07151b 72%);
+}
+
+.polished-2048-preview::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(135deg, rgba(255,255,255,.055), transparent 30%);
+}
+
+.polished-2048-preview span {
+  z-index: 2;
+  border-radius: 11px;
+  box-shadow: inset 0 1px rgba(255,255,255,.12), 0 7px 13px rgba(0,0,0,.16);
+  font-size: clamp(.64rem, 1.55vw, 1rem);
+  font-weight: 900;
+  letter-spacing: -.04em;
+  transition: transform .32s cubic-bezier(.2,.8,.2,1), box-shadow .32s ease, filter .32s ease;
+}
+
+.polished-2048-preview span:empty {
+  box-shadow: inset 0 1px rgba(255,255,255,.035);
+}
+
+.polished-2048-preview .tile-128 { color: #071219; background: #79d8e4; }
+.polished-2048-preview .tile-256 { color: #071219; background: #63c7d9; }
+.polished-2048-preview .tile-512 { color: #102019; background: #7fc990; }
+.polished-2048-preview .tile-1024 { color: #241b08; background: #f2c75c; font-size: clamp(.52rem, 1.2vw, .8rem); }
+.polished-2048-preview .tile-2048 {
+  color: #fff;
+  background: linear-gradient(145deg, #f0a14b, #d75f5c);
+  box-shadow: inset 0 1px rgba(255,255,255,.22), 0 0 24px rgba(237,139,69,.2), 0 9px 18px rgba(0,0,0,.2);
+  font-size: clamp(.5rem, 1.15vw, .78rem);
+}
+
+.game-card:hover .polished-2048-preview span:not(:empty) {
+  transform: translateY(-3px) scale(1.035);
+  box-shadow: inset 0 1px rgba(255,255,255,.16), 0 11px 18px rgba(0,0,0,.22);
+}
+.game-card:hover .polished-2048-preview .tile-128 { transform: translateY(-4px) rotate(-1deg) scale(1.04); }
+.game-card:hover .polished-2048-preview .tile-512 { transform: translateY(-5px) rotate(1deg) scale(1.045); }
+.game-card:hover .polished-2048-preview .tile-2048 { transform: translateY(-7px) scale(1.09); box-shadow: inset 0 1px rgba(255,255,255,.24), 0 0 36px rgba(237,139,69,.34), 0 15px 24px rgba(0,0,0,.24); }
+
+/* Minesweeper banner */
+.upgraded-mine-preview {
+  isolation: isolate;
+  overflow: hidden;
+  padding: 23px;
+  gap: 7px;
+  background:
+    radial-gradient(circle at 72% 60%, rgba(239,109,104,.1), transparent 30%),
+    radial-gradient(circle at 32% 24%, rgba(242,199,92,.08), transparent 28%),
+    linear-gradient(145deg, #0b222b, #07151b 72%);
+}
+
+.upgraded-mine-preview::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  background: linear-gradient(135deg, rgba(255,255,255,.05), transparent 31%);
+}
+
+.upgraded-mine-preview span {
+  z-index: 2;
+  overflow: hidden;
+  border-radius: 10px;
+  box-shadow: inset 0 1px rgba(255,255,255,.055), 0 7px 12px rgba(0,0,0,.13);
+  transition: transform .3s cubic-bezier(.2,.8,.2,1), border-color .3s ease, box-shadow .3s ease;
+}
+
+.upgraded-mine-preview .flag,
+.upgraded-mine-preview .mine {
+  padding: 4px;
+}
+
+.upgraded-mine-preview .flag {
+  border-color: rgba(242,199,92,.3);
+  background: radial-gradient(circle, rgba(242,199,92,.15), rgba(242,199,92,.055));
+}
+
+.upgraded-mine-preview .mine {
+  border-color: rgba(239,109,104,.34);
+  background: radial-gradient(circle, rgba(239,109,104,.2), rgba(239,109,104,.065));
+  box-shadow: inset 0 1px rgba(255,255,255,.08), 0 0 22px rgba(239,109,104,.11), 0 7px 12px rgba(0,0,0,.15);
+}
+
+.upgraded-mine-preview img {
+  width: 92%;
+  height: 92%;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 7px rgba(0,0,0,.25));
+  transition: transform .34s cubic-bezier(.2,.8,.2,1), filter .34s ease;
+}
+
+.game-card:hover .upgraded-mine-preview span:not(.flag):not(.mine) { transform: translateY(-1px); }
+.game-card:hover .upgraded-mine-preview .flag { transform: translateY(-4px) rotate(-2deg); border-color: rgba(242,199,92,.48); box-shadow: 0 0 24px rgba(242,199,92,.12), 0 11px 16px rgba(0,0,0,.17); }
+.game-card:hover .upgraded-mine-preview .flag img { transform: rotate(-5deg) scale(1.08); filter: drop-shadow(0 9px 9px rgba(0,0,0,.29)); }
+.game-card:hover .upgraded-mine-preview .mine { transform: translateY(-5px) rotate(2deg); border-color: rgba(239,109,104,.56); box-shadow: 0 0 31px rgba(239,109,104,.2), 0 12px 18px rgba(0,0,0,.19); }
+.game-card:hover .upgraded-mine-preview .mine img { transform: rotate(5deg) scale(1.1); filter: drop-shadow(0 10px 10px rgba(0,0,0,.3)) drop-shadow(0 0 12px rgba(239,109,104,.18)); }
+
 @media (max-width: 720px) {
   .arcade-grid .card-media { min-height: 210px; }
   .arcade-grid .card-body { min-height: 0; }
   .preview-card { border-radius: 13px !important; }
+  .snake-banner-apple { width: 64px; height: 64px; right: 12%; }
+  .upgraded-snake-preview span { width: 27px; height: 27px; }
+  .upgraded-snake-preview .snake-head { width: 31px; height: 31px; }
+  .polished-2048-preview { padding: 18px; gap: 6px; }
+  .upgraded-mine-preview { padding: 19px; gap: 5px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .preview-card { transition: none; }
+  .preview-card,
+  .upgraded-snake-preview span,
+  .snake-banner-apple,
+  .polished-2048-preview span,
+  .upgraded-mine-preview span,
+  .upgraded-mine-preview img { transition: none; }
 }
