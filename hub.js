@@ -1,3 +1,71 @@
+(() => {
+  const header = document.querySelector('.hub-header');
+  if (!header) return;
+
+  if (!document.querySelector('link[data-global-header]')) {
+    const headerStyles = document.createElement('link');
+    headerStyles.rel = 'stylesheet';
+    headerStyles.href = '/global-header.css?v=1';
+    headerStyles.dataset.globalHeader = 'true';
+    document.head.append(headerStyles);
+  }
+
+  const navigation = header.querySelector('.hub-nav');
+  if (navigation) {
+    const links = [
+      { label: 'About', href: '/#about', key: 'about' },
+      { label: 'Projects', href: '/#projects', key: 'projects' },
+      { label: 'Games', href: '/games/', key: 'games' },
+      { label: 'Journal', href: '/journal/', key: 'journal' },
+      { label: 'Connect', href: '/#connect', key: 'connect' }
+    ];
+
+    const path = window.location.pathname.toLowerCase();
+    const activeKey = path.startsWith('/games')
+      ? 'games'
+      : path.startsWith('/journal')
+        ? 'journal'
+        : '';
+
+    navigation.replaceChildren(...links.map((item) => {
+      const link = document.createElement('a');
+      link.href = item.href;
+      link.textContent = item.label;
+      link.dataset.section = item.key;
+      if (item.key === activeKey) {
+        link.classList.add('active');
+        link.setAttribute('aria-current', 'page');
+      }
+      return link;
+    }));
+
+    navigation.addEventListener('click', (event) => {
+      const selected = event.target.closest('a[data-section]');
+      if (!selected) return;
+      navigation.querySelectorAll('a').forEach((link) => {
+        const isSelected = link === selected;
+        link.classList.toggle('active', isSelected);
+        if (isSelected) link.setAttribute('aria-current', 'page');
+        else link.removeAttribute('aria-current');
+      });
+    });
+  }
+
+  const brand = header.querySelector('.hub-brand');
+  if (brand) {
+    brand.href = '/';
+    brand.setAttribute('aria-label', 'Danny4686 home');
+  }
+
+  const action = header.querySelector('.header-action');
+  if (action) {
+    action.href = 'https://discord.com/invite/CloudLab';
+    action.target = '_blank';
+    action.rel = 'noopener noreferrer';
+    action.textContent = 'Join CloudLab';
+  }
+})();
+
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const header = document.querySelector('.hub-header');
