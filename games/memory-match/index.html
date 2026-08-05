@@ -34,7 +34,7 @@
       <div>
         <p class="eyebrow">CLOUDLAB ARCADE</p>
         <h1>Memory Match</h1>
-        <p>Reveal two cards at a time, remember their positions, and match every pair using as few moves as possible.</p>
+        <p>Reveal two cards at a time, match all 10 globe designs, and clear the 20-card board in as few moves as possible.</p>
       </div>
       <div class="score-row" aria-label="Game progress">
         <div class="score-chip"><small>MOVES</small><strong id="moves">0</strong></div>
@@ -45,11 +45,11 @@
 
     <section class="game-panel reveal" aria-label="Memory Match game">
       <div class="game-stage memory-stage">
-        <div class="memory-board" id="memoryBoard" aria-label="Memory Match cards"></div>
+        <div class="memory-board" id="memoryBoard" aria-label="Memory Match image cards"></div>
         <div class="game-message hidden" id="gameMessage">
           <div>
             <h2>Board cleared</h2>
-            <p id="completionText">You matched every pair.</p>
+            <p id="completionText">You matched every image pair.</p>
             <button class="game-button primary" id="playAgainButton" type="button">Play Again</button>
           </div>
         </div>
@@ -60,7 +60,7 @@
         <button class="game-button" id="peekButton" type="button">Quick Peek</button>
       </div>
 
-      <p class="control-note">Tap or click two cards to reveal them. The timer starts with your first card.</p>
+      <p class="control-note">Tap or click two cards to reveal their images. The timer starts with your first card.</p>
     </section>
   </main>
 
