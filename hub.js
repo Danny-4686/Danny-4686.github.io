@@ -5,7 +5,7 @@
   if (!document.querySelector('link[data-global-header]')) {
     const headerStyles = document.createElement('link');
     headerStyles.rel = 'stylesheet';
-    headerStyles.href = '/global-header.css?v=1';
+    headerStyles.href = '/global-header.css?v=2';
     headerStyles.dataset.globalHeader = 'true';
     document.head.append(headerStyles);
   }
