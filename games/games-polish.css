@@ -72,16 +72,16 @@
   filter: drop-shadow(0 7px 9px rgba(0,0,0,.2));
 }
 
-.sprite-earth { background-position: 0% 0%; }
-.sprite-gloss-cyan { background-position: 25% 0%; }
-.sprite-gray { background-position: 50% 0%; }
-.sprite-gloss-gold { background-position: 75% 0%; }
-.sprite-cyan { background-position: 100% 0%; }
-.sprite-red { background-position: 0% 100%; }
-.sprite-blue { background-position: 25% 100%; }
+.sprite-cyan { background-position: 0% 0%; }
+.sprite-gray { background-position: 25% 0%; }
+.sprite-lime { background-position: 50% 0%; }
+.sprite-blue { background-position: 75% 0%; }
+.sprite-red { background-position: 100% 0%; }
+.sprite-purple { background-position: 0% 100%; }
+.sprite-earth { background-position: 25% 100%; }
 .sprite-mint { background-position: 50% 100%; }
-.sprite-purple { background-position: 75% 100%; }
-.sprite-lime { background-position: 100% 100%; }
+.sprite-gloss-cyan { background-position: 75% 100%; }
+.sprite-gloss-gold { background-position: 100% 100%; }
 
 .back-card {
   background:
