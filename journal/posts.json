@@ -5,10 +5,27 @@
     "description": "A new home for CloudLab Studio, Rocket Tycoon, the journal, and the memories still ahead.",
     "date": "2026-08-04",
     "displayDate": "August 4, 2026",
-    "tags": ["Website", "CloudLab Studio"],
+    "tags": [
+      "Website",
+      "CloudLab Studio"
+    ],
     "mediaType": "image",
     "thumbnail": "../assets/images/profile-gloss.webp",
     "fit": "contain",
     "comingSoon": true
+  },
+  {
+    "slug": "test",
+    "title": "Test",
+    "description": "This is a test",
+    "date": "2026-08-01",
+    "displayDate": "August 1, 2026",
+    "tags": [
+      "Test"
+    ],
+    "mediaType": "image",
+    "thumbnail": "/assets/images/journal/test/earth.png",
+    "fit": "contain",
+    "comingSoon": false
   }
 ]

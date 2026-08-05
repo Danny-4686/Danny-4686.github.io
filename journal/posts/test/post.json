@@ -1,0 +1,20 @@
+{
+  "slug": "test",
+  "title": "Test",
+  "description": "This is a test",
+  "date": "2026-08-01",
+  "displayDate": "August 1, 2026",
+  "tags": [
+    "Test"
+  ],
+  "thumbnail": "/assets/images/journal/test/earth.png",
+  "hero": "/assets/images/journal/test/earth.png",
+  "fit": "contain",
+  "comingSoon": false,
+  "sections": [],
+  "updatedBy": "Danny-4686",
+  "updatedAt": "2026-08-05T17:00:08.751Z",
+  "mediaPaths": [
+    "assets/images/journal/test/earth.png"
+  ]
+}
