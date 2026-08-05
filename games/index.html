@@ -11,6 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../hub.css">
+  <link rel="stylesheet" href="../assets/images/memory/memory-sprite.css">
   <link rel="stylesheet" href="games.css">
 </head>
 <body>
@@ -92,11 +93,12 @@
 
         <a class="game-card reveal" href="/games/memory-match/" data-title="Memory Match" data-genre="memory" data-keywords="images globes cards pairs timer moves">
           <div class="card-media">
-            <div class="memory-preview" aria-label="Memory Match image preview">
-              <span></span><span class="face-up"><img src="../assets/images/memory/cyan.svg" alt=""></span><span></span><span></span>
-              <span class="face-up"><img src="../assets/images/memory/red.svg" alt=""></span><span></span><span></span><span class="face-up"><img src="../assets/images/memory/earth.svg" alt=""></span>
-              <span></span><span></span><span class="face-up"><img src="../assets/images/memory/gloss-gold.svg" alt=""></span><span></span>
-              <span></span><span></span><span></span><span></span>
+            <div class="memory-preview polished-memory-preview" aria-label="Memory Match image preview">
+              <span class="preview-card back-card one"></span>
+              <span class="preview-card image-card two"><i class="memory-sprite sprite-cyan"></i></span>
+              <span class="preview-card image-card three"><i class="memory-sprite sprite-earth"></i></span>
+              <span class="preview-card back-card four"></span>
+              <span class="preview-card image-card five"><i class="memory-sprite sprite-gloss-gold"></i></span>
             </div>
           </div>
           <div class="card-body">
@@ -108,39 +110,18 @@
         </a>
 
         <a class="game-card reveal" href="/games/pong/" data-title="Pong" data-genre="arcade" data-keywords="paddle ball cpu reflex">
-          <div class="card-media">
-            <div class="pong-preview" aria-label="Pong game preview"><span class="paddle left"></span><span class="paddle right"></span><span class="pong-ball"></span><i></i></div>
-          </div>
-          <div class="card-body">
-            <div class="card-meta"><span class="badge">ARCADE</span><span>Vs CPU</span></div>
-            <h3>Pong</h3>
-            <p>Control your paddle, return the ball, and race the computer to seven points.</p>
-            <span class="card-link">Open game <span>→</span></span>
-          </div>
+          <div class="card-media"><div class="pong-preview" aria-label="Pong game preview"><span class="paddle left"></span><span class="paddle right"></span><span class="pong-ball"></span><i></i></div></div>
+          <div class="card-body"><div class="card-meta"><span class="badge">ARCADE</span><span>Vs CPU</span></div><h3>Pong</h3><p>Control your paddle, return the ball, and race the computer to seven points.</p><span class="card-link">Open game <span>→</span></span></div>
         </a>
 
         <a class="game-card reveal" href="/games/tic-tac-toe/" data-title="Tic-Tac-Toe" data-genre="strategy" data-keywords="x o computer two player board">
-          <div class="card-media">
-            <div class="ttt-preview" aria-label="Tic-Tac-Toe game preview"><span class="x">X</span><span></span><span class="o">O</span><span></span><span class="x">X</span><span></span><span class="o">O</span><span></span><span class="x">X</span></div>
-          </div>
-          <div class="card-body">
-            <div class="card-meta"><span class="badge">STRATEGY</span><span>1–2 players</span></div>
-            <h3>Tic-Tac-Toe</h3>
-            <p>Build a row of three against the computer or share the board with a friend.</p>
-            <span class="card-link">Open game <span>→</span></span>
-          </div>
+          <div class="card-media"><div class="ttt-preview" aria-label="Tic-Tac-Toe game preview"><span class="x">X</span><span></span><span class="o">O</span><span></span><span class="x">X</span><span></span><span class="o">O</span><span></span><span class="x">X</span></div></div>
+          <div class="card-body"><div class="card-meta"><span class="badge">STRATEGY</span><span>1–2 players</span></div><h3>Tic-Tac-Toe</h3><p>Build a row of three against the computer or share the board with a friend.</p><span class="card-link">Open game <span>→</span></span></div>
         </a>
 
         <a class="game-card reveal" href="/games/minesweeper/" data-title="Minesweeper" data-genre="strategy" data-keywords="mines flags numbers logic timer">
-          <div class="card-media">
-            <div class="mine-preview" aria-label="Minesweeper game preview"><span></span><span class="one">1</span><span class="flag">◆</span><span></span><span class="two">2</span><span></span><span class="one">1</span><span></span><span></span><span class="mine">●</span><span class="two">2</span><span></span><span></span><span class="one">1</span><span></span><span></span></div>
-          </div>
-          <div class="card-body">
-            <div class="card-meta"><span class="badge">STRATEGY</span><span>Solo</span></div>
-            <h3>Minesweeper</h3>
-            <p>Use numbers and flags to reveal every safe tile without triggering a mine.</p>
-            <span class="card-link">Open game <span>→</span></span>
-          </div>
+          <div class="card-media"><div class="mine-preview" aria-label="Minesweeper game preview"><span></span><span class="one">1</span><span class="flag">◆</span><span></span><span class="two">2</span><span></span><span class="one">1</span><span></span><span></span><span class="mine">●</span><span class="two">2</span><span></span><span></span><span class="one">1</span><span></span><span></span></div></div>
+          <div class="card-body"><div class="card-meta"><span class="badge">STRATEGY</span><span>Solo</span></div><h3>Minesweeper</h3><p>Use numbers and flags to reveal every safe tile without triggering a mine.</p><span class="card-link">Open game <span>→</span></span></div>
         </a>
       </div>
 
