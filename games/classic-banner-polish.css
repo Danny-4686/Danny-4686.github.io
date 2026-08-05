@@ -1,0 +1,149 @@
+/* Extra hover polish for the classic arcade banners. */
+.ttt-preview,
+.pong-preview {
+  isolation: isolate;
+  transform: translateZ(0);
+}
+
+.ttt-preview::after,
+.pong-preview::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(118deg, transparent 22%, rgba(255,255,255,.09) 48%, transparent 74%);
+  transform: translateX(-72%);
+  transition: opacity .25s ease, transform .62s cubic-bezier(.2,.75,.2,1);
+}
+
+.game-card:hover .ttt-preview::after,
+.game-card:hover .pong-preview::after {
+  opacity: 1;
+  transform: translateX(72%);
+}
+
+/* Tic-Tac-Toe */
+.ttt-preview span {
+  overflow: hidden;
+  box-shadow: inset 0 1px rgba(255,255,255,.055), 0 7px 13px rgba(0,0,0,.12);
+  transform: translateZ(0);
+  transition:
+    transform .32s cubic-bezier(.2,.82,.2,1),
+    border-color .32s ease,
+    background .32s ease,
+    box-shadow .32s ease,
+    text-shadow .32s ease;
+}
+
+.game-card:hover .ttt-preview span {
+  transform: translateY(-2px);
+  border-color: rgba(104,208,223,.24);
+  background: rgba(255,255,255,.045);
+  box-shadow: inset 0 1px rgba(255,255,255,.08), 0 11px 18px rgba(0,0,0,.18);
+}
+
+.game-card:hover .ttt-preview .x {
+  color: #8ee7f0;
+  text-shadow: 0 0 20px rgba(104,208,223,.46);
+  animation: tttXHover .58s cubic-bezier(.2,.85,.2,1) both;
+}
+
+.game-card:hover .ttt-preview .o {
+  color: #f7d979;
+  text-shadow: 0 0 20px rgba(242,199,92,.42);
+  animation: tttOHover .58s cubic-bezier(.2,.85,.2,1) both;
+}
+
+.game-card:hover .ttt-preview span:nth-child(3),
+.game-card:hover .ttt-preview span:nth-child(4) { animation-delay: 45ms; }
+.game-card:hover .ttt-preview span:nth-child(5),
+.game-card:hover .ttt-preview span:nth-child(6) { animation-delay: 90ms; }
+.game-card:hover .ttt-preview span:nth-child(7),
+.game-card:hover .ttt-preview span:nth-child(8),
+.game-card:hover .ttt-preview span:nth-child(9) { animation-delay: 135ms; }
+
+/* Pong */
+.pong-preview .paddle,
+.pong-preview .pong-ball,
+.pong-preview i {
+  will-change: transform;
+}
+
+.pong-preview .paddle {
+  transition: box-shadow .3s ease, filter .3s ease;
+}
+
+.pong-preview .pong-ball {
+  transition: box-shadow .3s ease, filter .3s ease;
+}
+
+.pong-preview i {
+  transition: opacity .3s ease, filter .3s ease;
+}
+
+.game-card:hover .pong-preview .left {
+  animation: pongLeftPaddle 1.25s ease-in-out infinite alternate;
+  box-shadow: 0 0 28px rgba(104,208,223,.48);
+}
+
+.game-card:hover .pong-preview .right {
+  animation: pongRightPaddle 1.25s ease-in-out infinite alternate;
+  box-shadow: 0 0 28px rgba(139,207,155,.42);
+}
+
+.game-card:hover .pong-preview .pong-ball {
+  animation: pongBallRally 1.25s cubic-bezier(.42,0,.58,1) infinite alternate;
+  filter: brightness(1.08) saturate(1.08);
+  box-shadow: 0 0 32px rgba(242,199,92,.68);
+}
+
+.game-card:hover .pong-preview i {
+  opacity: .9;
+  filter: drop-shadow(0 0 8px rgba(104,208,223,.18));
+}
+
+@keyframes tttXHover {
+  0% { transform: translateY(-2px) scale(1); }
+  48% { transform: translateY(-6px) rotate(-5deg) scale(1.12); }
+  100% { transform: translateY(-2px) rotate(0) scale(1); }
+}
+
+@keyframes tttOHover {
+  0% { transform: translateY(-2px) scale(1); }
+  48% { transform: translateY(-6px) rotate(7deg) scale(1.12); }
+  100% { transform: translateY(-2px) rotate(0) scale(1); }
+}
+
+@keyframes pongLeftPaddle {
+  from { transform: translateY(-12%); }
+  to { transform: translateY(18%); }
+}
+
+@keyframes pongRightPaddle {
+  from { transform: translateY(16%); }
+  to { transform: translateY(-14%); }
+}
+
+@keyframes pongBallRally {
+  0% { transform: translate(-42px, 24px) scale(.92); }
+  50% { transform: translate(0, -18px) scale(1.08); }
+  100% { transform: translate(42px, 13px) scale(.96); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-card:hover .ttt-preview .x,
+  .game-card:hover .ttt-preview .o,
+  .game-card:hover .pong-preview .left,
+  .game-card:hover .pong-preview .right,
+  .game-card:hover .pong-preview .pong-ball {
+    animation: none;
+  }
+
+  .ttt-preview span,
+  .pong-preview::after,
+  .ttt-preview::after {
+    transition: none;
+  }
+}
