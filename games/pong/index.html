@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Play Pong in the CloudLab Arcade.">
+  <meta name="theme-color" content="#061117">
+  <title>Pong | CloudLab Arcade</title>
+  <link rel="icon" href="../../assets/images/cloudlab-logo.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../hub.css">
+  <link rel="stylesheet" href="game.css">
+</head>
+<body>
+  <header class="hub-header">
+    <a class="hub-brand" href="/" aria-label="Return to Danny4686.com">
+      <img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo">
+      <span><strong>Danny4686</strong><small>CloudLab Studio</small></span>
+    </a>
+    <nav class="hub-nav" aria-label="Site navigation">
+      <a class="active" href="/games/">Games</a>
+      <a href="/journal/">Journal</a>
+      <a href="/">Home</a>
+    </nav>
+    <a class="header-action" href="/games/">All Games</a>
+  </header>
+
+  <main class="page-shell game-page">
+    <a class="back-link reveal" href="/games/">← Back to Browser Games</a>
+
+    <div class="game-heading reveal">
+      <div>
+        <p class="eyebrow">CLOUDLAB ARCADE</p>
+        <h1>Pong</h1>
+        <p>Defend your side, return the ball, and be the first player to reach seven points.</p>
+      </div>
+      <div class="score-row" aria-label="Pong scores">
+        <div class="score-chip"><small>YOU</small><strong id="playerScore">0</strong></div>
+        <div class="score-chip"><small>CPU</small><strong id="cpuScore">0</strong></div>
+        <div class="score-chip"><small>BEST RALLY</small><strong id="bestRally">0</strong></div>
+      </div>
+    </div>
+
+    <section class="game-panel reveal" aria-label="Pong game">
+      <div class="pong-stage">
+        <canvas id="pongCanvas" width="760" height="460" aria-label="Pong game board"></canvas>
+        <div class="game-message" id="gameMessage">
+          <div>
+            <h2 id="messageTitle">Ready?</h2>
+            <p id="messageText">Press Start, move with W/S or the arrow keys, or drag on the board.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="game-toolbar">
+        <button class="game-button primary" id="startButton" type="button">Start Match</button>
+        <button class="game-button" id="pauseButton" type="button">Pause</button>
+        <button class="game-button" id="restartButton" type="button">Restart</button>
+        <label>
+          <span class="visually-hidden">CPU difficulty</span>
+          <select class="difficulty-select" id="difficulty" aria-label="CPU difficulty">
+            <option value="0.052">Easy</option>
+            <option value="0.078" selected>Normal</option>
+            <option value="0.108">Hard</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="pong-touch-controls" aria-label="Touch paddle controls">
+        <button class="touch-button" type="button" data-move="up" aria-label="Move paddle up">↑</button>
+        <button class="touch-button" type="button" data-move="down" aria-label="Move paddle down">↓</button>
+      </div>
+
+      <p class="control-note"><span class="desktop-only">Use W/S or the arrow keys.</span> Drag vertically on the board or use the buttons on mobile.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <a class="footer-brand" href="/"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>Pong</small></span></a>
+    <p>© <span id="year"></span> Danny4686.</p>
+  </footer>
+
+  <script src="../../hub.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
