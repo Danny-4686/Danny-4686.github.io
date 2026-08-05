@@ -1,45 +1,82 @@
 .memory-stage {
   width: min(900px, 100%);
   margin: 0 auto;
+  position: relative;
 }
 
 .memory-board {
+  position: relative;
+  isolation: isolate;
+  contain: layout paint;
   width: 100%;
   padding: 16px;
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 13px;
-  border: 1px solid rgba(145, 190, 202, 0.22);
-  border-radius: 26px;
+  overflow: hidden;
+  border: 1px solid rgba(145, 190, 202, 0.24);
+  border-radius: 28px;
   background:
-    radial-gradient(circle at 50% 0%, rgba(104, 208, 223, 0.08), transparent 42%),
-    linear-gradient(145deg, #0a2028, #07151b);
-  box-shadow: inset 0 1px rgba(255,255,255,.05), 0 26px 54px rgba(0,0,0,.28);
+    radial-gradient(circle at 50% -12%, rgba(104, 208, 223, 0.14), transparent 42%),
+    radial-gradient(circle at 88% 92%, rgba(139, 207, 155, 0.07), transparent 36%),
+    linear-gradient(145deg, #0a2028, #07151b 68%);
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, 0.06),
+    inset 0 -1px rgba(0, 0, 0, 0.22),
+    0 28px 58px rgba(0, 0, 0, 0.3);
+  transition: border-color .28s ease, box-shadow .28s ease;
+}
+
+.memory-board::before {
+  content: "";
+  position: absolute;
+  inset: -45%;
+  z-index: -1;
+  pointer-events: none;
+  background: conic-gradient(from 20deg, transparent, rgba(104, 208, 223, .06), transparent 28%, rgba(139, 207, 155, .045), transparent 62%);
+  animation: boardAmbient 18s linear infinite;
+}
+
+.memory-board.is-peeking {
+  border-color: rgba(104, 208, 223, .48);
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, .08),
+    0 0 0 1px rgba(104, 208, 223, .08),
+    0 28px 64px rgba(0, 0, 0, .34),
+    0 0 38px rgba(104, 208, 223, .12);
 }
 
 .memory-card {
+  --deal-delay: calc(var(--card-index, 0) * 22ms);
   position: relative;
   aspect-ratio: 1;
   min-width: 0;
   padding: 0;
   border: 0;
-  border-radius: 18px;
+  border-radius: 19px;
   background: transparent;
   cursor: pointer;
-  perspective: 1000px;
-  transition: transform .18s ease;
+  perspective: 1100px;
+  transform: translateZ(0);
+  transition: transform .22s cubic-bezier(.2, .75, .25, 1), filter .22s ease;
   -webkit-tap-highlight-color: transparent;
 }
 
-.memory-card:not(:disabled):hover { transform: translateY(-3px); }
-.memory-card:focus-visible { outline: 3px solid rgba(104,208,223,.56); outline-offset: 3px; }
+.memory-board.is-dealing .memory-card {
+  animation: cardDeal .48s cubic-bezier(.2, .82, .2, 1) both;
+  animation-delay: var(--deal-delay);
+}
+
+.memory-card:active:not(:disabled) { transform: scale(.965); }
+.memory-card:focus-visible { outline: 3px solid rgba(104, 208, 223, .58); outline-offset: 3px; }
 .memory-card:disabled { cursor: default; }
 
 .memory-card-inner {
   position: absolute;
   inset: 0;
   transform-style: preserve-3d;
-  transition: transform .46s cubic-bezier(.2,.78,.24,1);
+  will-change: transform;
+  transition: transform .54s cubic-bezier(.2, .78, .2, 1.02);
 }
 
 .memory-card.is-flipped .memory-card-inner,
@@ -51,31 +88,49 @@
   display: grid;
   place-items: center;
   overflow: hidden;
-  border: 1px solid rgba(145,190,202,.2);
-  border-radius: 18px;
+  border: 1px solid rgba(145, 190, 202, .2);
+  border-radius: 19px;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-  box-shadow: inset 0 1px rgba(255,255,255,.08), 0 11px 24px rgba(0,0,0,.2);
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, .09),
+    inset 0 -1px rgba(0, 0, 0, .18),
+    0 12px 25px rgba(0, 0, 0, .22);
+  transition: border-color .24s ease, box-shadow .24s ease, background .24s ease;
 }
 
 .memory-card-front {
   background:
-    linear-gradient(145deg, rgba(255,255,255,.045), transparent 45%),
-    radial-gradient(circle at 66% 24%, rgba(104,208,223,.22), transparent 42%),
-    #102731;
+    linear-gradient(145deg, rgba(255, 255, 255, .055), transparent 44%),
+    radial-gradient(circle at 68% 22%, rgba(104, 208, 223, .23), transparent 41%),
+    linear-gradient(150deg, #122d38, #0c2028);
 }
 
 .memory-card-front::before {
   content: "";
-  width: 58%;
+  width: 61%;
   aspect-ratio: 1;
   background: url("../../assets/images/memory/Earth.png") center/contain no-repeat;
+  filter: drop-shadow(0 9px 13px rgba(0, 0, 0, .25));
+  transition: transform .28s cubic-bezier(.2, .8, .2, 1), filter .28s ease;
+}
+
+.memory-card-front::after {
+  content: "";
+  position: absolute;
+  inset: -45% -90%;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 42%, rgba(255, 255, 255, .13) 50%, transparent 58%);
+  transform: translateX(-32%) rotate(8deg);
+  transition: transform .62s ease;
 }
 
 .memory-card-back {
   padding: 7px;
   transform: rotateY(180deg);
-  background: rgba(8,22,28,.98);
+  background:
+    radial-gradient(circle at 50% 42%, rgba(104, 208, 223, .09), transparent 62%),
+    linear-gradient(150deg, rgba(12, 34, 43, .99), rgba(6, 19, 25, .99));
 }
 
 .memory-card-image {
@@ -85,19 +140,89 @@
   object-fit: contain;
   user-select: none;
   -webkit-user-drag: none;
-  filter: drop-shadow(0 10px 13px rgba(0,0,0,.24));
+  transform: translateZ(0) scale(.96);
+  filter: drop-shadow(0 11px 14px rgba(0, 0, 0, .25));
+  transition: transform .32s cubic-bezier(.2, .8, .2, 1), filter .32s ease;
 }
 
-.memory-card.is-matched { animation: matchedPulse .4s ease; }
+.memory-card.is-flipped .memory-card-image,
+.memory-card.is-matched .memory-card-image { transform: translateZ(0) scale(1); }
+
+.memory-card.just-matched {
+  z-index: 3;
+  animation: matchedPulse .52s cubic-bezier(.2, .8, .2, 1);
+}
+
+.memory-card.just-matched::after {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  z-index: 4;
+  pointer-events: none;
+  border: 2px solid rgba(139, 207, 155, .72);
+  border-radius: 24px;
+  animation: matchRing .58s ease-out both;
+}
+
 .memory-card.is-matched .memory-card-back {
-  border-color: rgba(139,207,155,.68);
-  box-shadow: 0 0 30px rgba(139,207,155,.25), inset 0 1px rgba(255,255,255,.12);
+  border-color: rgba(139, 207, 155, .68);
+  box-shadow:
+    0 0 0 1px rgba(139, 207, 155, .08),
+    0 0 30px rgba(139, 207, 155, .24),
+    inset 0 1px rgba(255, 255, 255, .12);
 }
 
+.memory-card.image-error .memory-card-image { opacity: .15; }
+.memory-card.image-error .memory-card-back::after {
+  content: "Image unavailable";
+  color: rgba(240, 248, 250, .6);
+  font-size: .7rem;
+  text-align: center;
+}
+
+.score-chip strong.stat-bump { animation: statBump .3s cubic-bezier(.2, .85, .25, 1); }
+.game-message:not(.hidden) > div { animation: messageIn .42s cubic-bezier(.2, .82, .2, 1) both; }
 .game-message.hidden { display: none; }
 
+@media (hover: hover) and (pointer: fine) {
+  .memory-card:not(:disabled):hover {
+    transform: translateY(-5px) scale(1.015);
+    filter: brightness(1.05);
+  }
+
+  .memory-card:not(:disabled):hover .memory-card-front::before {
+    transform: scale(1.055) rotate(-2deg);
+    filter: drop-shadow(0 12px 17px rgba(0, 0, 0, .3));
+  }
+
+  .memory-card:not(:disabled):hover .memory-card-front::after { transform: translateX(55%) rotate(8deg); }
+  .memory-card.is-flipped:not(:disabled):hover .memory-card-image { transform: scale(1.045); }
+}
+
+@keyframes boardAmbient { to { transform: rotate(360deg); } }
+
+@keyframes cardDeal {
+  from { opacity: 0; transform: translateY(15px) scale(.93); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 @keyframes matchedPulse {
-  50% { transform: scale(1.05); }
+  45% { transform: translateY(-3px) scale(1.055); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+@keyframes matchRing {
+  from { opacity: .95; transform: scale(.84); }
+  to { opacity: 0; transform: scale(1.16); }
+}
+
+@keyframes statBump {
+  45% { transform: translateY(-2px) scale(1.12); }
+}
+
+@keyframes messageIn {
+  from { opacity: 0; transform: translateY(12px) scale(.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @media (max-width: 720px) {
@@ -105,11 +230,11 @@
     padding: 10px;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 8px;
-    border-radius: 20px;
+    border-radius: 21px;
   }
 
   .memory-card,
-  .memory-card-face { border-radius: 13px; }
+  .memory-card-face { border-radius: 14px; }
   .memory-card-back { padding: 4px; }
   .score-row { grid-template-columns: repeat(3, minmax(80px, 1fr)); width: 100%; }
 }
@@ -117,12 +242,23 @@
 @media (max-width: 430px) {
   .memory-board { padding: 7px; gap: 6px; }
   .memory-card,
-  .memory-card-face { border-radius: 10px; }
-  .memory-card-front::before { width: 62%; }
+  .memory-card-face { border-radius: 11px; }
+  .memory-card-front::before { width: 65%; }
+  .memory-card.just-matched::after { inset: -4px; border-radius: 15px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .memory-board::before,
+  .memory-board.is-dealing .memory-card,
+  .memory-card.just-matched,
+  .memory-card.just-matched::after,
+  .score-chip strong.stat-bump,
+  .game-message:not(.hidden) > div { animation: none; }
+
   .memory-card,
-  .memory-card-inner { transition: none; }
-  .memory-card.is-matched { animation: none; }
+  .memory-card-inner,
+  .memory-card-face,
+  .memory-card-image,
+  .memory-card-front::before,
+  .memory-card-front::after { transition: none; }
 }
