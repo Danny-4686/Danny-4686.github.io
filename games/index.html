@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Play simple browser games from CloudLab Studio.">
+  <meta name="theme-color" content="#061117">
+  <title>Browser Games | Danny4686</title>
+  <link rel="icon" href="../assets/images/cloudlab-logo.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../hub.css">
+</head>
+<body>
+  <header class="hub-header">
+    <a class="hub-brand" href="/" aria-label="Return to Danny4686.com">
+      <img src="../assets/images/cloudlab-logo.png" alt="CloudLab logo">
+      <span><strong>Danny4686</strong><small>CloudLab Studio</small></span>
+    </a>
+    <nav class="hub-nav" aria-label="Site navigation">
+      <a class="active" href="/games/">Games</a>
+      <a href="/journal/">Journal</a>
+      <a href="/">Home</a>
+    </nav>
+    <a class="header-action" href="/journal/">Open Journal</a>
+  </header>
+
+  <main>
+    <section class="page-shell page-hero reveal">
+      <p class="eyebrow">CLOUDLAB ARCADE</p>
+      <h1>Simple games, built to be played.</h1>
+      <p class="lead">A growing collection of small browser games you can open instantly on desktop or mobile. Your scores and settings stay saved on your device.</p>
+      <div class="hero-actions">
+        <a class="primary-action" href="/games/snake/">Play Snake</a>
+        <a class="secondary-action" href="/">Back to Danny4686.com</a>
+      </div>
+    </section>
+
+    <section class="page-shell section-block">
+      <div class="section-heading reveal">
+        <div>
+          <p class="eyebrow">PLAY NOW</p>
+          <h2>The arcade starts here.</h2>
+        </div>
+        <p>Snake is the first playable game. More games can be added to this same library without changing the layout.</p>
+      </div>
+
+      <div class="card-grid">
+        <a class="game-card reveal" href="/games/snake/">
+          <div class="card-media">
+            <div class="snake-preview" aria-label="Snake game preview">
+              <span class="s1"></span><span class="s2"></span><span class="s3"></span><span class="s4"></span><span class="s5"></span><span class="food"></span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="card-meta"><span class="badge">ARCADE</span><span>Playable</span></div>
+            <h3>Snake</h3>
+            <p>Guide the snake, collect glowing food, build your score, and try to beat your personal best.</p>
+            <span class="card-link">Play game <span>→</span></span>
+          </div>
+        </a>
+
+        <article class="game-card coming-soon reveal" aria-disabled="true">
+          <div class="card-media"><div class="placeholder-art">2048</div></div>
+          <div class="card-body">
+            <div class="card-meta"><span class="badge">PUZZLE</span><span>Coming soon</span></div>
+            <h3>2048</h3>
+            <p>Slide matching tiles together and keep building toward the highest number you can reach.</p>
+          </div>
+        </article>
+
+        <article class="game-card coming-soon reveal" aria-disabled="true">
+          <div class="card-media"><div class="placeholder-art">?</div></div>
+          <div class="card-body">
+            <div class="card-meta"><span class="badge">MEMORY</span><span>Coming soon</span></div>
+            <h3>Memory Match</h3>
+            <p>Flip cards, remember their positions, and clear the board in as few moves as possible.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <a class="footer-brand" href="/"><img src="../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>Browser Games</small></span></a>
+    <p>© <span id="year"></span> Danny4686.</p>
+  </footer>
+
+  <script src="../hub.js"></script>
+</body>
+</html>
