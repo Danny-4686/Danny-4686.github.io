@@ -8,6 +8,13 @@
   let activeTag = 'all';
   let videoObserver = null;
 
+  function postMode(post) {
+    if (post.mode) return post.mode;
+    if (post.comingSoon) return 'coming-soon';
+    if (post.cardOnly) return 'card';
+    return 'article';
+  }
+
   function createMedia(post) {
     const media = document.createElement('div');
     media.className = 'card-media';
@@ -36,16 +43,19 @@
   }
 
   function createPostCard(post, index) {
-    const isComingSoon = Boolean(post.comingSoon);
-    const card = document.createElement(isComingSoon ? 'article' : 'a');
-    card.className = `journal-card reveal${isComingSoon ? ' coming-soon' : ''}`;
+    const mode = postMode(post);
+    const isArticle = mode === 'article';
+    const isComingSoon = mode === 'coming-soon';
+    const isCardOnly = mode === 'card';
+    const card = document.createElement(isArticle ? 'a' : 'article');
+    card.className = `journal-card reveal${isComingSoon ? ' coming-soon is-static' : ''}${isCardOnly ? ' post-only is-static' : ''}`;
     card.style.setProperty('--delay', `${Math.min(index, 3) * 55}ms`);
 
-    if (isComingSoon) {
-      card.setAttribute('aria-label', `${post.title}, coming soon`);
-      card.setAttribute('aria-disabled', 'true');
-    } else {
+    if (isArticle) {
       card.href = `/journal/posts/${encodeURIComponent(post.slug)}/`;
+    } else {
+      card.setAttribute('aria-label', `${post.title}, ${isComingSoon ? 'coming soon' : 'journal post'}`);
+      card.setAttribute('aria-disabled', 'true');
     }
 
     card.append(createMedia(post));
@@ -58,7 +68,7 @@
 
     const badge = document.createElement('span');
     badge.className = 'badge';
-    badge.textContent = isComingSoon ? 'COMING SOON' : (post.tags?.[0] || 'JOURNAL');
+    badge.textContent = isComingSoon ? 'COMING SOON' : isCardOnly ? 'POST' : (post.tags?.[0] || 'JOURNAL');
 
     const date = document.createElement('time');
     date.dateTime = post.date;
@@ -74,12 +84,19 @@
 
     const linkText = document.createElement('span');
     linkText.className = 'card-link';
-    linkText.innerHTML = isComingSoon ? 'Coming Soon' : 'Read post <span>→</span>';
+    if (isComingSoon) linkText.textContent = 'Coming Soon';
+    else if (isCardOnly) linkText.textContent = 'Post';
+    else {
+      linkText.append('Read post ');
+      const arrow = document.createElement('span');
+      arrow.textContent = '→';
+      linkText.append(arrow);
+    }
 
     body.append(meta, title, description, linkText);
     card.append(body);
 
-    if (!isComingSoon) {
+    if (isArticle) {
       card.addEventListener('pointermove', (event) => {
         const rect = card.getBoundingClientRect();
         card.style.setProperty('--spot-x', `${event.clientX - rect.left}px`);
@@ -174,6 +191,10 @@
     })
     .catch((error) => {
       console.error(error);
-      grid.innerHTML = '<div class="empty-state">The journal could not be loaded right now.</div>';
+      grid.replaceChildren();
+      const empty = document.createElement('div');
+      empty.className = 'empty-state';
+      empty.textContent = 'The journal could not be loaded right now.';
+      grid.append(empty);
     });
 })();
