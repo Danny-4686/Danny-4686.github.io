@@ -11,18 +11,17 @@
   const playAgainButton = document.getElementById('playAgainButton');
   const peekButton = document.getElementById('peekButton');
 
-  const spriteUrl = '../../assets/images/memory/memory-sprites.png?v=6';
   const images = [
-    { key: 'cyan', label: 'Cyan globe', column: 0, row: 0 },
-    { key: 'gray', label: 'Gray globe', column: 1, row: 0 },
-    { key: 'lime', label: 'Lime globe', column: 2, row: 0 },
-    { key: 'blue', label: 'Blue globe', column: 3, row: 0 },
-    { key: 'red', label: 'Red globe', column: 4, row: 0 },
-    { key: 'purple', label: 'Purple globe', column: 0, row: 1 },
-    { key: 'earth', label: 'Multicolor globe', column: 1, row: 1 },
-    { key: 'mint', label: 'Mint globe', column: 2, row: 1 },
-    { key: 'gloss-cyan', label: 'Glossy cyan globe', column: 3, row: 1 },
-    { key: 'gloss-gold', label: 'Glossy gold globe', column: 4, row: 1 }
+    { key: 'blue', label: 'Blue globe', src: '../../assets/images/memory/blue.png' },
+    { key: 'diamond', label: 'Diamond CloudLab globe', src: '../../assets/images/memory/cldiamond.png' },
+    { key: 'gold', label: 'Gold CloudLab globe', src: '../../assets/images/memory/clgold.png' },
+    { key: 'green', label: 'Green globe', src: '../../assets/images/memory/green.png' },
+    { key: 'grey', label: 'Gray globe', src: '../../assets/images/memory/grey.png' },
+    { key: 'light-blue', label: 'Light blue globe', src: '../../assets/images/memory/light_blue.png' },
+    { key: 'mint-green', label: 'Mint green globe', src: '../../assets/images/memory/mint_gream.png' },
+    { key: 'purple', label: 'Purple globe', src: '../../assets/images/memory/purple.png' },
+    { key: 'red', label: 'Red globe', src: '../../assets/images/memory/red.png' },
+    { key: 'yellow', label: 'Yellow globe', src: '../../assets/images/memory/yellow.png' }
   ];
 
   const bestKey = 'cloudlab-memory-image-best';
@@ -47,7 +46,9 @@
   }
 
   function saveBest() {
-    try { localStorage.setItem(bestKey, JSON.stringify(best)); } catch (_) {}
+    try {
+      localStorage.setItem(bestKey, JSON.stringify(best));
+    } catch (_) {}
   }
 
   function shuffle(items) {
@@ -83,24 +84,6 @@
     timer = null;
   }
 
-  function createArtwork(data) {
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.classList.add('memory-card-image');
-    svg.setAttribute('viewBox', `${data.column * 96} ${data.row * 96} 96 96`);
-    svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-    svg.setAttribute('aria-hidden', 'true');
-
-    const image = document.createElementNS('http://www.w3.org/2000/svg', 'image');
-    image.setAttribute('href', spriteUrl);
-    image.setAttributeNS('http://www.w3.org/1999/xlink', 'href', spriteUrl);
-    image.setAttribute('x', '0');
-    image.setAttribute('y', '0');
-    image.setAttribute('width', '480');
-    image.setAttribute('height', '192');
-    svg.append(image);
-    return svg;
-  }
-
   function buildCard(data, index) {
     const button = document.createElement('button');
     button.className = 'memory-card';
@@ -119,7 +102,13 @@
     const back = document.createElement('span');
     back.className = 'memory-card-face memory-card-back';
     back.setAttribute('aria-hidden', 'true');
-    back.append(createArtwork(data));
+
+    const image = document.createElement('img');
+    image.className = 'memory-card-image';
+    image.src = data.src;
+    image.alt = '';
+    image.draggable = false;
+    back.append(image);
 
     inner.append(front, back);
     button.append(inner);
@@ -147,6 +136,7 @@
 
   function chooseCard(card) {
     if (locked || card === firstCard || card.classList.contains('is-matched')) return;
+
     startTimer();
     card.classList.add('is-flipped');
     card.setAttribute('aria-label', `Revealed card: ${card.dataset.label}`);
@@ -172,12 +162,14 @@
     matchedPairs += 1;
     firstCard = null;
     secondCard = null;
+
     if (matchedPairs === images.length) finishGame();
   }
 
   function hideMismatch() {
     locked = true;
     const activeRound = roundId;
+
     window.setTimeout(() => {
       if (activeRound !== roundId) return;
       firstCard?.classList.remove('is-flipped');
@@ -190,10 +182,12 @@
 
   function finishGame() {
     stopTimer();
+
     if (!best || moves < best.moves || (moves === best.moves && elapsedSeconds < best.time)) {
       best = { moves, time: elapsedSeconds };
       saveBest();
     }
+
     updateStats();
     completionText.textContent = `Matched all 10 designs in ${moves} moves and ${formatTime(elapsedSeconds)}.`;
     message.classList.remove('hidden');
@@ -201,6 +195,7 @@
 
   function quickPeek() {
     if (locked || matchedPairs === images.length) return;
+
     const activeRound = roundId;
     locked = true;
     peekButton.disabled = true;
@@ -216,8 +211,6 @@
     }, 1100);
   }
 
-  const preload = new Image();
-  preload.src = spriteUrl;
   newGameButton.addEventListener('click', newGame);
   playAgainButton.addEventListener('click', newGame);
   peekButton.addEventListener('click', quickPeek);
