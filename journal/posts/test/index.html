@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/hub.css">
-  <style>figure{margin:0}.single-media{grid-template-columns:1fr}.single-media .media-item{max-width:100%}</style>
+  <link rel="stylesheet" href="/journal/post-layout.css?v=1">
 </head>
 <body>
   <header class="hub-header">
@@ -23,17 +23,24 @@
     <a class="header-action" href="/journal/">All Posts</a>
   </header>
 
-  <main class="post-shell">
-    <header class="post-header reveal">
-      <a class="back-link" href="/journal/">← Back to Journal</a>
-      <div class="post-date"><time datetime="2026-08-01">August 1, 2026</time></div>
-      <p class="eyebrow">TEST</p>
-      <h1>Test</h1>
-      <p class="post-description">This is a test</p>
-    </header>
+  <main class="journal-post-shell">
+    <section class="post-intro reveal">
+      <figure class="post-intro-media"><img src="/assets/images/journal/test/earth.png" alt="Test hero image"></figure>
+      <div class="post-intro-copy">
+        <a class="back-link" href="/journal/">← Back to Journal</a>
+        <div class="post-intro-meta">
+          <p class="eyebrow">TEST</p>
+          <time datetime="2026-08-01">August 1, 2026</time>
+        </div>
+        <h1>Test</h1>
+        <p class="post-description">This is a test</p>
+      </div>
+    </section>
 
-    <figure class="post-hero reveal"><img src="/assets/images/journal/test/earth.png" alt="Test hero image"></figure>
-    <article><section class="post-panel reveal"><p>More details will be added soon.</p></section></article>
+    <div class="post-divider reveal"><span>FULL POST</span></div>
+    <article class="post-content">
+      <section class="post-panel reveal"><p>More details will be added soon.</p></section>
+    </article>
   </main>
 
   <footer class="site-footer"><a class="footer-brand" href="/"><img src="/assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>Journal</small></span></a><p>© <span id="year"></span> Danny4686.</p></footer>
