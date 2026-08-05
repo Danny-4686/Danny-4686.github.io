@@ -1,0 +1,104 @@
+/* Keep the complete CloudLab navigation available on every secondary page. */
+.hub-header {
+  grid-template-columns: minmax(190px, 1fr) auto minmax(190px, 1fr);
+}
+
+.hub-header .hub-nav {
+  display: flex !important;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.hub-header .hub-nav a {
+  position: relative;
+}
+
+.hub-header .hub-nav a.active {
+  color: var(--text);
+  text-shadow: 0 0 14px rgba(104, 208, 223, .34);
+}
+
+.hub-header .hub-nav a.active::after {
+  width: 18px;
+  box-shadow: 0 0 12px rgba(104, 208, 223, .72);
+}
+
+@media (max-width: 900px) {
+  .hub-header {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    grid-template-rows: auto auto;
+    gap: 8px 12px;
+  }
+
+  .hub-header .hub-brand {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .hub-header .header-action {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .hub-header .hub-nav {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+    justify-content: center;
+    gap: clamp(16px, 4vw, 28px);
+    padding: 1px 4px 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    overscroll-behavior-inline: contain;
+  }
+
+  .hub-header .hub-nav::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (max-width: 620px) {
+  .hub-header {
+    width: calc(100% - 14px);
+    padding: 9px 10px 8px;
+    border-radius: 16px;
+  }
+
+  .hub-header .hub-brand small {
+    display: block !important;
+  }
+
+  .hub-header .hub-nav {
+    justify-content: flex-start;
+    gap: 20px;
+    padding-bottom: 2px;
+  }
+
+  .hub-header .hub-nav a {
+    flex: 0 0 auto;
+    padding: 7px 0;
+    font-size: .82rem;
+  }
+
+  .hub-header .header-action {
+    min-height: 40px;
+    padding: 9px 11px;
+    font-size: .76rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .hub-header .hub-brand img {
+    width: 36px;
+    height: 36px;
+  }
+
+  .hub-header .hub-brand strong {
+    font-size: .86rem;
+  }
+
+  .hub-header .hub-brand small {
+    font-size: .65rem;
+  }
+}
