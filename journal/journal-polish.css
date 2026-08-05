@@ -1,0 +1,54 @@
+.journal-card.is-static {
+  cursor: default;
+}
+
+.journal-card.is-static:hover {
+  transform: none;
+}
+
+.journal-card.post-only {
+  border-color: rgba(242, 199, 92, .22);
+  background:
+    radial-gradient(circle 210px at 50% 20%, rgba(242,199,92,.055), transparent 72%),
+    var(--panel-soft);
+}
+
+.journal-card.post-only .badge,
+.journal-card.post-only .card-link {
+  color: var(--gold);
+}
+
+.journal-card.post-only .badge {
+  border-color: rgba(242,199,92,.28);
+  background: rgba(242,199,92,.055);
+}
+
+.journal-card.post-only .card-media img,
+.journal-card.post-only .card-media video,
+.journal-card.coming-soon .card-media img,
+.journal-card.coming-soon .card-media video {
+  transform: none;
+}
+
+.journal-card.coming-soon {
+  opacity: .74;
+}
+
+.journal-card.coming-soon .badge {
+  color: #ffaaa6;
+  border-color: rgba(239,109,104,.28);
+  background: rgba(239,109,104,.05);
+}
+
+.journal-card.coming-soon .card-link {
+  color: #c4d0d4;
+}
+
+.journal-card.is-static .card-link::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: .65;
+}
