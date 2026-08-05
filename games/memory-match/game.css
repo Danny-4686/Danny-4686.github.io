@@ -5,14 +5,16 @@
 
 .memory-board {
   width: 100%;
-  padding: 14px;
+  padding: 16px;
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 12px;
-  border: 1px solid rgba(145, 190, 202, 0.2);
-  border-radius: 24px;
-  background: linear-gradient(145deg, #0a2028, #07151b);
-  box-shadow: inset 0 1px rgba(255,255,255,.04), 0 24px 50px rgba(0,0,0,.25);
+  gap: 13px;
+  border: 1px solid rgba(145, 190, 202, 0.22);
+  border-radius: 26px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(104, 208, 223, 0.08), transparent 42%),
+    linear-gradient(145deg, #0a2028, #07151b);
+  box-shadow: inset 0 1px rgba(255,255,255,.05), 0 26px 54px rgba(0,0,0,.28);
 }
 
 .memory-card {
@@ -21,25 +23,26 @@
   min-width: 0;
   padding: 0;
   border: 0;
-  border-radius: 16px;
+  border-radius: 18px;
   background: transparent;
   cursor: pointer;
-  perspective: 900px;
+  perspective: 1000px;
+  transition: transform .18s ease;
 }
 
+.memory-card:not(:disabled):hover { transform: translateY(-3px); }
+.memory-card:focus-visible { outline: 3px solid rgba(104,208,223,.56); outline-offset: 3px; }
 .memory-card:disabled { cursor: default; }
 
 .memory-card-inner {
   position: absolute;
   inset: 0;
   transform-style: preserve-3d;
-  transition: transform .42s cubic-bezier(.2,.75,.25,1);
+  transition: transform .46s cubic-bezier(.2,.78,.24,1);
 }
 
 .memory-card.is-flipped .memory-card-inner,
-.memory-card.is-matched .memory-card-inner {
-  transform: rotateY(180deg);
-}
+.memory-card.is-matched .memory-card-inner { transform: rotateY(180deg); }
 
 .memory-card-face {
   position: absolute;
@@ -47,61 +50,56 @@
   display: grid;
   place-items: center;
   overflow: hidden;
-  border: 1px solid rgba(145, 190, 202, 0.18);
-  border-radius: 16px;
+  border: 1px solid rgba(145,190,202,.2);
+  border-radius: 18px;
   backface-visibility: hidden;
-  box-shadow: inset 0 1px rgba(255,255,255,.06), 0 10px 22px rgba(0,0,0,.18);
+  box-shadow: inset 0 1px rgba(255,255,255,.08), 0 11px 24px rgba(0,0,0,.2);
 }
 
 .memory-card-front {
   background:
-    radial-gradient(circle at 65% 25%, rgba(104,208,223,.2), transparent 42%),
-    linear-gradient(145deg, #112934, #0b1b23);
+    linear-gradient(145deg, rgba(255,255,255,.035), transparent 45%),
+    radial-gradient(circle at 66% 24%, rgba(104,208,223,.2), transparent 42%),
+    #102731;
 }
 
 .memory-card-front::before {
-  content: "CL";
-  width: 44%;
+  content: "";
+  width: 54%;
   aspect-ratio: 1;
-  display: grid;
-  place-items: center;
-  border: 1px solid rgba(104,208,223,.22);
+  border: 1px solid rgba(104,208,223,.25);
   border-radius: 50%;
-  color: rgba(104,208,223,.58);
-  font-size: clamp(.65rem, 1.6vw, 1rem);
-  font-weight: 900;
-  letter-spacing: -.04em;
+  background:
+    radial-gradient(circle at 36% 30%, rgba(255,255,255,.1), transparent 26%),
+    url("../../assets/images/cloudlab-logo.png") center/72% no-repeat,
+    rgba(6,17,23,.42);
+  box-shadow: inset 0 1px rgba(255,255,255,.08), 0 8px 18px rgba(0,0,0,.18);
 }
 
 .memory-card-back {
   padding: 8px;
   transform: rotateY(180deg);
   background:
-    radial-gradient(circle at 50% 42%, rgba(104,208,223,.12), transparent 66%),
-    #eafcfe;
+    radial-gradient(circle at 50% 45%, rgba(104,208,223,.08), transparent 68%),
+    rgba(8,22,28,.96);
 }
 
-.memory-card-back img {
+.memory-card-back .memory-sprite {
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  user-select: none;
-  filter: drop-shadow(0 9px 12px rgba(0,0,0,.16));
+  filter: drop-shadow(0 10px 13px rgba(0,0,0,.22));
 }
 
-.memory-card.is-matched {
-  animation: matchedPulse .38s ease;
-}
-
+.memory-card.is-matched { animation: matchedPulse .4s ease; }
 .memory-card.is-matched .memory-card-back {
-  border-color: rgba(139,207,155,.62);
-  box-shadow: 0 0 28px rgba(139,207,155,.28), inset 0 1px rgba(255,255,255,.62);
+  border-color: rgba(139,207,155,.68);
+  box-shadow: 0 0 30px rgba(139,207,155,.25), inset 0 1px rgba(255,255,255,.12);
 }
 
 .game-message.hidden { display: none; }
 
 @keyframes matchedPulse {
-  50% { transform: scale(1.045); }
+  50% { transform: scale(1.05); }
 }
 
 @media (max-width: 720px) {
@@ -109,14 +107,11 @@
     padding: 10px;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 8px;
-    border-radius: 19px;
+    border-radius: 20px;
   }
 
   .memory-card,
-  .memory-card-face {
-    border-radius: 12px;
-  }
-
+  .memory-card-face { border-radius: 13px; }
   .memory-card-back { padding: 5px; }
   .score-row { grid-template-columns: repeat(3, minmax(80px, 1fr)); width: 100%; }
 }
@@ -128,6 +123,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .memory-card,
   .memory-card-inner { transition: none; }
   .memory-card.is-matched { animation: none; }
 }
