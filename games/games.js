@@ -7,6 +7,14 @@
     document.head.append(polishStyles);
   }
 
+  if (!document.querySelector('link[data-arcade-scale]')) {
+    const scaleStyles = document.createElement('link');
+    scaleStyles.rel = 'stylesheet';
+    scaleStyles.href = 'games-banner-scale.css?v=1';
+    scaleStyles.dataset.arcadeScale = 'true';
+    document.head.append(scaleStyles);
+  }
+
   const search = document.getElementById('gameSearch');
   const filters = document.getElementById('gameFilters');
   const cards = [...document.querySelectorAll('.game-card[data-genre]')];
