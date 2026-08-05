@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Play Snake in the CloudLab Arcade.">
+  <meta name="theme-color" content="#061117">
+  <title>Snake | CloudLab Arcade</title>
+  <link rel="icon" href="../../assets/images/cloudlab-logo.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../hub.css">
+</head>
+<body>
+  <header class="hub-header">
+    <a class="hub-brand" href="/" aria-label="Return to Danny4686.com">
+      <img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo">
+      <span><strong>Danny4686</strong><small>CloudLab Studio</small></span>
+    </a>
+    <nav class="hub-nav" aria-label="Site navigation">
+      <a class="active" href="/games/">Games</a>
+      <a href="/journal/">Journal</a>
+      <a href="/">Home</a>
+    </nav>
+    <a class="header-action" href="/games/">All Games</a>
+  </header>
+
+  <main class="page-shell game-page">
+    <a class="back-link reveal" href="/games/">← Back to Browser Games</a>
+
+    <div class="game-heading reveal">
+      <div>
+        <p class="eyebrow">CLOUDLAB ARCADE</p>
+        <h1>Snake</h1>
+        <p>Collect the glowing food, grow longer, and avoid the walls and your own tail.</p>
+      </div>
+      <div class="score-row" aria-label="Game scores">
+        <div class="score-chip"><small>SCORE</small><strong id="score">0</strong></div>
+        <div class="score-chip"><small>BEST</small><strong id="bestScore">0</strong></div>
+      </div>
+    </div>
+
+    <section class="game-panel reveal" aria-label="Snake game">
+      <div class="game-stage">
+        <canvas id="snakeCanvas" width="600" height="600" aria-label="Snake game board"></canvas>
+        <div class="game-message" id="gameMessage">
+          <div>
+            <h2 id="messageTitle">Ready?</h2>
+            <p id="messageText">Press Start, use the arrow keys, or swipe on the board.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="game-toolbar">
+        <button class="game-button primary" id="startButton" type="button">Start Game</button>
+        <button class="game-button" id="pauseButton" type="button">Pause</button>
+        <button class="game-button" id="restartButton" type="button">Restart</button>
+        <label>
+          <span class="visually-hidden">Difficulty</span>
+          <select class="difficulty-select" id="difficulty" aria-label="Game difficulty">
+            <option value="150">Easy</option>
+            <option value="105" selected>Normal</option>
+            <option value="72">Fast</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="touch-controls" aria-label="Touch controls">
+        <button class="touch-button" type="button" data-direction="up" aria-label="Move up">↑</button>
+        <button class="touch-button" type="button" data-direction="left" aria-label="Move left">←</button>
+        <button class="touch-button" type="button" data-direction="down" aria-label="Move down">↓</button>
+        <button class="touch-button" type="button" data-direction="right" aria-label="Move right">→</button>
+      </div>
+
+      <p class="control-note"><span class="desktop-only">Arrow keys or WASD to move. Space pauses.</span> Swipe or use the buttons on mobile.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <a class="footer-brand" href="/"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>Snake</small></span></a>
+    <p>© <span id="year"></span> Danny4686.</p>
+  </footer>
+
+  <script src="../../hub.js"></script>
+  <script src="snake.js"></script>
+</body>
+</html>
