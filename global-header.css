@@ -44,13 +44,16 @@
   max-height: 60%;
   margin: auto;
   object-fit: contain;
-  transform: none !important;
+  transform: translateY(-12%) !important;
   transform-origin: center;
 }
 
-.arcade-grid .game-card:hover .card-media .upgraded-mine-preview .flag img,
-.arcade-grid .game-card:hover .card-media .upgraded-mine-preview .mine img {
+.arcade-grid .game-card:hover .card-media .upgraded-mine-preview .flag img {
   transform: none !important;
+}
+
+.arcade-grid .game-card:hover .card-media .upgraded-mine-preview .mine img {
+  transform: translateY(-12%) !important;
 }
 
 @media (max-width: 900px) {
