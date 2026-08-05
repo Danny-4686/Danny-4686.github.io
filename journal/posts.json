@@ -1,5 +1,21 @@
 [
   {
+    "slug": "test",
+    "title": "Test",
+    "description": "Test test test",
+    "date": "2026-11-19",
+    "displayDate": "November 19, 2026",
+    "tags": [
+      "Game"
+    ],
+    "mediaType": "image",
+    "thumbnail": "/assets/images/profile-gloss.webp",
+    "fit": "contain",
+    "mode": "article",
+    "comingSoon": false,
+    "cardOnly": false
+  },
+  {
     "slug": "danny4686-com-is-officially-live",
     "title": "Danny4686.com is officially live",
     "description": "This is the start of something bigger, with new projects, updates, features, and upgrades coming soon. The site is ready to grow, improve, and become something amazing.",
