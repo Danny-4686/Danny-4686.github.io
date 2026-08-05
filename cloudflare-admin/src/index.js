@@ -29,6 +29,7 @@ import {
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 const MAX_TOTAL_BYTES = 30 * 1024 * 1024;
+const POST_MODES = new Set(['article', 'card', 'coming-soon']);
 
 export default {
   async fetch(request, env) {
@@ -65,7 +66,7 @@ export default {
 
       if (path === '/' || path === '/admin') {
         const csp = session
-          ? "default-src 'none'; style-src 'self'; script-src 'self'; img-src https://danny4686.com data: blob:; media-src 'self' blob:; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'"
+          ? "default-src 'none'; style-src 'self'; script-src 'self'; img-src https://danny4686.com data: blob:; media-src https://danny4686.com blob:; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'"
           : "default-src 'none'; style-src 'unsafe-inline'; img-src https://danny4686.com; form-action 'self' https://github.com; frame-ancestors 'none'; base-uri 'none'";
         return html(session ? dashboardPage(session.login) : loginPage(), 200, { 'Content-Security-Policy': csp });
       }
@@ -94,7 +95,7 @@ async function handleApi(request, env, session, path) {
     if (source) return json({ post: source });
     const listing = (await getPosts(env)).find((post) => post.slug === slug);
     if (!listing) return json({ error: 'Post not found.' }, 404);
-    return json({ post: { ...listing, hero: listing.thumbnail, sections: [] } });
+    return json({ post: { ...listing, mode: normalizeMode(listing), hero: listing.thumbnail, sections: [] } });
   }
 
   if (path === '/api/publish' && request.method === 'POST') {
@@ -197,6 +198,13 @@ async function getPosts(env) {
   return Array.isArray(value) ? value : [];
 }
 
+function normalizeMode(value) {
+  if (POST_MODES.has(value?.mode)) return value.mode;
+  if (value?.comingSoon) return 'coming-soon';
+  if (value?.cardOnly) return 'card';
+  return 'article';
+}
+
 async function publish(request, env, session) {
   requireEnv(env, ['GITHUB_TOKEN', 'GITHUB_OWNER', 'GITHUB_REPO']);
   const form = await request.formData();
@@ -212,8 +220,11 @@ async function publish(request, env, session) {
   const date = validDate(input.date);
   const tags = normalizeTags(input.tags);
   const fit = input.fit === 'contain' ? 'contain' : 'cover';
-  const comingSoon = Boolean(input.comingSoon);
-  const sections = normalizeSections(input.sections);
+  const mode = normalizeMode(input);
+  const isArticle = mode === 'article';
+  const comingSoon = mode === 'coming-soon';
+  const cardOnly = mode === 'card';
+  const sections = isArticle ? normalizeSections(input.sections) : [];
   if (!title || !description || !slug || !date) return json({ error: 'Title, description, date, and URL name are required.' }, 400);
 
   const uploaded = [];
@@ -238,28 +249,32 @@ async function publish(request, env, session) {
   }
 
   const thumbnail = await uploadField('thumbnail', 'thumbnail.png') || cleanAssetPath(input.existingThumbnail) || '/assets/images/profile-gloss.webp';
-  const hero = await uploadField('hero', 'hero.png') || cleanAssetPath(input.existingHero) || thumbnail;
+  const hero = isArticle
+    ? (await uploadField('hero', 'hero.png') || cleanAssetPath(input.existingHero) || thumbnail)
+    : thumbnail;
   const resolvedSections = [];
 
-  for (let i = 0; i < sections.length; i += 1) {
-    const section = sections[i];
-    const media = [];
-    for (const existing of section.existingMedia) {
-      const path = cleanAssetPath(existing.path);
-      if (path) media.push({ path, alt: cleanText(existing.alt, 180), type: existing.type === 'video' ? 'video' : 'image' });
+  if (isArticle) {
+    for (let i = 0; i < sections.length; i += 1) {
+      const section = sections[i];
+      const media = [];
+      for (const existing of section.existingMedia) {
+        const path = cleanAssetPath(existing.path);
+        if (path) media.push({ path, alt: cleanText(existing.alt, 180), type: existing.type === 'video' ? 'video' : 'image' });
+      }
+      for (const item of section.uploads) {
+        const path = await uploadField(item.field, `section-${i + 1}.png`);
+        if (!path) continue;
+        const file = form.get(item.field);
+        media.push({ path, alt: cleanText(item.alt || file?.name || title, 180), type: file?.type?.startsWith('video/') ? 'video' : 'image' });
+      }
+      resolvedSections.push({ heading: section.heading, body: section.body, media });
     }
-    for (const item of section.uploads) {
-      const path = await uploadField(item.field, `section-${i + 1}.png`);
-      if (!path) continue;
-      const file = form.get(item.field);
-      media.push({ path, alt: cleanText(item.alt || file?.name || title, 180), type: file?.type?.startsWith('video/') ? 'video' : 'image' });
-    }
-    resolvedSections.push({ heading: section.heading, body: section.body, media });
   }
 
   const post = {
     slug, title, description, date, displayDate: displayDate(date), tags,
-    thumbnail, hero, fit, comingSoon, sections: resolvedSections,
+    thumbnail, hero, fit, mode, comingSoon, cardOnly, sections: resolvedSections,
     updatedBy: session.login, updatedAt: new Date().toISOString(),
     mediaPaths: [...new Set([...(existingSource?.mediaPaths || []), ...newMediaPaths])]
   };
@@ -267,13 +282,13 @@ async function publish(request, env, session) {
   const posts = await getPosts(env);
   const listing = {
     slug, title, description, date, displayDate: post.displayDate, tags,
-    mediaType: mediaType(thumbnail), thumbnail, fit, comingSoon
+    mediaType: mediaType(thumbnail), thumbnail, fit, mode, comingSoon, cardOnly
   };
   const updated = [listing, ...posts.filter((item) => item.slug !== slug)]
     .sort((a, b) => new Date(b.date) - new Date(a.date));
 
   files.push({ path: 'journal/posts.json', text: `${JSON.stringify(updated, null, 2)}\n` });
-  if (!comingSoon) {
+  if (isArticle) {
     files.push({ path: `journal/posts/${slug}/post.json`, text: `${JSON.stringify(post, null, 2)}\n` });
     files.push({ path: `journal/posts/${slug}/index.html`, text: buildPostHtml(post) });
   } else if (existingSource) {
@@ -281,8 +296,9 @@ async function publish(request, env, session) {
     files.push({ path: `journal/posts/${slug}/post.json`, delete: true });
   }
 
-  const commit = await commitFiles(env, files, `${comingSoon ? 'Schedule' : 'Publish'} journal post: ${title}`);
-  return json({ ok: true, slug, comingSoon, commit });
+  const action = mode === 'article' ? 'Publish' : mode === 'card' ? 'Publish Journal card' : 'Schedule';
+  const commit = await commitFiles(env, files, `${action}: ${title}`);
+  return json({ ok: true, slug, mode, comingSoon, cardOnly, commit });
 }
 
 function normalizeSections(value) {
