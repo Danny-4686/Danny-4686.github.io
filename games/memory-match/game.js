@@ -12,20 +12,13 @@
   const peekButton = document.getElementById('peekButton');
 
   const images = [
-    { key: 'cyan', label: 'Cyan globe', src: '../../assets/images/memory/cyan.svg' },
-    { key: 'gray', label: 'Gray globe', src: '../../assets/images/memory/gray.svg' },
-    { key: 'lime', label: 'Lime globe', src: '../../assets/images/memory/lime.svg' },
-    { key: 'blue', label: 'Blue globe', src: '../../assets/images/memory/blue.svg' },
-    { key: 'red', label: 'Red globe', src: '../../assets/images/memory/red.svg' },
-    { key: 'purple', label: 'Purple globe', src: '../../assets/images/memory/purple.svg' },
-    { key: 'earth', label: 'Multicolor globe', src: '../../assets/images/memory/earth.svg' },
-    { key: 'mint', label: 'Mint globe', src: '../../assets/images/memory/mint.svg' },
-    { key: 'gloss-cyan', label: 'Glossy cyan globe', src: '../../assets/images/memory/gloss-cyan.svg' },
-    { key: 'gloss-gold', label: 'Glossy gold globe', src: '../../assets/images/memory/gloss-gold.svg' }
-  ];
+    ['cyan', 'Cyan globe'], ['gray', 'Gray globe'], ['lime', 'Lime globe'],
+    ['blue', 'Blue globe'], ['red', 'Red globe'], ['purple', 'Purple globe'],
+    ['earth', 'Multicolor globe'], ['mint', 'Mint globe'],
+    ['gloss-cyan', 'Glossy cyan globe'], ['gloss-gold', 'Glossy gold globe']
+  ].map(([key, label]) => ({ key, label }));
 
   const bestKey = 'cloudlab-memory-image-best';
-  let cards = [];
   let firstCard = null;
   let secondCard = null;
   let moves = 0;
@@ -40,9 +33,8 @@
   function loadBest() {
     try {
       const saved = JSON.parse(localStorage.getItem(bestKey) || 'null');
-      if (saved && Number.isFinite(saved.moves) && Number.isFinite(saved.time)) return saved;
-    } catch (_) {}
-    return null;
+      return saved && Number.isFinite(saved.moves) && Number.isFinite(saved.time) ? saved : null;
+    } catch (_) { return null; }
   }
 
   function saveBest() {
@@ -59,9 +51,7 @@
   }
 
   function formatTime(totalSeconds) {
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    return `${minutes}:${String(seconds).padStart(2, '0')}`;
+    return `${Math.floor(totalSeconds / 60)}:${String(totalSeconds % 60).padStart(2, '0')}`;
   }
 
   function updateStats() {
@@ -88,7 +78,6 @@
     const button = document.createElement('button');
     button.className = 'memory-card';
     button.type = 'button';
-    button.dataset.id = cardData.id;
     button.dataset.key = cardData.key;
     button.dataset.label = cardData.label;
     button.setAttribute('aria-label', `Hidden card ${index + 1}`);
@@ -104,12 +93,9 @@
     back.className = 'memory-card-face memory-card-back';
     back.setAttribute('aria-hidden', 'true');
 
-    const image = document.createElement('img');
-    image.src = cardData.src;
-    image.alt = '';
-    image.draggable = false;
-    back.append(image);
-
+    const art = document.createElement('span');
+    art.className = `memory-sprite sprite-${cardData.key}`;
+    back.append(art);
     inner.append(front, back);
     button.append(inner);
     button.addEventListener('click', () => chooseCard(button));
@@ -129,13 +115,8 @@
     message.classList.add('hidden');
     peekButton.disabled = false;
 
-    const pairs = images.flatMap((image) => [
-      { ...image, id: `${image.key}-a` },
-      { ...image, id: `${image.key}-b` }
-    ]);
-
-    cards = shuffle(pairs);
-    boardElement.replaceChildren(...cards.map(buildCard));
+    const pairs = images.flatMap((image) => [{ ...image }, { ...image }]);
+    boardElement.replaceChildren(...shuffle(pairs).map(buildCard));
     updateStats();
   }
 
@@ -154,11 +135,8 @@
     moves += 1;
     movesElement.textContent = String(moves);
 
-    if (firstCard.dataset.key === secondCard.dataset.key) {
-      matchCards();
-    } else {
-      hideMismatchedCards();
-    }
+    if (firstCard.dataset.key === secondCard.dataset.key) matchCards();
+    else hideMismatchedCards();
   }
 
   function matchCards() {
@@ -166,11 +144,9 @@
     secondCard.classList.add('is-matched');
     firstCard.disabled = true;
     secondCard.disabled = true;
-    firstCard.setAttribute('aria-label', `Matched card: ${firstCard.dataset.label}`);
-    secondCard.setAttribute('aria-label', `Matched card: ${secondCard.dataset.label}`);
     matchedPairs += 1;
-    clearSelection();
-
+    firstCard = null;
+    secondCard = null;
     if (matchedPairs === images.length) finishGame();
   }
 
@@ -181,16 +157,10 @@
       if (activeRound !== roundId) return;
       firstCard?.classList.remove('is-flipped');
       secondCard?.classList.remove('is-flipped');
-      if (firstCard) firstCard.setAttribute('aria-label', 'Hidden card');
-      if (secondCard) secondCard.setAttribute('aria-label', 'Hidden card');
-      clearSelection();
+      firstCard = null;
+      secondCard = null;
       locked = false;
     }, 760);
-  }
-
-  function clearSelection() {
-    firstCard = null;
-    secondCard = null;
   }
 
   function finishGame() {
@@ -211,7 +181,6 @@
     peekButton.disabled = true;
     const unmatched = [...boardElement.querySelectorAll('.memory-card:not(.is-matched)')];
     unmatched.forEach((card) => card.classList.add('is-flipped'));
-
     window.setTimeout(() => {
       if (activeRound !== roundId) return;
       unmatched.forEach((card) => {
@@ -221,14 +190,8 @@
     }, 1100);
   }
 
-  images.forEach((imageData) => {
-    const image = new Image();
-    image.src = imageData.src;
-  });
-
   newGameButton.addEventListener('click', newGame);
   playAgainButton.addEventListener('click', newGame);
   peekButton.addEventListener('click', quickPeek);
-
   newGame();
 })();
