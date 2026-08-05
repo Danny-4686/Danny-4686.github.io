@@ -1,10 +1,10 @@
 name = "cloudlab-journal-admin"
 main = "src/index.js"
 compatibility_date = "2026-08-01"
-workers_dev = true
+workers_dev = false
 
 routes = [
-  { pattern = "admin.danny4686.com/*", zone_name = "danny4686.com" }
+  { pattern = "admin.danny4686.com", custom_domain = true }
 ]
 
 [vars]
