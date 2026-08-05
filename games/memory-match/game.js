@@ -25,6 +25,7 @@
   ];
 
   const bestKey = 'cloudlab-memory-image-best';
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let firstCard = null;
   let secondCard = null;
   let moves = 0;
@@ -51,17 +52,32 @@
     } catch (_) {}
   }
 
+  function preloadImages() {
+    images.forEach(({ src }) => {
+      const image = new Image();
+      image.decoding = 'async';
+      image.src = src;
+    });
+  }
+
   function shuffle(items) {
     const result = [...items];
-    for (let i = result.length - 1; i > 0; i -= 1) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [result[i], result[j]] = [result[j], result[i]];
+    for (let index = result.length - 1; index > 0; index -= 1) {
+      const target = Math.floor(Math.random() * (index + 1));
+      [result[index], result[target]] = [result[target], result[index]];
     }
     return result;
   }
 
   function formatTime(seconds) {
     return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+  }
+
+  function bumpStat(element) {
+    if (reducedMotion) return;
+    element.classList.remove('stat-bump');
+    requestAnimationFrame(() => element.classList.add('stat-bump'));
+    window.setTimeout(() => element.classList.remove('stat-bump'), 320);
   }
 
   function updateStats() {
@@ -90,6 +106,7 @@
     button.type = 'button';
     button.dataset.key = data.key;
     button.dataset.label = data.label;
+    button.style.setProperty('--card-index', String(index));
     button.setAttribute('aria-label', `Hidden card ${index + 1}`);
 
     const inner = document.createElement('span');
@@ -108,12 +125,24 @@
     image.src = data.src;
     image.alt = '';
     image.draggable = false;
+    image.decoding = 'async';
+    image.loading = 'eager';
+    image.addEventListener('error', () => button.classList.add('image-error'), { once: true });
     back.append(image);
 
     inner.append(front, back);
     button.append(inner);
     button.addEventListener('click', () => chooseCard(button));
     return button;
+  }
+
+  function restartDealAnimation() {
+    board.classList.remove('is-dealing', 'is-peeking');
+    if (reducedMotion) return;
+    requestAnimationFrame(() => {
+      board.classList.add('is-dealing');
+      window.setTimeout(() => board.classList.remove('is-dealing'), 980);
+    });
   }
 
   function newGame() {
@@ -129,9 +158,12 @@
     message.classList.add('hidden');
     peekButton.disabled = false;
 
-    const pairs = images.flatMap((image) => [{ ...image }, { ...image }]);
-    board.replaceChildren(...shuffle(pairs).map(buildCard));
+    const pairs = shuffle(images.flatMap((image) => [{ ...image }, { ...image }]));
+    const fragment = document.createDocumentFragment();
+    pairs.forEach((image, index) => fragment.append(buildCard(image, index)));
+    board.replaceChildren(fragment);
     updateStats();
+    restartDealAnimation();
   }
 
   function chooseCard(card) {
@@ -149,21 +181,34 @@
     secondCard = card;
     moves += 1;
     movesEl.textContent = String(moves);
+    bumpStat(movesEl);
 
     if (firstCard.dataset.key === secondCard.dataset.key) matchCards();
     else hideMismatch();
   }
 
   function matchCards() {
-    firstCard.classList.add('is-matched');
-    secondCard.classList.add('is-matched');
-    firstCard.disabled = true;
-    secondCard.disabled = true;
+    const matched = [firstCard, secondCard];
+    matched.forEach((card) => {
+      card.classList.add('is-matched', 'just-matched');
+      card.disabled = true;
+      card.setAttribute('aria-label', `Matched card: ${card.dataset.label}`);
+    });
+
     matchedPairs += 1;
     firstCard = null;
     secondCard = null;
 
-    if (matchedPairs === images.length) finishGame();
+    if ('vibrate' in navigator) navigator.vibrate(12);
+    window.setTimeout(() => matched.forEach((card) => card.classList.remove('just-matched')), 620);
+
+    if (matchedPairs === images.length) {
+      locked = true;
+      const activeRound = roundId;
+      window.setTimeout(() => {
+        if (activeRound === roundId) finishGame();
+      }, reducedMotion ? 0 : 430);
+    }
   }
 
   function hideMismatch() {
@@ -174,22 +219,27 @@
       if (activeRound !== roundId) return;
       firstCard?.classList.remove('is-flipped');
       secondCard?.classList.remove('is-flipped');
+      firstCard?.setAttribute('aria-label', 'Hidden card');
+      secondCard?.setAttribute('aria-label', 'Hidden card');
       firstCard = null;
       secondCard = null;
       locked = false;
-    }, 760);
+    }, 700);
   }
 
   function finishGame() {
     stopTimer();
+    locked = false;
 
-    if (!best || moves < best.moves || (moves === best.moves && elapsedSeconds < best.time)) {
+    const isNewBest = !best || moves < best.moves || (moves === best.moves && elapsedSeconds < best.time);
+    if (isNewBest) {
       best = { moves, time: elapsedSeconds };
       saveBest();
+      bumpStat(bestEl);
     }
 
     updateStats();
-    completionText.textContent = `Matched all 10 designs in ${moves} moves and ${formatTime(elapsedSeconds)}.`;
+    completionText.textContent = `${isNewBest ? 'New best! ' : ''}Matched all 10 designs in ${moves} moves and ${formatTime(elapsedSeconds)}.`;
     message.classList.remove('hidden');
   }
 
@@ -199,6 +249,7 @@
     const activeRound = roundId;
     locked = true;
     peekButton.disabled = true;
+    board.classList.add('is-peeking');
     const unmatched = [...board.querySelectorAll('.memory-card:not(.is-matched)')];
     unmatched.forEach((card) => card.classList.add('is-flipped'));
 
@@ -207,10 +258,12 @@
       unmatched.forEach((card) => {
         if (card !== firstCard && card !== secondCard) card.classList.remove('is-flipped');
       });
+      board.classList.remove('is-peeking');
       locked = false;
-    }, 1100);
+    }, 1150);
   }
 
+  preloadImages();
   newGameButton.addEventListener('click', newGame);
   playAgainButton.addEventListener('click', newGame);
   peekButton.addEventListener('click', quickPeek);
