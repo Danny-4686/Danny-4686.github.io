@@ -28,6 +28,7 @@
   cursor: pointer;
   perspective: 1000px;
   transition: transform .18s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .memory-card:not(:disabled):hover { transform: translateY(-3px); }
@@ -53,63 +54,60 @@
   border: 1px solid rgba(145,190,202,.2);
   border-radius: 18px;
   backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
   box-shadow: inset 0 1px rgba(255,255,255,.08), 0 11px 24px rgba(0,0,0,.2);
 }
 
 .memory-card-front {
   background:
-    linear-gradient(145deg, rgba(255,255,255,.035), transparent 45%),
-    radial-gradient(circle at 66% 24%, rgba(104,208,223,.2), transparent 42%),
+    linear-gradient(145deg, rgba(255,255,255,.045), transparent 45%),
+    radial-gradient(circle at 66% 24%, rgba(104,208,223,.22), transparent 42%),
     #102731;
 }
 
 .memory-card-front::before {
   content: "";
-  width: 54%;
+  width: 58%;
   aspect-ratio: 1;
-  border: 1px solid rgba(104,208,223,.25);
+  border: 1px solid rgba(104,208,223,.28);
   border-radius: 50%;
   background:
-    radial-gradient(circle at 36% 30%, rgba(255,255,255,.1), transparent 26%),
-    url("../../assets/images/cloudlab-logo.png") center/72% no-repeat,
-    rgba(6,17,23,.42);
-  box-shadow: inset 0 1px rgba(255,255,255,.08), 0 8px 18px rgba(0,0,0,.18);
+    url("../../assets/images/cloudlab-logo.png") center/74% no-repeat,
+    rgba(6,17,23,.5);
+  box-shadow: inset 0 1px rgba(255,255,255,.09), 0 8px 18px rgba(0,0,0,.2);
+  opacity: .9;
 }
 
 .memory-card-back {
-  padding: 8px;
+  padding: 7px;
   transform: rotateY(180deg);
   background:
-    radial-gradient(circle at 50% 45%, rgba(104,208,223,.08), transparent 68%),
-    rgba(8,22,28,.96);
+    radial-gradient(circle at 50% 45%, rgba(104,208,223,.1), transparent 68%),
+    rgba(8,22,28,.98);
 }
 
-.memory-sprite {
+.memory-card-image {
   display: block;
   width: 100%;
-  aspect-ratio: 1;
-  background-image: url("../../assets/images/memory/memory-sprites.png");
-  background-repeat: no-repeat;
-  background-size: 500% 200%;
-  filter: drop-shadow(0 10px 13px rgba(0,0,0,.22));
-  transform: translateZ(0);
+  height: 100%;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+  filter: drop-shadow(0 10px 13px rgba(0,0,0,.24));
 }
-
-.sprite-cyan { background-position: 0% 0%; }
-.sprite-gray { background-position: 25% 0%; }
-.sprite-lime { background-position: 50% 0%; }
-.sprite-blue { background-position: 75% 0%; }
-.sprite-red { background-position: 100% 0%; }
-.sprite-purple { background-position: 0% 100%; }
-.sprite-earth { background-position: 25% 100%; }
-.sprite-mint { background-position: 50% 100%; }
-.sprite-gloss-cyan { background-position: 75% 100%; }
-.sprite-gloss-gold { background-position: 100% 100%; }
 
 .memory-card.is-matched { animation: matchedPulse .4s ease; }
 .memory-card.is-matched .memory-card-back {
   border-color: rgba(139,207,155,.68);
   box-shadow: 0 0 30px rgba(139,207,155,.25), inset 0 1px rgba(255,255,255,.12);
+}
+
+.memory-load-error {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 34px 20px;
+  color: rgba(240,248,250,.75);
+  text-align: center;
 }
 
 .game-message.hidden { display: none; }
@@ -128,7 +126,7 @@
 
   .memory-card,
   .memory-card-face { border-radius: 13px; }
-  .memory-card-back { padding: 5px; }
+  .memory-card-back { padding: 4px; }
   .score-row { grid-template-columns: repeat(3, minmax(80px, 1fr)); width: 100%; }
 }
 
@@ -136,6 +134,7 @@
   .memory-board { padding: 7px; gap: 6px; }
   .memory-card,
   .memory-card-face { border-radius: 10px; }
+  .memory-card-front::before { width: 62%; }
 }
 
 @media (prefers-reduced-motion: reduce) {
