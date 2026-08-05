@@ -1,0 +1,15 @@
+/* Keep end-screen controls clickable while allowing non-interactive overlays to pass input through. */
+.game-message {
+  z-index: 20;
+}
+
+.game-message > div {
+  pointer-events: auto;
+}
+
+.game-message .game-button,
+.game-message button,
+.game-message a {
+  pointer-events: auto;
+  touch-action: manipulation;
+}
