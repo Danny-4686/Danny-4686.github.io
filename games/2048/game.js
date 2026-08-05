@@ -4,6 +4,7 @@
 
   const scoreElement = document.getElementById('score');
   const bestElement = document.getElementById('bestScore');
+  const scoreChip = scoreElement.closest('.score-chip');
   const message = document.getElementById('gameMessage');
   const messageTitle = document.getElementById('messageTitle');
   const messageText = document.getElementById('messageText');
@@ -14,14 +15,22 @@
 
   const size = 4;
   const bestKey = 'cloudlab-2048-best';
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const motionDuration = reducedMotion ? 0 : 190;
   let board = [];
   let score = 0;
   let bestScore = Number.parseInt(localStorage.getItem(bestKey) || '0', 10);
   let previousState = null;
   let winShown = false;
   let touchStart = null;
+  let inputLocked = false;
+  let motionTimer = null;
 
-  bestElement.textContent = String(bestScore);
+  bestElement.textContent = formatNumber(bestScore);
+
+  function formatNumber(value) {
+    return Number(value).toLocaleString('en-US');
+  }
 
   function emptyBoard() {
     return Array.from({ length: size }, () => Array(size).fill(0));
@@ -29,6 +38,19 @@
 
   function cloneBoard(source = board) {
     return source.map((row) => [...row]);
+  }
+
+  function boardsMatch(first, second) {
+    for (let row = 0; row < size; row += 1) {
+      for (let column = 0; column < size; column += 1) {
+        if (first[row][column] !== second[row][column]) return false;
+      }
+    }
+    return true;
+  }
+
+  function cellKey(row, column) {
+    return `${row}:${column}`;
   }
 
   function availableCells() {
@@ -43,30 +65,37 @@
 
   function addRandomTile() {
     const cells = availableCells();
-    if (!cells.length) return;
+    if (!cells.length) return null;
     const target = cells[Math.floor(Math.random() * cells.length)];
-    board[target.row][target.column] = Math.random() < 0.9 ? 2 : 4;
+    const value = Math.random() < 0.9 ? 2 : 4;
+    board[target.row][target.column] = value;
+    return { ...target, value };
   }
 
   function startNewGame() {
+    window.clearTimeout(motionTimer);
+    inputLocked = false;
+    boardElement.classList.remove('is-moving', 'is-blocked', 'is-undoing', 'move-left', 'move-right', 'move-up', 'move-down');
     board = emptyBoard();
     score = 0;
     previousState = null;
     winShown = false;
-    addRandomTile();
-    addRandomTile();
+    const firstTile = addRandomTile();
+    const secondTile = addRandomTile();
     hideMessage();
-    render();
+    render({ newCells: [firstTile, secondTile].filter(Boolean) });
   }
 
   function slideLine(line) {
     const values = line.filter((value) => value !== 0);
     const merged = [];
+    const mergedIndexes = [];
     let gained = 0;
 
     for (let index = 0; index < values.length; index += 1) {
       if (values[index] === values[index + 1]) {
         const combined = values[index] * 2;
+        mergedIndexes.push(merged.length);
         merged.push(combined);
         gained += combined;
         index += 1;
@@ -76,7 +105,7 @@
     }
 
     while (merged.length < size) merged.push(0);
-    return { line: merged, gained };
+    return { line: merged, gained, mergedIndexes };
   }
 
   function getColumn(columnIndex) {
@@ -90,43 +119,108 @@
   }
 
   function move(direction) {
+    if (inputLocked) return;
+
     const before = cloneBoard();
     const scoreBefore = score;
+    const mergedCells = [];
     let gained = 0;
 
     if (direction === 'left' || direction === 'right') {
-      board = board.map((row) => {
+      board = board.map((row, rowIndex) => {
         const input = direction === 'right' ? [...row].reverse() : [...row];
         const result = slideLine(input);
         gained += result.gained;
+        result.mergedIndexes.forEach((index) => {
+          const column = direction === 'right' ? size - 1 - index : index;
+          mergedCells.push(cellKey(rowIndex, column));
+        });
         return direction === 'right' ? result.line.reverse() : result.line;
       });
     } else {
       for (let column = 0; column < size; column += 1) {
         const source = getColumn(column);
-        const input = direction === 'down' ? source.reverse() : source;
+        const input = direction === 'down' ? [...source].reverse() : source;
         const result = slideLine(input);
         gained += result.gained;
+        result.mergedIndexes.forEach((index) => {
+          const row = direction === 'down' ? size - 1 - index : index;
+          mergedCells.push(cellKey(row, column));
+        });
         setColumn(column, direction === 'down' ? result.line.reverse() : result.line);
       }
     }
 
-    const changed = JSON.stringify(before) !== JSON.stringify(board);
-    if (!changed) return;
+    if (boardsMatch(before, board)) {
+      showBlockedMove(direction);
+      return;
+    }
 
     previousState = { board: before, score: scoreBefore };
     score += gained;
-    addRandomTile();
-    updateBest();
-    render();
-    checkGameState();
+    const newTile = addRandomTile();
+    const bestImproved = updateBest();
+    render({ mergedCells, newCells: newTile ? [newTile] : [] });
+    playMoveFeedback(direction, gained, bestImproved);
+  }
+
+  function playMoveFeedback(direction, gained, bestImproved) {
+    inputLocked = true;
+    window.clearTimeout(motionTimer);
+    boardElement.classList.remove('is-moving', 'is-blocked', 'move-left', 'move-right', 'move-up', 'move-down');
+
+    requestAnimationFrame(() => {
+      boardElement.classList.add('is-moving', `move-${direction}`);
+    });
+
+    if (gained > 0) {
+      showScoreGain(gained);
+      bumpScore(scoreElement);
+      if ('vibrate' in navigator) navigator.vibrate(gained >= 128 ? [10, 18, 10] : 9);
+    }
+    if (bestImproved) bumpScore(bestElement);
+
+    motionTimer = window.setTimeout(() => {
+      boardElement.classList.remove('is-moving', `move-${direction}`);
+      inputLocked = false;
+      checkGameState();
+    }, motionDuration);
+  }
+
+  function showBlockedMove(direction) {
+    inputLocked = true;
+    boardElement.classList.remove('is-moving', 'is-blocked', 'move-left', 'move-right', 'move-up', 'move-down');
+    requestAnimationFrame(() => boardElement.classList.add('is-blocked', `move-${direction}`));
+    window.setTimeout(() => {
+      boardElement.classList.remove('is-blocked', `move-${direction}`);
+      inputLocked = false;
+    }, reducedMotion ? 0 : 235);
+  }
+
+  function bumpScore(element) {
+    if (reducedMotion) return;
+    element.classList.remove('score-bump');
+    requestAnimationFrame(() => element.classList.add('score-bump'));
+    window.setTimeout(() => element.classList.remove('score-bump'), 360);
+  }
+
+  function showScoreGain(gained) {
+    if (!scoreChip || reducedMotion) return;
+    const gain = document.createElement('span');
+    gain.className = 'score-gain';
+    gain.textContent = `+${formatNumber(gained)}`;
+    scoreChip.append(gain);
+    window.setTimeout(() => gain.remove(), 760);
   }
 
   function updateBest() {
-    if (score <= bestScore) return;
+    if (score <= bestScore) return false;
     bestScore = score;
-    bestElement.textContent = String(bestScore);
-    try { localStorage.setItem(bestKey, String(bestScore)); } catch (_) {}
+    bestElement.textContent = formatNumber(bestScore);
+    try {
+      localStorage.setItem(bestKey, String(bestScore));
+    } catch (_) {}
+    return true;
   }
 
   function canMove() {
@@ -150,26 +244,35 @@
     }
 
     if (!canMove()) {
-      showMessage('No moves left', `Final score: ${score}. Start a new game to try again.`, false);
+      showMessage('No moves left', `Final score: ${formatNumber(score)}. Start a new game to try again.`, false);
     }
   }
 
-  function render() {
-    boardElement.replaceChildren();
-    board.flat().forEach((value) => {
-      const tile = document.createElement('div');
-      tile.className = 'tile-2048';
-      tile.setAttribute('role', 'gridcell');
-      tile.dataset.value = value ? String(value) : '0';
-      if (value > 2048) tile.dataset.large = 'true';
-      tile.textContent = value ? String(value) : '';
-      tile.setAttribute('aria-label', value ? String(value) : 'Empty tile');
-      boardElement.append(tile);
+  function render({ mergedCells = [], newCells = [] } = {}) {
+    const mergedSet = new Set(mergedCells);
+    const newSet = new Set(newCells.map(({ row, column }) => cellKey(row, column)));
+    const fragment = document.createDocumentFragment();
+
+    board.forEach((row, rowIndex) => {
+      row.forEach((value, columnIndex) => {
+        const key = cellKey(rowIndex, columnIndex);
+        const tile = document.createElement('div');
+        tile.className = 'tile-2048';
+        tile.setAttribute('role', 'gridcell');
+        tile.dataset.value = value ? String(value) : '0';
+        if (value > 2048) tile.dataset.large = 'true';
+        if (mergedSet.has(key)) tile.classList.add('is-merged');
+        else if (newSet.has(key)) tile.classList.add('is-new');
+        tile.textContent = value ? formatNumber(value) : '';
+        tile.setAttribute('aria-label', value ? String(value) : 'Empty tile');
+        fragment.append(tile);
+      });
     });
 
-    scoreElement.textContent = String(score);
-    bestElement.textContent = String(bestScore);
-    undoButton.disabled = !previousState;
+    boardElement.replaceChildren(fragment);
+    scoreElement.textContent = formatNumber(score);
+    bestElement.textContent = formatNumber(bestScore);
+    undoButton.disabled = !previousState || inputLocked;
   }
 
   function showMessage(title, text, allowContinue) {
@@ -184,12 +287,16 @@
   }
 
   function undo() {
-    if (!previousState) return;
+    if (!previousState || inputLocked) return;
     board = cloneBoard(previousState.board);
     score = previousState.score;
     previousState = null;
     hideMessage();
     render();
+
+    boardElement.classList.remove('is-undoing');
+    requestAnimationFrame(() => boardElement.classList.add('is-undoing'));
+    window.setTimeout(() => boardElement.classList.remove('is-undoing'), reducedMotion ? 0 : 300);
   }
 
   function directionFromKey(key) {
