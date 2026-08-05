@@ -46,7 +46,7 @@ export function buildPostHtml(post) {
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/hub.css">
-  <style>figure{margin:0}.single-media{grid-template-columns:1fr}.single-media .media-item{max-width:100%}</style>
+  <link rel="stylesheet" href="/journal/post-layout.css?v=1">
 </head>
 <body>
   <header class="hub-header">
@@ -55,17 +55,22 @@ export function buildPostHtml(post) {
     <a class="header-action" href="/journal/">All Posts</a>
   </header>
 
-  <main class="post-shell">
-    <header class="post-header reveal">
-      <a class="back-link" href="/journal/">← Back to Journal</a>
-      <div class="post-date"><time datetime="${escapeAttr(post.date)}">${escapeHtml(post.displayDate)}</time></div>
-      <p class="eyebrow">${tags}</p>
-      <h1>${escapeHtml(post.title)}</h1>
-      <p class="post-description">${escapeHtml(post.description)}</p>
-    </header>
+  <main class="journal-post-shell">
+    <section class="post-intro reveal">
+      <figure class="post-intro-media">${heroBlock(post)}</figure>
+      <div class="post-intro-copy">
+        <a class="back-link" href="/journal/">← Back to Journal</a>
+        <div class="post-intro-meta">
+          <p class="eyebrow">${tags}</p>
+          <time datetime="${escapeAttr(post.date)}">${escapeHtml(post.displayDate)}</time>
+        </div>
+        <h1>${escapeHtml(post.title)}</h1>
+        <p class="post-description">${escapeHtml(post.description)}</p>
+      </div>
+    </section>
 
-    <figure class="post-hero reveal">${heroBlock(post)}</figure>
-    <article>${sections || '<section class="post-panel reveal"><p>More details will be added soon.</p></section>'}</article>
+    <div class="post-divider reveal"><span>FULL POST</span></div>
+    <article class="post-content">${sections || '<section class="post-panel reveal"><p>More details will be added soon.</p></section>'}</article>
   </main>
 
   <footer class="site-footer"><a class="footer-brand" href="/"><img src="/assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>Journal</small></span></a><p>© <span id="year"></span> Danny4686.</p></footer>
