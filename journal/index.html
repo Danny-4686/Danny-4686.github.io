@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Memories, project updates, and milestones from Danny4686 and CloudLab Studio.">
+  <meta name="theme-color" content="#061117">
+  <title>Journal | Danny4686</title>
+  <link rel="icon" href="../assets/images/cloudlab-logo.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../hub.css">
+</head>
+<body>
+  <header class="hub-header">
+    <a class="hub-brand" href="/" aria-label="Return to Danny4686.com">
+      <img src="../assets/images/cloudlab-logo.png" alt="CloudLab logo">
+      <span><strong>Danny4686</strong><small>CloudLab Studio</small></span>
+    </a>
+    <nav class="hub-nav" aria-label="Site navigation">
+      <a href="/games/">Games</a>
+      <a class="active" href="/journal/">Journal</a>
+      <a href="/">Home</a>
+    </nav>
+    <a class="header-action" href="/games/">Play Games</a>
+  </header>
+
+  <main>
+    <section class="page-shell page-hero reveal">
+      <p class="eyebrow">STUDIO JOURNAL</p>
+      <h1>Projects, progress, and memories.</h1>
+      <p class="lead">A visual timeline of what I am building, what changed, and the moments worth remembering along the way.</p>
+    </section>
+
+    <section class="page-shell section-block">
+      <div class="section-heading reveal">
+        <div>
+          <p class="eyebrow">LATEST POSTS</p>
+          <h2>From the journal.</h2>
+        </div>
+        <input class="search-box" id="journalSearch" type="search" placeholder="Search posts" aria-label="Search journal posts">
+      </div>
+
+      <div class="filters reveal" id="journalFilters" aria-label="Filter journal posts">
+        <button class="filter-button active" type="button" data-tag="all">All</button>
+      </div>
+
+      <div class="journal-grid" id="journalGrid" aria-live="polite">
+        <div class="empty-state">Loading journal posts…</div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <a class="footer-brand" href="/"><img src="../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>Journal</small></span></a>
+    <p>© <span id="year"></span> Danny4686.</p>
+  </footer>
+
+  <script src="journal.js"></script>
+  <script src="../hub.js"></script>
+</body>
+</html>
