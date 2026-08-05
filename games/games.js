@@ -23,6 +23,14 @@
     document.head.append(scaleStyles);
   }
 
+  if (!document.querySelector('link[data-classic-banner-polish]')) {
+    const classicStyles = document.createElement('link');
+    classicStyles.rel = 'stylesheet';
+    classicStyles.href = 'classic-banner-polish.css?v=1';
+    classicStyles.dataset.classicBannerPolish = 'true';
+    document.head.append(classicStyles);
+  }
+
   const search = document.getElementById('gameSearch');
   const filters = document.getElementById('gameFilters');
   const cards = [...document.querySelectorAll('.game-card[data-genre]')];
