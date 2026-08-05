@@ -12,6 +12,8 @@
   const size = 9;
   const mineTotal = 10;
   const storageKey = 'cloudlab-minesweeper-best';
+  const flagImageSource = '../../assets/images/memory/flag.png';
+  const bombImageSource = '../../assets/images/memory/bomb.png';
 
   let cells = [];
   let started = false;
@@ -36,6 +38,16 @@
       number: 0,
       element: null
     };
+  }
+
+  function createCellImage(source, className) {
+    const image = document.createElement('img');
+    image.className = `mine-cell-icon ${className}`;
+    image.src = source;
+    image.alt = '';
+    image.draggable = false;
+    image.decoding = 'async';
+    return image;
   }
 
   function neighbors(cell) {
@@ -163,22 +175,21 @@
     element.classList.toggle('mine', cell.revealed && cell.mine);
     element.disabled = cell.revealed || over;
     element.removeAttribute('data-number');
+    element.replaceChildren();
 
     if (cell.flagged && !cell.revealed) {
-      element.textContent = '◆';
+      element.append(createCellImage(flagImageSource, 'flag-icon'));
       element.setAttribute('aria-label', `Flagged tile ${cell.row + 1}, ${cell.column + 1}`);
     } else if (cell.revealed && cell.mine) {
-      element.textContent = '●';
+      element.append(createCellImage(bombImageSource, 'bomb-icon'));
       element.setAttribute('aria-label', 'Mine');
     } else if (cell.revealed && cell.number > 0) {
       element.textContent = String(cell.number);
       element.dataset.number = String(cell.number);
       element.setAttribute('aria-label', `${cell.number} nearby mines`);
     } else if (cell.revealed) {
-      element.textContent = '';
       element.setAttribute('aria-label', 'Empty safe tile');
     } else {
-      element.textContent = '';
       element.setAttribute('aria-label', `Hidden tile ${cell.row + 1}, ${cell.column + 1}`);
     }
   }
@@ -190,7 +201,7 @@
       if (cell.mine) cell.revealed = true;
       renderCell(cell);
     });
-    hitCell.element.style.boxShadow = '0 0 24px rgba(239,109,104,.35)';
+    hitCell.element.classList.add('triggered');
     statusElement.textContent = 'A mine was triggered. Start a new board to try again.';
   }
 
