@@ -7,7 +7,7 @@ Private Cloudflare Worker dashboard for publishing Journal posts to `Danny-4686/
 - The dashboard is served from `admin.danny4686.com`, not from the public GitHub Pages site.
 - It is not linked in the public navigation.
 - Dashboard HTML, JavaScript, CSS, and API routes are served only after a valid signed session.
-- Authentication uses GitHub OAuth and permits only the GitHub login configured in `ALLOWED_GITHUB_LOGIN`.
+- Authentication uses GitHub OAuth and permits only the configured GitHub username and permanent numeric account ID.
 - Repository writes use a fine-grained GitHub token stored only as a Cloudflare Worker secret.
 - Sessions use signed Secure/HttpOnly cookies and CSRF protection.
 - Pages return `noindex`, `nofollow`, and `noarchive` headers.
@@ -57,7 +57,7 @@ openssl rand -base64 48
 npm run deploy
 ```
 
-Wrangler attaches the Worker to `admin.danny4686.com/*`. The `danny4686.com` zone must be active in the same Cloudflare account.
+Wrangler attaches the Worker to `admin.danny4686.com/*`. The `danny4686.com` zone must be active in the same Cloudflare account, with the admin hostname proxied through Cloudflare.
 
 ## 5. Optional automatic deployment
 
@@ -67,7 +67,7 @@ Add these repository secrets:
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_ACCOUNT_ID`
 
-The API token needs Workers Scripts and Workers Routes edit access for the `danny4686.com` zone.
+The API token needs Workers Scripts and Workers Routes edit access for the `danny4686.com` zone. After the secrets are configured, set the repository variable `ENABLE_ADMIN_DEPLOY` to `true`, or run the workflow manually.
 
 ## Publishing behavior
 
