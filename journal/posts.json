@@ -12,7 +12,9 @@
     "mediaType": "image",
     "thumbnail": "../assets/images/profile-gloss.webp",
     "fit": "contain",
-    "comingSoon": true
+    "mode": "coming-soon",
+    "comingSoon": true,
+    "cardOnly": false
   },
   {
     "slug": "test",
@@ -26,6 +28,8 @@
     "mediaType": "image",
     "thumbnail": "/assets/images/journal/test/earth.png",
     "fit": "contain",
-    "comingSoon": false
+    "mode": "article",
+    "comingSoon": false,
+    "cardOnly": false
   }
 ]
