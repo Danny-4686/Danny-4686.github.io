@@ -36,10 +36,17 @@
   }
 
   function createPostCard(post, index) {
-    const card = document.createElement('a');
-    card.className = 'journal-card reveal';
-    card.href = `/journal/posts/${encodeURIComponent(post.slug)}/`;
+    const isComingSoon = Boolean(post.comingSoon);
+    const card = document.createElement(isComingSoon ? 'article' : 'a');
+    card.className = `journal-card reveal${isComingSoon ? ' coming-soon' : ''}`;
     card.style.setProperty('--delay', `${Math.min(index, 3) * 55}ms`);
+
+    if (isComingSoon) {
+      card.setAttribute('aria-label', `${post.title}, coming soon`);
+      card.setAttribute('aria-disabled', 'true');
+    } else {
+      card.href = `/journal/posts/${encodeURIComponent(post.slug)}/`;
+    }
 
     card.append(createMedia(post));
 
@@ -51,7 +58,7 @@
 
     const badge = document.createElement('span');
     badge.className = 'badge';
-    badge.textContent = post.tags?.[0] || 'JOURNAL';
+    badge.textContent = isComingSoon ? 'COMING SOON' : (post.tags?.[0] || 'JOURNAL');
 
     const date = document.createElement('time');
     date.dateTime = post.date;
@@ -67,20 +74,22 @@
 
     const linkText = document.createElement('span');
     linkText.className = 'card-link';
-    linkText.innerHTML = 'Read post <span>→</span>';
+    linkText.innerHTML = isComingSoon ? 'Coming Soon' : 'Read post <span>→</span>';
 
     body.append(meta, title, description, linkText);
     card.append(body);
 
-    card.addEventListener('pointermove', (event) => {
-      const rect = card.getBoundingClientRect();
-      card.style.setProperty('--spot-x', `${event.clientX - rect.left}px`);
-      card.style.setProperty('--spot-y', `${event.clientY - rect.top}px`);
-    });
-    card.addEventListener('pointerleave', () => {
-      card.style.removeProperty('--spot-x');
-      card.style.removeProperty('--spot-y');
-    });
+    if (!isComingSoon) {
+      card.addEventListener('pointermove', (event) => {
+        const rect = card.getBoundingClientRect();
+        card.style.setProperty('--spot-x', `${event.clientX - rect.left}px`);
+        card.style.setProperty('--spot-y', `${event.clientY - rect.top}px`);
+      });
+      card.addEventListener('pointerleave', () => {
+        card.style.removeProperty('--spot-x');
+        card.style.removeProperty('--spot-y');
+      });
+    }
 
     return card;
   }
