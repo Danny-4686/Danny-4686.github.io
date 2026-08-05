@@ -11,8 +11,20 @@
   const playAgainButton = document.getElementById('playAgainButton');
   const peekButton = document.getElementById('peekButton');
 
-  const tokens = ['CLOUD', 'LAB', 'GAME', 'CODE', 'WEB', 'BUILD', 'PLAY', 'IDEA'];
-  const bestKey = 'cloudlab-memory-best';
+  const images = [
+    { key: 'cyan', label: 'Cyan globe', src: '../../assets/images/memory/cyan.svg' },
+    { key: 'gray', label: 'Gray globe', src: '../../assets/images/memory/gray.svg' },
+    { key: 'lime', label: 'Lime globe', src: '../../assets/images/memory/lime.svg' },
+    { key: 'blue', label: 'Blue globe', src: '../../assets/images/memory/blue.svg' },
+    { key: 'red', label: 'Red globe', src: '../../assets/images/memory/red.svg' },
+    { key: 'purple', label: 'Purple globe', src: '../../assets/images/memory/purple.svg' },
+    { key: 'earth', label: 'Multicolor globe', src: '../../assets/images/memory/earth.svg' },
+    { key: 'mint', label: 'Mint globe', src: '../../assets/images/memory/mint.svg' },
+    { key: 'gloss-cyan', label: 'Glossy cyan globe', src: '../../assets/images/memory/gloss-cyan.svg' },
+    { key: 'gloss-gold', label: 'Glossy gold globe', src: '../../assets/images/memory/gloss-gold.svg' }
+  ];
+
+  const bestKey = 'cloudlab-memory-image-best';
   let cards = [];
   let firstCard = null;
   let secondCard = null;
@@ -77,8 +89,8 @@
     button.className = 'memory-card';
     button.type = 'button';
     button.dataset.id = cardData.id;
-    button.dataset.token = cardData.token;
-    button.dataset.style = String(cardData.style);
+    button.dataset.key = cardData.key;
+    button.dataset.label = cardData.label;
     button.setAttribute('aria-label', `Hidden card ${index + 1}`);
 
     const inner = document.createElement('span');
@@ -90,8 +102,13 @@
 
     const back = document.createElement('span');
     back.className = 'memory-card-face memory-card-back';
-    back.textContent = cardData.token;
     back.setAttribute('aria-hidden', 'true');
+
+    const image = document.createElement('img');
+    image.src = cardData.src;
+    image.alt = '';
+    image.draggable = false;
+    back.append(image);
 
     inner.append(front, back);
     button.append(inner);
@@ -112,10 +129,11 @@
     message.classList.add('hidden');
     peekButton.disabled = false;
 
-    const pairs = tokens.flatMap((token, style) => [
-      { id: `${style}-a`, token, style },
-      { id: `${style}-b`, token, style }
+    const pairs = images.flatMap((image) => [
+      { ...image, id: `${image.key}-a` },
+      { ...image, id: `${image.key}-b` }
     ]);
+
     cards = shuffle(pairs);
     boardElement.replaceChildren(...cards.map(buildCard));
     updateStats();
@@ -125,7 +143,7 @@
     if (locked || card === firstCard || card.classList.contains('is-matched')) return;
     startTimer();
     card.classList.add('is-flipped');
-    card.setAttribute('aria-label', `Revealed card: ${card.dataset.token}`);
+    card.setAttribute('aria-label', `Revealed card: ${card.dataset.label}`);
 
     if (!firstCard) {
       firstCard = card;
@@ -136,7 +154,7 @@
     moves += 1;
     movesElement.textContent = String(moves);
 
-    if (firstCard.dataset.token === secondCard.dataset.token) {
+    if (firstCard.dataset.key === secondCard.dataset.key) {
       matchCards();
     } else {
       hideMismatchedCards();
@@ -148,12 +166,12 @@
     secondCard.classList.add('is-matched');
     firstCard.disabled = true;
     secondCard.disabled = true;
-    firstCard.setAttribute('aria-label', `Matched card: ${firstCard.dataset.token}`);
-    secondCard.setAttribute('aria-label', `Matched card: ${secondCard.dataset.token}`);
+    firstCard.setAttribute('aria-label', `Matched card: ${firstCard.dataset.label}`);
+    secondCard.setAttribute('aria-label', `Matched card: ${secondCard.dataset.label}`);
     matchedPairs += 1;
     clearSelection();
 
-    if (matchedPairs === tokens.length) finishGame();
+    if (matchedPairs === images.length) finishGame();
   }
 
   function hideMismatchedCards() {
@@ -182,12 +200,12 @@
       saveBest();
     }
     updateStats();
-    completionText.textContent = `Completed in ${moves} moves and ${formatTime(elapsedSeconds)}.`;
+    completionText.textContent = `Matched all 10 designs in ${moves} moves and ${formatTime(elapsedSeconds)}.`;
     message.classList.remove('hidden');
   }
 
   function quickPeek() {
-    if (locked || matchedPairs === tokens.length) return;
+    if (locked || matchedPairs === images.length) return;
     const activeRound = roundId;
     locked = true;
     peekButton.disabled = true;
@@ -200,8 +218,13 @@
         if (card !== firstCard && card !== secondCard) card.classList.remove('is-flipped');
       });
       locked = false;
-    }, 1000);
+    }, 1100);
   }
+
+  images.forEach((imageData) => {
+    const image = new Image();
+    image.src = imageData.src;
+  });
 
   newGameButton.addEventListener('click', newGame);
   playAgainButton.addEventListener('click', newGame);
