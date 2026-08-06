@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   deploy:
@@ -23,9 +23,40 @@ jobs:
         with:
           node-version: 22
       - run: npm install
-      - uses: cloudflare/wrangler-action@v3
+      - id: cloudflare_deploy
+        continue-on-error: true
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: cloudflare-admin
           command: deploy
+      - name: Publish safe deployment status
+        if: always()
+        working-directory: .
+        env:
+          DEPLOY_OUTCOME: ${{ steps.cloudflare_deploy.outcome }}
+        run: |
+          mkdir -p .deployment-status
+          python - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+
+          status = {
+              "workflow": "Deploy Journal Admin",
+              "commit": os.environ.get("GITHUB_SHA", ""),
+              "outcome": os.environ.get("DEPLOY_OUTCOME", "unknown"),
+              "completedAt": datetime.now(timezone.utc).isoformat()
+          }
+          with open(".deployment-status/journal-admin.json", "w", encoding="utf-8") as handle:
+              json.dump(status, handle, indent=2)
+              handle.write("\n")
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .deployment-status/journal-admin.json
+          git diff --cached --quiet || git commit -m "Record Journal Admin deployment status [skip ci]"
+          git push
+      - name: Fail workflow when deployment failed
+        if: steps.cloudflare_deploy.outcome != 'success'
+        run: exit 1
