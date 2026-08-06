@@ -93,6 +93,7 @@ jobs:
           DEPLOY_OUTCOME: ${{ steps.cloudflare_deploy.outcome }}
           SMOKE_OUTCOME: ${{ steps.community_smoke.outcome }}
         run: |
+          git restore cloudflare-admin/src/community-store.js
           git fetch origin main
           git rebase origin/main
           mkdir -p .deployment-status
