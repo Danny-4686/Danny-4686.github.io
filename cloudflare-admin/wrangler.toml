@@ -5,8 +5,17 @@ workers_dev = false
 keep_vars = true
 
 routes = [
-  { pattern = "admin.danny4686.com", custom_domain = true }
+  { pattern = "admin.danny4686.com", custom_domain = true },
+  { pattern = "api.danny4686.com", custom_domain = true }
 ]
+
+[[durable_objects.bindings]]
+name = "COMMUNITY"
+class_name = "CommunityStore"
+
+[[migrations]]
+tag = "community-v1"
+new_sqlite_classes = ["CommunityStore"]
 
 [vars]
 GITHUB_OWNER = "Danny-4686"
@@ -14,3 +23,4 @@ GITHUB_REPO = "Danny-4686.github.io"
 GITHUB_BRANCH = "main"
 ALLOWED_GITHUB_LOGIN = "Danny-4686"
 ALLOWED_GITHUB_ID = "176429540"
+COMMUNITY_ALLOWED_ORIGINS = "https://danny4686.com,https://www.danny4686.com"
