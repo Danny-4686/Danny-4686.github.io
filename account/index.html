@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/community/account.css?v=3">
-  <link rel="stylesheet" href="/community/profile-settings.css?v=1">
+  <link rel="stylesheet" href="/community/profile-settings.css?v=2">
 </head>
 <body data-account-page="account">
   <header class="account-header">
@@ -29,10 +29,14 @@
             <span id="profileAvatar" class="profile-avatar">C</span>
             <img id="profileAvatarImage" class="profile-avatar-image" alt="Your CloudLab profile picture" hidden>
           </div>
-          <div>
+          <div class="profile-identity-copy">
             <p class="eyebrow">CLOUDLAB ACCOUNT</p>
-            <h1 id="profileUsername">Loading…</h1>
+            <div class="profile-name-line">
+              <h1 id="profileUsername">Loading…</h1>
+              <span id="profileStatusDisplay" class="profile-status-display" hidden></span>
+            </div>
             <p id="profileJoined">Loading account details…</p>
+            <p id="profileBioDisplay" class="profile-bio-display">Loading profile…</p>
           </div>
         </div>
         <div class="profile-top-actions">
@@ -43,7 +47,7 @@
       <section id="profileSettings" class="profile-settings" aria-labelledby="profileSettingsTitle">
         <div class="profile-settings-heading">
           <div><p class="eyebrow">PROFILE SETTINGS</p><h2 id="profileSettingsTitle">Your profile</h2></div>
-          <p>Update your picture or manage your public username.</p>
+          <p>Update the public information shown when someone opens your profile.</p>
         </div>
 
         <div id="profileSettingsFeedback" class="profile-settings-feedback" hidden role="status" aria-live="polite"></div>
@@ -83,6 +87,23 @@
             </form>
             <p class="setting-note">New accounts wait 7 days. After a change, the next change unlocks in 30 days and the old name stays reserved for 7 days.</p>
           </article>
+
+          <article class="profile-setting-card profile-about-card">
+            <h3>Bio and status</h3>
+            <p>Add a short bio and an optional status line for a note, pronouns, or anything brief.</p>
+            <form id="profileDetailsForm" class="profile-details-form">
+              <label class="field">
+                <span class="field-title-row"><span>Status or pronouns</span><small id="statusCount">0 / 20</small></span>
+                <input id="profileStatusInput" name="statusText" maxlength="20" placeholder="Example: he/him">
+              </label>
+              <label class="field profile-bio-field">
+                <span class="field-title-row"><span>Bio</span><small id="bioCount">0 / 160</small></span>
+                <textarea id="profileBioInput" name="bio" maxlength="160" rows="4" placeholder="Tell the community a little about yourself."></textarea>
+              </label>
+              <button id="profileDetailsSave" class="settings-button primary" type="submit">Save profile</button>
+            </form>
+            <p class="setting-note">This information is public and appears when someone opens your leaderboard profile.</p>
+          </article>
         </div>
       </section>
 
@@ -94,6 +115,6 @@
   <footer class="account-footer"><span>© <span id="year"></span> Danny4686.</span><a href="/">Back to Danny4686.com</a></footer>
   <script>document.getElementById('year').textContent=new Date().getFullYear()</script>
   <script src="/community/account.js?v=3"></script>
-  <script src="/community/profile-settings.js?v=2"></script>
+  <script src="/community/profile-settings.js?v=3"></script>
 </body>
 </html>
