@@ -1,5 +1,21 @@
 [
   {
+    "slug": "luck-incremental",
+    "title": "Luck Incremental",
+    "description": "After reaching the maximum rebirth level of 52 in Luck Incremental, I decided to take on a new challenge: earning the most prestige in the entire game. After a lot of grinding, I finally managed to reach #1 on the global leaderboard! Now we’ll just have to see how long I can hold the top spot.",
+    "date": "2026-08-05",
+    "displayDate": "August 5, 2026",
+    "tags": [
+      "Game"
+    ],
+    "mediaType": "image",
+    "thumbnail": "/assets/images/journal/luck-incremental/image.png",
+    "fit": "contain",
+    "mode": "card",
+    "comingSoon": false,
+    "cardOnly": true
+  },
+  {
     "slug": "fortnite-sprites",
     "title": "Fortnite Sprites",
     "description": "After three long days of grinding and dealing with Fortnite bugs, we finally mastered every Sprite! It definitely wasn’t easy, but it feels great to have them all finished. Now it’s time to see what Fortnite has planned for us on August 6!",
