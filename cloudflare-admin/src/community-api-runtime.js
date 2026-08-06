@@ -1,6 +1,7 @@
 import { handleCommunityApi as handleBaseCommunityApi } from './community-api.js';
 
 const API_PREFIX = '/v1';
+const COMMUNITY_BUILD = '2026-08-06.1';
 
 function allowedOrigins(env) {
   const configured = String(env.COMMUNITY_ALLOWED_ORIGINS || '')
@@ -110,15 +111,20 @@ export async function handleCommunityApi(request, env) {
       const storageReady = Boolean(storageResponse.ok && storageData.ok);
       return json(request, env, {
         ...baseData,
+        build: COMMUNITY_BUILD,
         storageReady,
-        storageBackend: storageReady ? (storageData.storage || 'sqlite') : 'unavailable'
+        storageBackend: storageReady ? (storageData.storage || 'sqlite') : 'unavailable',
+        storageResponseStatus: storageResponse.status,
+        storageResponse: storageReady ? undefined : storageData
       }, storageReady ? 200 : 503);
     } catch (error) {
       console.error('Community storage health check failed', error);
       return json(request, env, {
         ...baseData,
+        build: COMMUNITY_BUILD,
         storageReady: false,
-        storageBackend: 'unavailable'
+        storageBackend: 'unavailable',
+        storageError: String(error?.message || error || 'Unknown storage error').slice(0, 240)
       }, 503);
     }
   }
