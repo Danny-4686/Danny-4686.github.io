@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Play Tower Stacker in the CloudLab Arcade.">
+  <meta name="theme-color" content="#061117">
+  <title>Tower Stacker | CloudLab Arcade</title>
+  <link rel="icon" href="../../assets/images/cloudlab-logo.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../hub.css">
+  <style>
+    .stack-stage{position:relative;width:min(680px,100%);margin:0 auto;overflow:hidden;border:1px solid var(--line);border-radius:24px;background:#07151c;box-shadow:inset 0 0 0 1px rgba(255,255,255,.025),0 20px 50px rgba(0,0,0,.24)}
+    #stackCanvas{display:block;width:100%;height:auto;aspect-ratio:1;touch-action:manipulation;cursor:pointer}.game-message{background:rgba(4,13,18,.58);backdrop-filter:blur(8px);transition:opacity .2s ease,visibility .2s ease}.game-message.hidden{display:grid;opacity:0;visibility:hidden;pointer-events:none}.game-message h2{font-size:clamp(2rem,6vw,3.4rem)}.drop-button{width:min(320px,100%);min-height:54px;font-size:1rem}
+  </style>
+</head>
+<body>
+  <header class="hub-header"><a class="hub-brand" href="/" aria-label="Return to Danny4686.com"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>Danny4686</strong><small>CloudLab Studio</small></span></a><nav class="hub-nav" aria-label="Site navigation"><a class="active" href="/games/">Games</a><a href="/journal/">Journal</a><a href="/">Home</a></nav><a class="header-action" href="/games/">All Games</a></header>
+  <main class="page-shell game-page">
+    <a class="back-link reveal" href="/games/">← Back to Browser Games</a>
+    <div class="game-heading reveal"><div><p class="eyebrow">CLOUDLAB ARCADE</p><h1>Tower Stacker</h1><p>Drop each moving block onto the tower. Miss the overlap and the run is over.</p></div><div class="score-row"><div class="score-chip"><small>HEIGHT</small><strong id="score">0</strong></div><div class="score-chip"><small>PERFECT</small><strong id="perfect">0</strong></div><div class="score-chip"><small>BEST</small><strong id="best">0</strong></div></div></div>
+    <section class="game-panel reveal" aria-label="Tower Stacker game">
+      <div class="stack-stage"><canvas id="stackCanvas" width="720" height="720" aria-label="Tower Stacker board"></canvas><div class="game-message" id="gameMessage"><div><h2 id="messageTitle">Build upward.</h2><p id="messageText">Press Start, then tap the board or press Space to drop each moving block.</p></div></div></div>
+      <div class="game-toolbar"><button class="game-button primary drop-button" id="dropButton" type="button">Start Tower</button><button class="game-button" id="restartButton" type="button">Restart</button></div>
+      <p class="control-note">Tap anywhere on the board, press the drop button, or use Space. Near-perfect drops snap into place.</p>
+    </section>
+  </main>
+  <footer class="site-footer"><a class="footer-brand" href="/"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>Tower Stacker</small></span></a><p>© <span id="year"></span> Danny4686.</p></footer>
+  <script src="../../hub.js"></script>
+  <script>
+  (() => {
+    const canvas = document.getElementById('stackCanvas');
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width;
+    const H = canvas.height;
+    const scoreEl = document.getElementById('score');
+    const perfectEl = document.getElementById('perfect');
+    const bestEl = document.getElementById('best');
+    const message = document.getElementById('gameMessage');
+    const messageTitle = document.getElementById('messageTitle');
+    const messageText = document.getElementById('messageText');
+    const dropButton = document.getElementById('dropButton');
+    let blocks = [];
+    let active = null;
+    let debris = [];
+    let running = false;
+    let score = 0;
+    let perfect = 0;
+    let best = Number(localStorage.getItem('cloudlab-stacker-best') || 0);
+    let cameraY = 0;
+    let last = 0;
+    let raf = 0;
+
+    const colors = ['#68d0df','#8bcf9b','#f2c75c','#ed8b45','#ef6d68','#9e8cff'];
+    function showMessage(title, text) { messageTitle.textContent = title; messageText.textContent = text; message.classList.remove('hidden'); }
+    function hideMessage() { message.classList.add('hidden'); }
+    function updateStats() { scoreEl.textContent = score; perfectEl.textContent = perfect; bestEl.textContent = Math.max(best, score); }
+
+    function resetGame() {
+      cancelAnimationFrame(raf);
+      blocks = [{ x: W / 2 - 150, y: H - 62, w: 300, h: 34, color: colors[0] }];
+      active = null;
+      debris = [];
+      running = false;
+      score = 0;
+      perfect = 0;
+      cameraY = 0;
+      dropButton.textContent = 'Start Tower';
+      updateStats();
+      showMessage('Build upward.', 'Press Start, then tap the board or press Space to drop each moving block.');
+      draw();
+    }
+
+    function makeActive() {
+      const previous = blocks[blocks.length - 1];
+      const direction = score % 2 === 0 ? 1 : -1;
+      active = {
+        x: direction > 0 ? -previous.w : W,
+        y: previous.y - 48,
+        w: previous.w,
+        h: 34,
+        vx: direction * Math.min(540, 210 + score * 18),
+        color: colors[(score + 1) % colors.length]
+      };
+    }
+
+    function start() {
+      if (running) return;
+      if (score && !active) resetGame();
+      running = true;
+      hideMessage();
+      dropButton.textContent = 'Drop Block';
+      makeActive();
+      last = performance.now();
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(loop);
+    }
+
+    function endGame() {
+      running = false;
+      active = null;
+      best = Math.max(best, score);
+      localStorage.setItem('cloudlab-stacker-best', String(best));
+      updateStats();
+      dropButton.textContent = 'Play Again';
+      showMessage('Tower Complete', `You stacked ${score} ${score === 1 ? 'level' : 'levels'} with ${perfect} perfect ${perfect === 1 ? 'drop' : 'drops'}.`);
+    }
+
+    function drop() {
+      if (!running) { start(); return; }
+      if (!active) return;
+      const previous = blocks[blocks.length - 1];
+      let left = Math.max(active.x, previous.x);
+      const right = Math.min(active.x + active.w, previous.x + previous.w);
+      let overlap = right - left;
+      const difference = active.x - previous.x;
+
+      if (Math.abs(difference) <= 7) {
+        left = previous.x;
+        overlap = previous.w;
+        perfect += 1;
+      }
+
+      if (overlap <= 0) {
+        debris.push({ ...active, vy: 40, spin: 0, vr: active.vx > 0 ? .7 : -.7 });
+        endGame();
+        return;
+      }
+
+      const overhangLeft = Math.max(0, previous.x - active.x);
+      const overhangRight = Math.max(0, active.x + active.w - (previous.x + previous.w));
+      if (overhangLeft > 0) debris.push({ x: active.x, y: active.y, w: overhangLeft, h: active.h, color: active.color, vy: 0, spin: 0, vr: -.5 });
+      if (overhangRight > 0) debris.push({ x: right, y: active.y, w: overhangRight, h: active.h, color: active.color, vy: 0, spin: 0, vr: .5 });
+
+      blocks.push({ x: left, y: active.y, w: overlap, h: active.h, color: active.color });
+      score += 1;
+      updateStats();
+      const targetTop = H * .33;
+      if (active.y - cameraY < targetTop) cameraY = active.y - targetTop;
+      makeActive();
+    }
+
+    function update(dt) {
+      if (active) {
+        active.x += active.vx * dt;
+        if (active.vx > 0 && active.x > W) active.x = -active.w;
+        if (active.vx < 0 && active.x + active.w < 0) active.x = W;
+      }
+      debris.forEach((piece) => { piece.vy += 920 * dt; piece.y += piece.vy * dt; piece.spin += piece.vr * dt; });
+      debris = debris.filter((piece) => piece.y - cameraY < H + 180);
+    }
+
+    function drawBlock(block, offset = cameraY) {
+      const y = block.y - offset;
+      ctx.save();
+      ctx.shadowColor = block.color;
+      ctx.shadowBlur = 15;
+      const grad = ctx.createLinearGradient(block.x, y, block.x, y + block.h);
+      grad.addColorStop(0, block.color);
+      grad.addColorStop(1, '#17313b');
+      ctx.fillStyle = grad;
+      ctx.beginPath(); ctx.roundRect(block.x, y, block.w, block.h, 8); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,.2)';
+      ctx.beginPath(); ctx.roundRect(block.x + 4, y + 4, Math.max(0, block.w - 8), 5, 2); ctx.fill();
+      ctx.restore();
+    }
+
+    function draw() {
+      const bg = ctx.createLinearGradient(0, 0, 0, H);
+      bg.addColorStop(0, '#0b2a36');
+      bg.addColorStop(1, '#040d12');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, W, H);
+      ctx.strokeStyle = 'rgba(104,208,223,.07)';
+      for (let x = 0; x < W; x += 48) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+      for (let y = 0; y < H; y += 48) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+
+      blocks.forEach((block) => drawBlock(block));
+      if (active) drawBlock(active);
+      debris.forEach((piece) => {
+        ctx.save();
+        ctx.translate(piece.x + piece.w / 2, piece.y - cameraY + piece.h / 2);
+        ctx.rotate(piece.spin);
+        const local = { ...piece, x: -piece.w / 2, y: cameraY - piece.h / 2 };
+        drawBlock(local, cameraY);
+        ctx.restore();
+      });
+    }
+
+    function loop(now) {
+      if (!running) { draw(); return; }
+      const dt = Math.min(.025, (now - last) / 1000 || 0);
+      last = now;
+      update(dt);
+      draw();
+      raf = requestAnimationFrame(loop);
+    }
+
+    dropButton.addEventListener('click', drop);
+    canvas.addEventListener('pointerdown', (event) => { event.preventDefault(); drop(); });
+    document.getElementById('restartButton').addEventListener('click', resetGame);
+    window.addEventListener('keydown', (event) => { if (event.code === 'Space' || event.key === 'Enter') { event.preventDefault(); drop(); } });
+    bestEl.textContent = best;
+    resetGame();
+  })();
+  </script>
+</body>
+</html>
