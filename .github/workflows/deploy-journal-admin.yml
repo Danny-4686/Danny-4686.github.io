@@ -43,7 +43,7 @@ jobs:
         working-directory: .
         run: |
           sleep 12
-          HEALTH_CODE="$(curl -sS --retry 3 --retry-delay 2 --retry-all-errors --max-time 25 -o /tmp/community-health.json -w '%{http_code}' 'https://api.danny4686.com/v1/health' || printf '000')"
+          HEALTH_CODE="$(curl -sS --retry 3 --retry-delay 2 --retry-all-errors --max-time 40 -o /tmp/community-health.json -w '%{http_code}' 'https://api.danny4686.com/v1/health?deep=1' || printf '000')"
           CHECK_NAME="DeployCheck${GITHUB_RUN_NUMBER}"
           CHECK_NAME="${CHECK_NAME:0:20}"
           USERNAME_CODE="$(curl -sS --retry 3 --retry-delay 2 --retry-all-errors --max-time 25 -o /tmp/community-username.json -w '%{http_code}' "https://api.danny4686.com/v1/username?name=${CHECK_NAME}" || printf '000')"
@@ -77,6 +77,7 @@ jobs:
               os.environ.get("HEALTH_CODE") == "200"
               and health.get("ok") is True
               and health.get("storageReady") is True
+              and health.get("signupReady") is True
               and os.environ.get("USERNAME_CODE") == "200"
               and isinstance(username.get("available"), bool)
           )
