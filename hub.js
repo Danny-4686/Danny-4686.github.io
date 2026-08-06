@@ -2,6 +2,13 @@
   const path = window.location.pathname.toLowerCase();
   if (!path.startsWith('/games/')) return;
 
+  if (!document.querySelector('style[data-cloud-hopper-coin-size]')) {
+    const coinSizeStyles = document.createElement('style');
+    coinSizeStyles.dataset.cloudHopperCoinSize = 'true';
+    coinSizeStyles.textContent = '.hopper-preview .preview-coin{width:24px!important;height:24px!important}';
+    document.head.append(coinSizeStyles);
+  }
+
   const nativeMatchMedia = typeof window.matchMedia === 'function'
     ? window.matchMedia.bind(window)
     : null;
@@ -46,7 +53,7 @@
       Object.defineProperty(prototype, '__cloudLabGoldCoinPatch', { value: true });
       prototype.fillText = function patchedCloudCoin(text, x, y, maxWidth) {
         if (text === 'C' && this.canvas?.id === 'hopperCanvas' && coinSprite.complete && coinSprite.naturalWidth > 0) {
-          const size = 42;
+          const size = 25;
           this.save();
           this.shadowColor = 'rgba(242, 199, 92, .58)';
           this.shadowBlur = 18;
