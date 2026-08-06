@@ -1,6 +1,15 @@
 import app from './index.js';
+import { handleFreshAbyss } from './fresh-abyss.js';
 import { loginPage } from './pages.js';
-import { html, json } from './utils.js';
+import {
+  CSRF_COOKIE,
+  SESSION_COOKIE,
+  html,
+  json,
+  parseCookies,
+  safeStringEqual,
+  verifySession
+} from './utils.js';
 
 function missingSettings(env, names) {
   return names.filter((name) => !env[name]);
@@ -20,6 +29,49 @@ function loginErrorPage(message, status = 500, requestId = '') {
   return html(loginPage(detail), status, {
     'X-CloudLab-Request-ID': requestId || 'not-generated'
   });
+}
+
+async function getSession(request, env) {
+  if (!env.SESSION_SECRET || !env.ALLOWED_GITHUB_LOGIN || !env.ALLOWED_GITHUB_ID) return null;
+  const token = parseCookies(request.headers.get('Cookie'))[SESSION_COOKIE];
+  if (!token) return null;
+
+  try {
+    const session = await verifySession(token, env.SESSION_SECRET);
+    const allowedLogin = String(env.ALLOWED_GITHUB_LOGIN).trim().toLowerCase();
+    const allowedId = String(env.ALLOWED_GITHUB_ID).trim();
+    if (!session || String(session.login).toLowerCase() !== allowedLogin || String(session.githubId) !== allowedId) return null;
+    return session;
+  } catch {
+    return null;
+  }
+}
+
+function validCsrf(request, session) {
+  const cookies = parseCookies(request.headers.get('Cookie'));
+  const header = request.headers.get('X-CSRF-Token') || '';
+  return Boolean(
+    header &&
+    cookies[CSRF_COOKIE] &&
+    safeStringEqual(header, session.csrf) &&
+    safeStringEqual(cookies[CSRF_COOKIE], session.csrf)
+  );
+}
+
+function allowExternalImagePreviews(response, path) {
+  if (path !== '/' && path !== '/admin') return response;
+  const contentType = response.headers.get('Content-Type') || '';
+  if (!contentType.includes('text/html')) return response;
+
+  const headers = new Headers(response.headers);
+  const csp = headers.get('Content-Security-Policy');
+  if (csp) {
+    headers.set(
+      'Content-Security-Policy',
+      csp.replace('img-src https://danny4686.com data: blob:', 'img-src https: data: blob:')
+    );
+  }
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }
 
 export default {
@@ -67,7 +119,16 @@ export default {
     }
 
     try {
-      const response = await app.fetch(request, env, ctx);
+      if (path === '/api/fresh-abyss') {
+        const session = await getSession(request, env);
+        if (!session) return json({ error: 'Authentication required.' }, 401);
+        if (request.method !== 'GET' && !validCsrf(request, session)) {
+          return json({ error: 'Security token expired. Refresh the dashboard and try again.' }, 403);
+        }
+        return handleFreshAbyss(request, env, session);
+      }
+
+      const response = allowExternalImagePreviews(await app.fetch(request, env, ctx), path);
       if (response.status < 500) return response;
 
       if (path === '/' || path === '/admin' || path.startsWith('/auth/')) {
