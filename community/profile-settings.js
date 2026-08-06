@@ -9,6 +9,7 @@
 
   const avatarImage = document.getElementById('profileAvatarImage');
   const avatarWrap = document.getElementById('profileAvatarWrap');
+  const avatarSettingsPreview = document.getElementById('avatarSettingsPreview');
   const avatarInput = document.getElementById('avatarInput');
   const avatarChoose = document.getElementById('avatarChoose');
   const avatarRemove = document.getElementById('avatarRemove');
@@ -59,6 +60,8 @@
   function applyAvatar(user) {
     const fallback = document.getElementById('profileAvatar');
     if (fallback) fallback.textContent = user.username.slice(0, 1).toUpperCase();
+    const source = user.avatarUrl || '/assets/images/cloudlab-logo.png';
+    if (avatarSettingsPreview) avatarSettingsPreview.src = source;
     if (!avatarImage || !avatarWrap) return;
 
     if (user.avatarUrl) {
@@ -188,6 +191,7 @@
       showFeedback(error.message, 'error');
     } finally {
       setBusy(avatarRemove, false);
+      avatarRemove.disabled = !currentUser?.avatarUrl;
     }
   }
 
@@ -232,6 +236,7 @@
       usernamePassword.value = '';
       applyUser(data.user);
       showFeedback(`Your username is now ${data.user.username}. Your previous name is reserved for 7 days.`, 'success');
+      window.setTimeout(() => location.reload(), 1200);
     } catch (error) {
       if (error.data?.nextUsernameChangeAt) {
         usernameCooldown.textContent = `Your next username change unlocks on ${formatDate(error.data.nextUsernameChangeAt)}.`;
