@@ -8,6 +8,10 @@ on:
       - ".github/workflows/deploy-journal-admin.yml"
   workflow_dispatch:
 
+concurrency:
+  group: deploy-journal-admin
+  cancel-in-progress: true
+
 permissions:
   contents: write
 
@@ -38,6 +42,7 @@ jobs:
         env:
           DEPLOY_OUTCOME: ${{ steps.cloudflare_deploy.outcome }}
         run: |
+          git pull --rebase origin main
           mkdir -p .deployment-status
           python - <<'PY'
           import json, os
