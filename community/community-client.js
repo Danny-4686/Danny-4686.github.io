@@ -2,6 +2,16 @@
   const API = 'https://api.danny4686.com/v1';
   let session = { authenticated: false, user: null, csrfToken: '' };
   let sessionPromise = null;
+  let profileOverlay = null;
+  let profileReturnFocus = null;
+
+  if (!document.querySelector('link[data-public-profile-ui]')) {
+    const styles = document.createElement('link');
+    styles.rel = 'stylesheet';
+    styles.href = '/community/public-profile.css?v=1';
+    styles.dataset.publicProfileUi = 'true';
+    document.head.append(styles);
+  }
 
   const GAME_CONFIG = {
     '/games/snake/': { id: 'snake', name: 'Snake', selector: '#bestScore', metric: 'points', direction: 'desc' },
@@ -51,6 +61,96 @@
     document.body.append(element);
     window.setTimeout(() => element.classList.add('is-leaving'), 2600);
     window.setTimeout(() => element.remove(), 2920);
+  }
+
+  function ensureProfileOverlay() {
+    if (profileOverlay) return profileOverlay;
+    profileOverlay = document.createElement('div');
+    profileOverlay.className = 'community-profile-overlay';
+    profileOverlay.hidden = true;
+    profileOverlay.innerHTML = `
+      <section class="community-public-profile" role="dialog" aria-modal="true" aria-labelledby="communityProfileName">
+        <button class="community-profile-close" type="button" aria-label="Close profile">×</button>
+        <div class="community-profile-loading">Loading profile…</div>
+        <div class="community-profile-content" hidden>
+          <div class="community-profile-head">
+            <div class="community-profile-avatar"><span></span><img alt="" hidden></div>
+            <div class="community-profile-identity">
+              <span class="community-profile-status" hidden></span>
+              <h3 id="communityProfileName"></h3>
+              <p class="community-profile-joined"></p>
+            </div>
+          </div>
+          <p class="community-profile-bio"></p>
+        </div>
+      </section>`;
+    document.body.append(profileOverlay);
+
+    const close = () => closePublicProfile();
+    profileOverlay.querySelector('.community-profile-close').addEventListener('click', close);
+    profileOverlay.addEventListener('click', (event) => {
+      if (event.target === profileOverlay) close();
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !profileOverlay.hidden) close();
+    });
+    return profileOverlay;
+  }
+
+  function closePublicProfile() {
+    if (!profileOverlay) return;
+    profileOverlay.hidden = true;
+    document.body.classList.remove('community-profile-open');
+    profileReturnFocus?.focus?.();
+    profileReturnFocus = null;
+  }
+
+  async function openPublicProfile(userId, trigger) {
+    if (!userId) return;
+    const overlay = ensureProfileOverlay();
+    const loading = overlay.querySelector('.community-profile-loading');
+    const content = overlay.querySelector('.community-profile-content');
+    profileReturnFocus = trigger || document.activeElement;
+    loading.textContent = 'Loading profile…';
+    loading.hidden = false;
+    content.hidden = true;
+    overlay.hidden = false;
+    document.body.classList.add('community-profile-open');
+    overlay.querySelector('.community-profile-close').focus();
+
+    try {
+      const data = await api(`/profiles/${encodeURIComponent(userId)}`);
+      const profile = data.profile;
+      const avatar = overlay.querySelector('.community-profile-avatar');
+      const fallback = avatar.querySelector('span');
+      const image = avatar.querySelector('img');
+      const status = overlay.querySelector('.community-profile-status');
+      const name = overlay.querySelector('.community-profile-identity h3');
+      const joined = overlay.querySelector('.community-profile-joined');
+      const bio = overlay.querySelector('.community-profile-bio');
+
+      fallback.textContent = profile.username.slice(0, 1).toUpperCase();
+      if (profile.avatarUrl) {
+        image.src = profile.avatarUrl;
+        image.alt = `${profile.username}'s profile picture`;
+        image.hidden = false;
+        avatar.classList.add('has-image');
+      } else {
+        image.hidden = true;
+        image.removeAttribute('src');
+        avatar.classList.remove('has-image');
+      }
+
+      status.textContent = profile.statusText || '';
+      status.hidden = !profile.statusText;
+      name.textContent = profile.username;
+      joined.textContent = `Account created ${new Date(profile.createdAt).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}`;
+      bio.textContent = profile.bio || 'This user has not added a bio yet.';
+      loading.hidden = true;
+      content.hidden = false;
+    } catch (error) {
+      loading.textContent = error.message;
+    }
   }
 
   function normalizePath() {
@@ -172,7 +272,7 @@
 
     const section = document.createElement('section');
     section.className = 'community-leaderboard reveal visible';
-    section.innerHTML = `<div class="community-leaderboard-head"><div><p class="eyebrow">COMMUNITY RECORDS</p><h2>${config.name} leaderboard</h2><p>Best saved account records from CloudLab players.</p></div><span class="community-leaderboard-status">TOP 10</span></div><div class="community-ranking"><div class="community-leaderboard-empty">Loading leaderboard…</div></div><div class="community-leaderboard-foot"><span class="community-sync-note">Sign in to sync your personal best.</span><a href="/login/">Sign in</a></div>`;
+    section.innerHTML = `<div class="community-leaderboard-head"><div><p class="eyebrow">COMMUNITY RECORDS</p><h2>${config.name} leaderboard</h2><p>Tap a player to view their CloudLab profile.</p></div><span class="community-leaderboard-status">TOP 10</span></div><div class="community-ranking"><div class="community-leaderboard-empty">Loading leaderboard…</div></div><div class="community-leaderboard-foot"><span class="community-sync-note">Sign in to sync your personal best.</span><a href="/login/">Sign in</a></div>`;
     panel.insertAdjacentElement('afterend', section);
     const ranking = section.querySelector('.community-ranking');
     const note = section.querySelector('.community-sync-note');
@@ -198,11 +298,37 @@
       } else {
         data.entries.forEach((entry) => {
           const row = document.createElement('div');
-          row.className = `community-rank-row${session.user?.username === entry.username ? ' is-me' : ''}`;
-          row.innerHTML = '<span class="community-rank-number"></span><span class="community-rank-name"></span><span class="community-rank-value"></span>';
-          row.querySelector('.community-rank-number').textContent = entry.rank;
-          row.querySelector('.community-rank-name').textContent = entry.username;
-          row.querySelector('.community-rank-value').textContent = formatValue(config, entry);
+          row.className = `community-rank-row${session.user?.id === entry.userId ? ' is-me' : ''}`;
+
+          const rank = document.createElement('span');
+          rank.className = 'community-rank-number';
+          rank.textContent = entry.rank;
+
+          const profileButton = document.createElement('button');
+          profileButton.className = 'community-rank-profile';
+          profileButton.type = 'button';
+          profileButton.setAttribute('aria-label', `View ${entry.username}'s profile`);
+
+          const avatar = document.createElement('span');
+          avatar.className = 'community-rank-avatar';
+          avatar.textContent = entry.username.slice(0, 1).toUpperCase();
+          if (entry.avatarUrl) {
+            const image = document.createElement('img');
+            image.src = entry.avatarUrl;
+            image.alt = '';
+            avatar.append(image);
+          }
+
+          const name = document.createElement('span');
+          name.className = 'community-rank-name';
+          name.textContent = entry.username;
+          profileButton.append(avatar, name);
+          profileButton.addEventListener('click', () => openPublicProfile(entry.userId, profileButton));
+
+          const value = document.createElement('span');
+          value.className = 'community-rank-value';
+          value.textContent = formatValue(config, entry);
+          row.append(rank, profileButton, value);
           ranking.append(row);
         });
       }
