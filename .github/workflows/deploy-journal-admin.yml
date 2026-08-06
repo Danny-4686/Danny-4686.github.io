@@ -42,7 +42,8 @@ jobs:
         env:
           DEPLOY_OUTCOME: ${{ steps.cloudflare_deploy.outcome }}
         run: |
-          git pull --rebase origin main
+          git fetch origin main
+          git rebase origin/main
           mkdir -p .deployment-status
           python - <<'PY'
           import json, os
@@ -62,7 +63,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add .deployment-status/journal-admin.json
           git diff --cached --quiet || git commit -m "Record Journal Admin deployment status [skip ci]"
-          git push
+          git push origin HEAD:main
       - name: Fail workflow when deployment failed
         if: steps.cloudflare_deploy.outcome != 'success'
         run: exit 1
