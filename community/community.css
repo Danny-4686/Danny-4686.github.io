@@ -3,3 +3,49 @@
 .journal-like-wrap{display:flex;align-items:center;gap:10px;margin-top:22px}.journal-like-button{min-height:46px;padding:10px 15px;display:inline-flex;align-items:center;gap:9px;border:1px solid var(--line);border-radius:14px;color:var(--text);background:rgba(255,255,255,.025);cursor:pointer;font-weight:850;transition:transform .18s ease,border-color .18s ease,background .18s ease,box-shadow .18s ease}.journal-like-button:hover{transform:translateY(-2px);border-color:rgba(239,109,104,.42);background:rgba(239,109,104,.055);box-shadow:0 12px 26px rgba(0,0,0,.17)}.journal-like-button.is-liked{border-color:rgba(239,109,104,.52);color:#ffc0bd;background:rgba(239,109,104,.09);box-shadow:0 0 24px rgba(239,109,104,.08)}.journal-like-heart{font-size:1.1rem;line-height:1;transition:transform .22s cubic-bezier(.2,.85,.2,1)}.journal-like-button.is-liked .journal-like-heart{transform:scale(1.16)}.journal-like-note{color:var(--muted);font-size:.72rem}
 .community-toast{position:fixed;right:18px;bottom:18px;z-index:1000;max-width:min(390px,calc(100% - 36px));padding:13px 15px;border:1px solid var(--line-strong);border-radius:14px;color:var(--text);background:rgba(5,18,24,.96);box-shadow:0 22px 54px rgba(0,0,0,.38);backdrop-filter:blur(14px);font-size:.78rem;font-weight:750;line-height:1.45;animation:communityToastIn .28s ease both}.community-toast.is-success{border-color:rgba(139,207,155,.43);color:#b9ecc2}.community-toast.is-error{border-color:rgba(239,109,104,.46);color:#ffc0bd}.community-toast.is-leaving{animation:communityToastOut .28s ease both}@keyframes communityToastIn{from{opacity:0;transform:translateY(9px) scale(.97)}to{opacity:1;transform:none}}@keyframes communityToastOut{to{opacity:0;transform:translateY(8px) scale(.98)}}
 @media(max-width:900px){.community-header-actions{grid-column:2}.community-account-link{padding:10px 11px}.community-account-link span:last-child{max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}@media(max-width:620px){.community-account-link{min-width:42px;padding:9px}.community-account-link span:last-child{display:none}.community-header-actions{gap:6px}.community-leaderboard{padding:15px;border-radius:18px}.community-leaderboard-head,.community-leaderboard-foot{align-items:flex-start;flex-direction:column}.community-rank-row{grid-template-columns:36px minmax(0,1fr) auto}.journal-like-wrap{align-items:flex-start;flex-direction:column}}@media(prefers-reduced-motion:reduce){.community-account-link,.journal-like-button,.journal-like-heart{transition:none}.community-toast{animation:none}}
+
+/* One clean account action replaces the previous Join CloudLab + Sign in pair. */
+.community-header-actions .header-action{display:none!important}
+.community-header-actions{gap:0}
+.community-account-link:not(.is-authenticated) span:last-child{font-size:0;max-width:none}
+.community-account-link:not(.is-authenticated) span:last-child::after{content:"Sign in / Sign up";font-size:.79rem}
+.community-account-link.is-authenticated{color:#dff8e4;border-color:rgba(139,207,155,.27);background:rgba(139,207,155,.055)}
+
+.header-cta.community-account-action{
+  min-height:44px;
+  padding:10px 14px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  border:1px solid rgba(104,208,223,.34);
+  border-radius:13px;
+  color:var(--text);
+  background:rgba(104,208,223,.055);
+  box-shadow:0 10px 24px rgba(0,0,0,.14),inset 0 1px rgba(255,255,255,.035);
+  font-size:.79rem;
+  font-weight:850;
+}
+.header-cta.community-account-action:hover{
+  color:#ecfcff;
+  border-color:rgba(104,208,223,.52);
+  background:rgba(104,208,223,.1);
+  box-shadow:0 14px 28px rgba(0,0,0,.18),0 0 22px rgba(104,208,223,.06);
+}
+.header-cta.community-account-action.is-authenticated{
+  color:#dff8e4;
+  border-color:rgba(139,207,155,.3);
+  background:rgba(139,207,155,.065);
+}
+.header-cta.community-account-action.is-authenticated .community-account-dot{
+  background:var(--mint);
+  box-shadow:0 0 14px rgba(139,207,155,.5);
+}
+
+@media(max-width:620px){
+  .community-account-link:not(.is-authenticated) span:last-child{display:inline;max-width:none}
+  .community-account-link:not(.is-authenticated) span:last-child::after{content:"Sign in";font-size:.72rem}
+  .community-account-link.is-authenticated span:last-child{display:inline;max-width:82px}
+  .header-cta.community-account-action{padding:9px 11px;font-size:.72rem}
+  .header-cta.community-account-action span:last-child{max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+}
