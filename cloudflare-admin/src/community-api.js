@@ -118,6 +118,17 @@ function sessionSecret(env) {
   return String(env.COMMUNITY_SESSION_SECRET || env.SESSION_SECRET || '');
 }
 
+function userForApi(user, request) {
+  if (!user) return null;
+  const origin = new URL(request.url).origin;
+  return {
+    ...user,
+    avatarUrl: user.avatarUpdatedAt
+      ? `${origin}${API_PREFIX}/avatars/${encodeURIComponent(user.id)}?v=${encodeURIComponent(user.avatarUpdatedAt)}`
+      : ''
+  };
+}
+
 async function currentSession(request, env, verifyUser = true) {
   const secret = sessionSecret(env);
   if (!secret) return null;
@@ -128,7 +139,8 @@ async function currentSession(request, env, verifyUser = true) {
   const response = await storeFetch(env, `/user?id=${encodeURIComponent(session.uid)}`);
   const data = await response.json().catch(() => ({}));
   if (!response.ok || !data.user) return null;
-  return { ...session, username: data.user.username, createdAt: data.user.createdAt };
+  const user = userForApi(data.user, request);
+  return { ...session, username: user.username, createdAt: user.createdAt, user };
 }
 
 function validCsrf(request, session) {
@@ -151,7 +163,7 @@ function storeFetch(env, path, init = {}) {
 
 async function readBody(request) {
   const contentLength = Number(request.headers.get('Content-Length') || 0);
-  if (contentLength > 32768) throw new Error('Request too large.');
+  if (contentLength > 300000) throw new Error('Request too large.');
   return request.json().catch(() => ({}));
 }
 
@@ -188,7 +200,7 @@ async function createLoginResponse(request, env, user, status = 200) {
     iat: now,
     exp: now + SESSION_TTL
   }, secret);
-  return json(request, env, { ok: true, user, csrfToken: csrf }, status, {
+  return json(request, env, { ok: true, user: userForApi(user, request), csrfToken: csrf }, status, {
     'Set-Cookie': cookie(token)
   });
 }
@@ -225,6 +237,19 @@ export async function handleCommunityApi(request, env) {
         turnstileSiteKey: String(env.TURNSTILE_SITE_KEY || ''),
         turnstileEnabled: Boolean(env.TURNSTILE_SECRET && env.TURNSTILE_SITE_KEY)
       });
+    }
+
+    const avatarMatch = path.match(/^\/avatars\/([A-Za-z0-9-]+)$/);
+    if (avatarMatch && request.method === 'GET') {
+      const response = await storeFetch(env, `/avatar?id=${encodeURIComponent(avatarMatch[1])}`);
+      if (!response.ok) return new Response(null, { status: response.status });
+      const headers = new Headers(response.headers);
+      const origin = request.headers.get('Origin');
+      if (origin && allowedOrigins(env).has(origin)) {
+        headers.set('Access-Control-Allow-Origin', origin);
+        headers.append('Vary', 'Origin');
+      }
+      return new Response(response.body, { status: response.status, headers });
     }
 
     if (path === '/username' && request.method === 'GET') {
@@ -278,10 +303,45 @@ export async function handleCommunityApi(request, env) {
       const session = await currentSession(request, env);
       return json(request, env, session ? {
         authenticated: true,
-        user: { id: session.uid, username: session.username, createdAt: session.createdAt },
+        user: session.user,
         csrfToken: session.csrf,
         expiresAt: session.exp * 1000
       } : { authenticated: false, user: null, csrfToken: '' });
+    }
+
+    if (path === '/profile/avatar' && request.method === 'POST') {
+      const session = await currentSession(request, env);
+      if (!session) return json(request, env, { error: 'Sign in to update your profile picture.' }, 401);
+      if (!validCsrf(request, session)) return json(request, env, { error: 'Security token expired. Refresh and try again.' }, 403);
+      const body = await readBody(request);
+      const response = await storeFetch(env, '/avatar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: session.uid, avatarData: body.avatarData || '' })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) return json(request, env, data, response.status);
+      return json(request, env, { ok: true, user: userForApi(data.user, request) });
+    }
+
+    if (path === '/profile/username' && request.method === 'POST') {
+      const session = await currentSession(request, env);
+      if (!session) return json(request, env, { error: 'Sign in to change your username.' }, 401);
+      if (!validCsrf(request, session)) return json(request, env, { error: 'Security token expired. Refresh and try again.' }, 403);
+      const body = await readBody(request);
+      const response = await storeFetch(env, '/username-change', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: session.uid,
+          username: body.username,
+          password: body.password,
+          ip: request.headers.get('CF-Connecting-IP') || 'unknown'
+        })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) return json(request, env, data, response.status);
+      return createLoginResponse(request, env, data.user);
     }
 
     if (path === '/records' && request.method === 'GET') {
