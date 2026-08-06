@@ -3,58 +3,49 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Create a Danny4686.com CloudLab Arcade account.">
+  <meta name="description" content="Create your Danny4686.com CloudLab account.">
   <meta name="theme-color" content="#061117">
-  <title>Create Account | Danny4686</title>
+  <title>Join CloudLab | Danny4686</title>
   <link rel="icon" href="/assets/images/cloudlab-logo.png" type="image/png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/community/account.css?v=2">
-  <link rel="stylesheet" href="/community/account-polish.css?v=1">
+  <link rel="stylesheet" href="/community/account-polish.css?v=2">
 </head>
 <body data-account-page="signup">
   <header class="account-header">
     <a class="account-brand" href="/"><img src="/assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>Danny4686</strong><small>CloudLab Account</small></span></a>
-    <nav class="account-header-nav" aria-label="Account page navigation"><a href="/">Home</a><a href="/games/">Arcade</a></nav>
+    <nav class="account-header-nav" aria-label="Account page navigation"><a href="/">Home</a></nav>
   </header>
 
-  <main class="account-shell">
-    <section class="account-story">
-      <p class="eyebrow">JOIN CLOUDLAB ARCADE</p>
-      <h1>Make your best runs count.</h1>
-      <p class="lead">Create a free player profile for synced Arcade records, public leaderboards, and account-based Journal likes.</p>
-      <div class="benefit-grid">
-        <article class="benefit"><span class="benefit-icon">1</span><strong>Choose your player name</strong><small>Friendly usernames are checked before the profile is created.</small></article>
-        <article class="benefit"><span class="benefit-icon">2</span><strong>Play like normal</strong><small>New personal bests sync automatically while you are signed in.</small></article>
-        <article class="benefit"><span class="benefit-icon">3</span><strong>Climb the leaderboard</strong><small>Only your best qualifying result is kept for each game.</small></article>
-      </div>
-    </section>
-
+  <main class="account-shell auth-only-shell">
     <section class="account-card" aria-labelledby="signupTitle">
       <nav class="auth-tabs" aria-label="Account access">
         <a href="/login/">Sign in</a>
         <a class="active" href="/signup/" aria-current="page">Create account</a>
       </nav>
 
-      <div class="card-head">
-        <div><p class="eyebrow">NEW PLAYER</p><h1 id="signupTitle">Create account</h1><p>Choose a friendly public name and a strong password.</p></div>
-        <span class="secure-badge">FREE</span>
+      <div class="card-head simple-card-head">
+        <div>
+          <p class="eyebrow">JOIN CLOUDLAB</p>
+          <h1 id="signupTitle">Create your account</h1>
+          <p>Choose a username and password to get started.</p>
+        </div>
       </div>
 
       <div id="authFeedback" class="auth-feedback" hidden role="status" aria-live="polite"></div>
 
       <form class="auth-form" data-auth-form="signup">
-        <label class="field"><span>Public username</span><input id="username" name="username" autocomplete="username" maxlength="20" required placeholder="Example_Player"><small id="usernameHint" class="field-hint">3–20 characters using letters, numbers, or underscores.</small></label>
-        <label class="field"><span>Password</span><span class="password-wrap"><input id="password" name="password" type="password" autocomplete="new-password" maxlength="128" required placeholder="At least 10 characters"><button class="password-toggle" type="button" data-password-toggle="password">Show</button></span><span id="passwordMeter" class="password-meter" data-level="0"><span></span></span><small class="field-hint">Use at least one letter and one number. Longer passwords are stronger.</small></label>
+        <label class="field"><span>Username</span><input id="username" name="username" autocomplete="username" maxlength="20" required placeholder="Example_Player"><small id="usernameHint" class="field-hint">3–20 characters using letters, numbers, or underscores.</small></label>
+        <label class="field"><span>Password</span><span class="password-wrap"><input id="password" name="password" type="password" autocomplete="new-password" maxlength="128" required placeholder="At least 10 characters"><button class="password-toggle" type="button" data-password-toggle="password">Show</button></span><span id="passwordMeter" class="password-meter" data-level="0"><span></span></span><small class="field-hint">Use at least one letter and one number.</small></label>
         <label class="field"><span>Confirm password</span><span class="password-wrap"><input id="confirmPassword" name="confirmPassword" type="password" autocomplete="new-password" maxlength="128" required placeholder="Type it again"><button class="password-toggle" type="button" data-password-toggle="confirmPassword">Show</button></span></label>
         <div id="turnstileSlot" class="turnstile-slot"></div>
-        <button class="auth-submit" type="submit">Create CloudLab account</button>
+        <button class="auth-submit" type="submit">Join CloudLab</button>
       </form>
 
-      <div class="auth-assurance">Your password is hashed and never stored in the public website repository.</div>
-      <p class="auth-switch">Already have a profile? <a href="/login/">Sign in instead</a></p>
-      <p class="account-footnote">Your username and qualifying records may appear publicly on Arcade leaderboards.</p>
+      <div class="auth-assurance">Your password is securely protected.</div>
+      <p class="auth-switch">Already have an account? <a href="/login/">Sign in</a></p>
     </section>
   </main>
 
