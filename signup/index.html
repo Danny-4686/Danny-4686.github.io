@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Create a Danny4686.com CloudLab Arcade account.">
+  <meta name="theme-color" content="#061117">
+  <title>Create Account | Danny4686</title>
+  <link rel="icon" href="/assets/images/cloudlab-logo.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/community/account.css?v=1">
+</head>
+<body data-account-page="signup">
+  <header class="account-header">
+    <a class="account-brand" href="/"><img src="/assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>Danny4686</strong><small>CloudLab Account</small></span></a>
+    <nav class="account-header-nav"><a href="/games/">Arcade</a><a href="/login/">Sign in</a></nav>
+  </header>
+  <main class="account-shell">
+    <section class="account-story">
+      <p class="eyebrow">JOIN CLOUDLAB</p>
+      <h1>Turn every high score into a record.</h1>
+      <p class="lead">Create one clean profile for Arcade records, public leaderboards, and Journal likes. Your username is the name other players will see.</p>
+      <div class="benefit-grid">
+        <article class="benefit"><span class="benefit-icon">1</span><strong>Choose a name</strong><small>Usernames are checked for reserved, offensive, and inappropriate wording.</small></article>
+        <article class="benefit"><span class="benefit-icon">2</span><strong>Play normally</strong><small>Your current browser records sync when you are signed in.</small></article>
+        <article class="benefit"><span class="benefit-icon">3</span><strong>Climb the board</strong><small>Only your best valid record is kept for each game.</small></article>
+      </div>
+    </section>
+    <section class="account-card" aria-labelledby="signupTitle">
+      <div class="card-head"><div><p class="eyebrow">CREATE PROFILE</p><h1 id="signupTitle">Sign up</h1><p>Pick a friendly username and a strong password.</p></div><span class="secure-badge">FREE</span></div>
+      <div id="authFeedback" class="auth-feedback" hidden role="status" aria-live="polite"></div>
+      <form class="auth-form" data-auth-form="signup">
+        <label class="field"><span>Public username</span><input id="username" name="username" autocomplete="username" maxlength="20" required placeholder="Example_Player"><small id="usernameHint" class="field-hint">3–20 characters using letters, numbers, or underscores.</small></label>
+        <label class="field"><span>Password</span><span class="password-wrap"><input id="password" name="password" type="password" autocomplete="new-password" maxlength="128" required placeholder="At least 10 characters"><button class="password-toggle" type="button" data-password-toggle="password">Show</button></span><span id="passwordMeter" class="password-meter" data-level="0"><span></span></span><small class="field-hint">Use at least one letter and one number. Longer passwords are better.</small></label>
+        <label class="field"><span>Confirm password</span><span class="password-wrap"><input id="confirmPassword" name="confirmPassword" type="password" autocomplete="new-password" maxlength="128" required placeholder="Type it again"><button class="password-toggle" type="button" data-password-toggle="confirmPassword">Show</button></span></label>
+        <div id="turnstileSlot" class="turnstile-slot"></div>
+        <button class="auth-submit" type="submit">Create CloudLab account</button>
+      </form>
+      <p class="auth-switch">Already registered? <a href="/login/">Sign in instead</a></p>
+      <p class="account-footnote">Creating an account means your username and qualifying game records can appear publicly on Arcade leaderboards.</p>
+    </section>
+  </main>
+  <footer class="account-footer"><span>© <span id="year"></span> Danny4686.</span><a href="/">Back to Danny4686.com</a></footer>
+  <script>document.getElementById('year').textContent=new Date().getFullYear()</script>
+  <script src="/community/account.js?v=1"></script>
+</body>
+</html>
