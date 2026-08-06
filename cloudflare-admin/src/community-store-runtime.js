@@ -1,3 +1,4 @@
+import { DurableObject } from 'cloudflare:workers';
 import { CommunityStore as BaseCommunityStore, GAME_RULES } from './community-store.js';
 
 const PROFILE_BIO_MAX = 160;
@@ -53,7 +54,7 @@ function cleanProfileText(value, maxLength, label) {
   return { text };
 }
 
-export class CommunityStore extends BaseCommunityStore {
+class CommunityStoreImplementation extends BaseCommunityStore {
   ensureProfilesTable() {
     this.sql.exec(`
       CREATE TABLE IF NOT EXISTS profiles (
@@ -69,6 +70,11 @@ export class CommunityStore extends BaseCommunityStore {
   async fetch(request) {
     const url = new URL(request.url);
     const method = request.method.toUpperCase();
+
+    if (url.pathname === '/health' && method === 'GET') {
+      const check = this.sql.exec('SELECT 1 AS ready').one();
+      return json({ ok: check.ready === 1, storage: 'sqlite' });
+    }
 
     if (url.pathname === '/public-profile' && method === 'GET') {
       return this.getPublicProfile(url.searchParams.get('userId'));
@@ -218,5 +224,16 @@ export class CommunityStore extends BaseCommunityStore {
         updatedAt: row.updated_at
       }))
     });
+  }
+}
+
+export class CommunityStore extends DurableObject {
+  constructor(ctx, env) {
+    super(ctx, env);
+    this.implementation = new CommunityStoreImplementation(ctx, env);
+  }
+
+  fetch(request) {
+    return this.implementation.fetch(request);
   }
 }
