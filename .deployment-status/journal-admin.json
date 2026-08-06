@@ -1,9 +1,9 @@
 {
   "workflow": "Deploy Journal Admin",
-  "commit": "e3bcfa362b27b22251687e36e17b8d3c12cc47d6",
+  "commit": "501e33887dc12442f2e9dad50dfb2f42012a1588",
   "outcome": "success",
   "smokeOutcome": "success",
-  "completedAt": "2026-08-06T23:28:53.624791+00:00",
+  "completedAt": "2026-08-06T23:30:03.918106+00:00",
   "communityApi": {
     "healthHttpStatus": "200",
     "health": {
@@ -12,14 +12,16 @@
       "storageConfigured": true,
       "sessionsConfigured": true,
       "turnstileConfigured": true,
+      "build": "2026-08-06.1",
       "storageReady": true,
-      "storageBackend": "sqlite"
+      "storageBackend": "sqlite",
+      "storageResponseStatus": 200
     },
     "usernameHttpStatus": "200",
     "usernameCheck": {
       "available": true,
-      "username": "DeployCheck43"
+      "username": "DeployCheck45"
     },
-    "usernameChecked": "DeployCheck43"
+    "usernameChecked": "DeployCheck45"
   }
 }
