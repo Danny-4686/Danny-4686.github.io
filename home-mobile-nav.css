@@ -45,13 +45,9 @@
 
   .site-header .nav-links a {
     flex: 0 0 auto;
+    display: inline-flex !important;
     padding: 7px 0;
     font-size: .82rem;
-  }
-
-  /* Secondary pages use these four primary navigation items on mobile. */
-  .site-header .nav-links a[href="#connect"] {
-    display: none !important;
   }
 }
 
