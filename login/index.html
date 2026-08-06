@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Sign in to your Danny4686.com CloudLab Arcade account.">
+  <meta name="theme-color" content="#061117">
+  <title>Sign In | Danny4686</title>
+  <link rel="icon" href="/assets/images/cloudlab-logo.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/community/account.css?v=1">
+</head>
+<body data-account-page="login">
+  <header class="account-header">
+    <a class="account-brand" href="/"><img src="/assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>Danny4686</strong><small>CloudLab Account</small></span></a>
+    <nav class="account-header-nav"><a href="/games/">Arcade</a><a href="/signup/">Create account</a></nav>
+  </header>
+  <main class="account-shell">
+    <section class="account-story">
+      <p class="eyebrow">CLOUDLAB ACCOUNT</p>
+      <h1>Your records, wherever you play.</h1>
+      <p class="lead">Sign in to sync personal bests, appear on Arcade leaderboards, and like your favorite Journal posts.</p>
+      <div class="benefit-grid">
+        <article class="benefit"><span class="benefit-icon">↗</span><strong>Synced records</strong><small>Keep your best Arcade scores connected to your account.</small></article>
+        <article class="benefit"><span class="benefit-icon">#</span><strong>Leaderboards</strong><small>See how your records compare with other CloudLab players.</small></article>
+        <article class="benefit"><span class="benefit-icon">♥</span><strong>Journal likes</strong><small>Support posts you enjoy with one account-based like.</small></article>
+      </div>
+    </section>
+    <section class="account-card" aria-labelledby="loginTitle">
+      <div class="card-head"><div><p class="eyebrow">WELCOME BACK</p><h1 id="loginTitle">Sign in</h1><p>Use the username and password from your CloudLab account.</p></div><span class="secure-badge">SECURE</span></div>
+      <div id="authFeedback" class="auth-feedback" hidden role="status" aria-live="polite"></div>
+      <form class="auth-form" data-auth-form="login">
+        <label class="field"><span>Username</span><input id="username" name="username" autocomplete="username" maxlength="20" required placeholder="Your username"></label>
+        <label class="field"><span>Password</span><span class="password-wrap"><input id="password" name="password" type="password" autocomplete="current-password" maxlength="128" required placeholder="Your password"><button class="password-toggle" type="button" data-password-toggle="password">Show</button></span></label>
+        <div id="turnstileSlot" class="turnstile-slot"></div>
+        <button class="auth-submit" type="submit">Sign in to CloudLab</button>
+      </form>
+      <p class="auth-switch">New here? <a href="/signup/">Create your account</a></p>
+      <p class="account-footnote">Your password is never placed in the public website repository. Account data is stored by the private Cloudflare service.</p>
+    </section>
+  </main>
+  <footer class="account-footer"><span>© <span id="year"></span> Danny4686.</span><a href="/">Back to Danny4686.com</a></footer>
+  <script>document.getElementById('year').textContent=new Date().getFullYear()</script>
+  <script src="/community/account.js?v=1"></script>
+</body>
+</html>
