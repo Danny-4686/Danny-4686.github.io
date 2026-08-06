@@ -51,6 +51,7 @@
     let running = false;
     let paused = false;
     let started = false;
+    let gameOver = false;
     let score = 0;
     let coins = 0;
     let best = Number(localStorage.getItem('cloudlab-hopper-best') || 0);
@@ -77,6 +78,7 @@
       running = false;
       paused = false;
       started = false;
+      gameOver = false;
       particles = [];
       player = { x: W / 2 - 28, y: H - 120, w: 56, h: 38, vx: 0, vy: -650 };
       platforms = [{ x: W / 2 - 85, y: H - 64, w: 170, h: 18, coin: false, moving: false, vx: 0 }];
@@ -97,7 +99,7 @@
 
     function start() {
       if (running) return;
-      if (!started && player.y > H + 80) resetGame();
+      if (gameOver) resetGame();
       started = true;
       running = true;
       paused = false;
@@ -180,6 +182,7 @@
       if (player.y - camera > H + 100) {
         running = false;
         started = false;
+        gameOver = true;
         best = Math.max(best, Math.floor(score));
         localStorage.setItem('cloudlab-hopper-best', String(best));
         updateStats();
