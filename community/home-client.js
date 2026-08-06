@@ -1,18 +1,14 @@
 (() => {
   const header = document.querySelector('.site-header');
   const action = header?.querySelector('.header-cta');
-  if (!header || !action || header.querySelector('.community-header-actions')) return;
+  if (!header || !action) return;
 
-  const wrapper = document.createElement('div');
-  wrapper.className = 'community-header-actions community-home-actions';
-
-  const account = document.createElement('a');
-  account.className = 'community-account-link';
-  account.href = '/login/?next=%2F';
-  account.innerHTML = '<span class="community-account-dot" aria-hidden="true"></span><span>Sign in</span>';
-
-  action.before(wrapper);
-  wrapper.append(account, action);
+  action.classList.add('community-account-action');
+  action.href = '/login/?next=%2F';
+  action.removeAttribute('target');
+  action.removeAttribute('rel');
+  action.setAttribute('aria-label', 'Sign in or create a CloudLab account');
+  action.innerHTML = '<span class="community-account-dot" aria-hidden="true"></span><span>Sign in / Sign up</span>';
 
   fetch('https://api.danny4686.com/v1/session', {
     credentials: 'include',
@@ -21,10 +17,10 @@
     .then((response) => response.ok ? response.json() : null)
     .then((session) => {
       if (!session?.authenticated || !session.user?.username) return;
-      account.href = '/account/';
-      account.classList.add('is-authenticated');
-      account.querySelector('span:last-child').textContent = session.user.username;
-      account.setAttribute('aria-label', `Open ${session.user.username}'s CloudLab account`);
+      action.href = '/account/';
+      action.classList.add('is-authenticated');
+      action.querySelector('span:last-child').textContent = session.user.username;
+      action.setAttribute('aria-label', `Open ${session.user.username}'s CloudLab account`);
     })
     .catch(() => {});
 })();
