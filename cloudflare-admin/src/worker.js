@@ -1,6 +1,7 @@
 import app from './index.js';
+import { handleCommunityApi } from './community-api.js';
 import { handleFreshAbyss } from './fresh-abyss.js';
-import { loginPage } from './pages.js';
+import { loginPage } from './admin-login-page.js';
 import {
   CSRF_COOKIE,
   SESSION_COOKIE,
@@ -20,13 +21,13 @@ function configurationStatus(env) {
     oauthConfigured: Boolean(env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET),
     sessionConfigured: Boolean(env.SESSION_SECRET),
     publisherConfigured: Boolean(env.GITHUB_TOKEN && env.GITHUB_OWNER && env.GITHUB_REPO),
-    accountRestrictionConfigured: Boolean(env.ALLOWED_GITHUB_LOGIN && env.ALLOWED_GITHUB_ID)
+    accountRestrictionConfigured: Boolean(env.ALLOWED_GITHUB_LOGIN && env.ALLOWED_GITHUB_ID),
+    communityConfigured: Boolean(env.COMMUNITY && env.SESSION_SECRET)
   };
 }
 
-function loginErrorPage(message, status = 500, requestId = '') {
-  const detail = requestId ? `${message} Reference: ${requestId}.` : message;
-  return html(loginPage(detail), status, {
+function loginNoticePage(status = 500, requestId = '') {
+  return html(loginPage('retry'), status, {
     'X-CloudLab-Request-ID': requestId || 'not-generated'
   });
 }
@@ -74,6 +75,13 @@ function allowExternalImagePreviews(response, path) {
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }
 
+async function replaceAdminAuthFailure(response, path) {
+  if (!path.startsWith('/auth/') || response.status < 400) return response;
+  const contentType = response.headers.get('Content-Type') || '';
+  if (!contentType.includes('text/html')) return response;
+  return loginNoticePage(response.status, response.headers.get('X-CloudLab-Request-ID') || '');
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -81,6 +89,13 @@ export default {
       ? url.pathname.slice(0, -1)
       : url.pathname;
     const requestId = crypto.randomUUID();
+    const communityHost = url.hostname.toLowerCase() === 'api.danny4686.com';
+
+    if (communityHost) {
+      if (path === '/') return Response.redirect('https://danny4686.com/account/', 302);
+      if (!path.startsWith('/v1')) return json({ error: 'Community API route not found.' }, 404);
+      return handleCommunityApi(request, env);
+    }
 
     if (path === '/health') {
       return json({
@@ -92,13 +107,7 @@ export default {
 
     if (path === '/auth/login') {
       const missing = missingSettings(env, ['GITHUB_CLIENT_ID']);
-      if (missing.length) {
-        return loginErrorPage(
-          `GitHub sign-in is not configured on this Worker. Missing: ${missing.join(', ')}.`,
-          503,
-          requestId
-        );
-      }
+      if (missing.length) return loginNoticePage(503, requestId);
     }
 
     if (path === '/auth/callback') {
@@ -109,16 +118,18 @@ export default {
         'ALLOWED_GITHUB_LOGIN',
         'ALLOWED_GITHUB_ID'
       ]);
-      if (missing.length) {
-        return loginErrorPage(
-          `GitHub sign-in cannot finish because the Worker is missing: ${missing.join(', ')}.`,
-          503,
-          requestId
-        );
-      }
+      if (missing.length) return loginNoticePage(503, requestId);
     }
 
     try {
+      if (path === '/' || path === '/admin') {
+        const session = await getSession(request, env);
+        if (!session) {
+          const csp = "default-src 'none'; style-src 'unsafe-inline'; img-src https://danny4686.com; form-action 'self' https://github.com; frame-ancestors 'none'; base-uri 'none'";
+          return html(loginPage(), 200, { 'Content-Security-Policy': csp });
+        }
+      }
+
       if (path === '/api/fresh-abyss') {
         const session = await getSession(request, env);
         if (!session) return json({ error: 'Authentication required.' }, 401);
@@ -128,26 +139,20 @@ export default {
         return handleFreshAbyss(request, env, session);
       }
 
-      const response = allowExternalImagePreviews(await app.fetch(request, env, ctx), path);
+      const rawResponse = await app.fetch(request, env, ctx);
+      const replacedResponse = await replaceAdminAuthFailure(rawResponse, path);
+      const response = allowExternalImagePreviews(replacedResponse, path);
       if (response.status < 500) return response;
 
       if (path === '/' || path === '/admin' || path.startsWith('/auth/')) {
-        return loginErrorPage(
-          'GitHub sign-in hit a temporary server problem. Return to this page and press Sign in with GitHub again.',
-          500,
-          requestId
-        );
+        return loginNoticePage(500, requestId);
       }
 
       return response;
     } catch (error) {
       console.error('Unhandled CloudLab admin error', requestId, error);
       if (path === '/' || path === '/admin' || path.startsWith('/auth/')) {
-        return loginErrorPage(
-          'The admin page hit a temporary server problem. Reload the page and try signing in again.',
-          500,
-          requestId
-        );
+        return loginNoticePage(500, requestId);
       }
       return json({ error: 'Unexpected server error.', requestId }, 500);
     }
