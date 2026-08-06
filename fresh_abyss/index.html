@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#020507">
+  <title>Fresh Abyss</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --edge: rgba(255, 255, 255, 0.13);
+      --glow: rgba(91, 175, 210, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+      margin: 0;
+    }
+
+    body {
+      min-height: 100svh;
+      display: grid;
+      place-items: center;
+      padding: clamp(12px, 3vw, 34px);
+      overflow-x: hidden;
+      background:
+        radial-gradient(circle at 50% 42%, var(--glow), transparent 48%),
+        linear-gradient(180deg, #05090c, #010203);
+    }
+
+    .image-frame {
+      width: min(1120px, 100%);
+      max-height: calc(100svh - clamp(24px, 6vw, 68px));
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      padding: clamp(6px, 1vw, 11px);
+      border: 1px solid var(--edge);
+      border-radius: clamp(15px, 2vw, 26px);
+      background: rgba(5, 10, 14, 0.9);
+      box-shadow:
+        0 28px 80px rgba(0, 0, 0, 0.62),
+        inset 0 1px rgba(255, 255, 255, 0.055);
+    }
+
+    .image-frame img {
+      display: block;
+      width: auto;
+      max-width: 100%;
+      height: auto;
+      max-height: calc(100svh - clamp(38px, 8vw, 90px));
+      object-fit: contain;
+      border-radius: clamp(10px, 1.35vw, 18px);
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 8px;
+      }
+
+      .image-frame {
+        width: 100%;
+        max-height: calc(100svh - 16px);
+        padding: 5px;
+        border-radius: 15px;
+      }
+
+      .image-frame img {
+        max-height: calc(100svh - 26px);
+        border-radius: 11px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="image-frame" aria-label="Fresh Abyss image">
+    <img
+      src="https://cdn.discordapp.com/attachments/1138912646943473785/1534791088831991888/image.png?ex=6a756916&amp;is=6a741796&amp;hm=a6063589806be1833ad1e4431bd4914da9ebdea9c411b98b255aa175f02b47a3&amp;"
+      alt="Fresh Abyss"
+      referrerpolicy="no-referrer"
+      draggable="false"
+    >
+  </main>
+</body>
+</html>
