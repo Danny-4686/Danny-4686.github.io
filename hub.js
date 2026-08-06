@@ -1,4 +1,82 @@
 (() => {
+  const path = window.location.pathname.toLowerCase();
+  if (!path.startsWith('/games/')) return;
+
+  const nativeMatchMedia = typeof window.matchMedia === 'function'
+    ? window.matchMedia.bind(window)
+    : null;
+  const systemReducedMotion = nativeMatchMedia
+    ? nativeMatchMedia('(prefers-reduced-motion: reduce)').matches
+    : false;
+  document.documentElement.dataset.systemReducedMotion = String(systemReducedMotion);
+
+  if (path.startsWith('/games/2048/')) {
+    let manualMotionOff = false;
+    try { manualMotionOff = localStorage.getItem('cloudlab-2048-motion') === 'off'; } catch (_) {}
+    const shouldReduceMotion = systemReducedMotion || manualMotionOff;
+    document.documentElement.classList.toggle('game-motion-off', shouldReduceMotion);
+    document.documentElement.dataset.gameMotion = shouldReduceMotion ? 'off' : 'on';
+
+    if (manualMotionOff && nativeMatchMedia) {
+      window.matchMedia = (query) => {
+        const result = nativeMatchMedia(query);
+        if (query !== '(prefers-reduced-motion: reduce)') return result;
+        return {
+          matches: true,
+          media: result.media,
+          onchange: result.onchange,
+          addListener: result.addListener?.bind(result) || (() => {}),
+          removeListener: result.removeListener?.bind(result) || (() => {}),
+          addEventListener: result.addEventListener?.bind(result) || (() => {}),
+          removeEventListener: result.removeEventListener?.bind(result) || (() => {}),
+          dispatchEvent: result.dispatchEvent?.bind(result) || (() => false)
+        };
+      };
+    }
+  }
+
+  if (path.startsWith('/games/cloud-hopper/') && window.CanvasRenderingContext2D) {
+    const coinSprite = new Image();
+    coinSprite.decoding = 'async';
+    coinSprite.src = '/assets/images/memory/clgold.png';
+    const prototype = window.CanvasRenderingContext2D.prototype;
+    const originalFillText = prototype.fillText;
+
+    if (!prototype.__cloudLabGoldCoinPatch) {
+      Object.defineProperty(prototype, '__cloudLabGoldCoinPatch', { value: true });
+      prototype.fillText = function patchedCloudCoin(text, x, y, maxWidth) {
+        if (text === 'C' && this.canvas?.id === 'hopperCanvas' && coinSprite.complete && coinSprite.naturalWidth > 0) {
+          const size = 42;
+          this.save();
+          this.shadowColor = 'rgba(242, 199, 92, .58)';
+          this.shadowBlur = 18;
+          this.drawImage(coinSprite, x - size / 2, y - size / 2, size, size);
+          this.restore();
+          return;
+        }
+        if (maxWidth === undefined) return originalFillText.call(this, text, x, y);
+        return originalFillText.call(this, text, x, y, maxWidth);
+      };
+    }
+  }
+
+  if (!document.querySelector('link[data-premium-game-effects]')) {
+    const gameStyles = document.createElement('link');
+    gameStyles.rel = 'stylesheet';
+    gameStyles.href = '/games/premium-game-effects.css?v=1';
+    gameStyles.dataset.premiumGameEffects = 'true';
+    document.head.append(gameStyles);
+  }
+
+  if (!document.querySelector('script[data-premium-game-effects]')) {
+    const gameScript = document.createElement('script');
+    gameScript.src = '/games/premium-game-effects.js?v=1';
+    gameScript.dataset.premiumGameEffects = 'true';
+    document.head.append(gameScript);
+  }
+})();
+
+(() => {
   const header = document.querySelector('.hub-header');
   if (!header) return;
 
