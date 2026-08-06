@@ -1,3 +1,8 @@
+/* Keep the complete homepage navigation visible at every screen size. */
+.site-header .nav-links a[href="#connect"] {
+  display: inline-flex !important;
+}
+
 /* Match the homepage mobile navigation to the Games and Journal header. */
 @media (max-width: 900px) {
   .site-header {
