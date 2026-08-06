@@ -1,5 +1,5 @@
 name = "cloudlab-journal-admin"
-main = "src/worker.js"
+main = "src/entry.js"
 compatibility_date = "2026-08-01"
 workers_dev = false
 keep_vars = true
