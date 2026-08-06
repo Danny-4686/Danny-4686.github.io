@@ -10,7 +10,7 @@
   if (!document.querySelector('link[data-home-mobile-nav]')) {
     const navigationStyles = document.createElement('link');
     navigationStyles.rel = 'stylesheet';
-    navigationStyles.href = '/home-mobile-nav.css?v=1';
+    navigationStyles.href = '/home-mobile-nav.css?v=2';
     navigationStyles.dataset.homeMobileNav = 'true';
     document.head.append(navigationStyles);
   }
