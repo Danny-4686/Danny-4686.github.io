@@ -1,0 +1,88 @@
+/* Match the homepage mobile navigation to the Games and Journal header. */
+@media (max-width: 900px) {
+  .site-header {
+    width: calc(100% - 14px) !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    grid-template-rows: auto auto !important;
+    gap: 8px 12px !important;
+    padding: 9px 10px 8px !important;
+    border-radius: 16px !important;
+  }
+
+  .site-header .brand {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
+  }
+
+  .site-header .header-cta {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  .site-header .nav-links {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+    min-width: 0;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(16px, 4vw, 28px);
+    padding: 1px 4px 2px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    scrollbar-width: none;
+    overscroll-behavior-inline: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .site-header .nav-links::-webkit-scrollbar {
+    display: none;
+  }
+
+  .site-header .nav-links a {
+    flex: 0 0 auto;
+    padding: 7px 0;
+    font-size: .82rem;
+  }
+
+  /* Secondary pages use these four primary navigation items on mobile. */
+  .site-header .nav-links a[href="#connect"] {
+    display: none !important;
+  }
+}
+
+@media (max-width: 620px) {
+  .site-header .brand-logo {
+    width: 36px;
+    height: 36px;
+  }
+
+  .site-header .brand-copy small {
+    display: block !important;
+  }
+
+  .site-header .nav-links {
+    justify-content: flex-start;
+    gap: 20px;
+  }
+
+  .site-header .header-cta {
+    min-height: 40px;
+    padding: 9px 11px;
+    font-size: .76rem;
+  }
+}
+
+@media (max-width: 390px) {
+  .site-header .nav-links {
+    gap: 18px;
+  }
+
+  .site-header .nav-links a {
+    font-size: .79rem;
+  }
+}
