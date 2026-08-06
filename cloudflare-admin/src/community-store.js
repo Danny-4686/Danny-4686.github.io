@@ -29,6 +29,11 @@ const BLOCKED_CONTAINS = [
 ];
 
 const PBKDF2_ITERATIONS = 240000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+const FIRST_USERNAME_LOCK_MS = 7 * DAY_MS;
+const USERNAME_CHANGE_COOLDOWN_MS = 30 * DAY_MS;
+const OLD_USERNAME_RESERVATION_MS = 7 * DAY_MS;
+const MAX_AVATAR_BYTES = 180000;
 const encoder = new TextEncoder();
 
 function json(data, status = 200) {
@@ -106,6 +111,25 @@ function validatePassword(value) {
   return '';
 }
 
+function validateAvatarData(value) {
+  const data = String(value || '');
+  if (!data) return { data: '', mime: '', bytes: new Uint8Array(0) };
+  const match = data.match(/^data:image\/(png|jpeg|webp);base64,([A-Za-z0-9+/=]+)$/);
+  if (!match) return { error: 'Use a PNG, JPG, or WebP image.' };
+
+  try {
+    const bytes = fromBase64(match[2]);
+    if (bytes.length < 24) return { error: 'That profile picture is not a valid image.' };
+    if (bytes.length > MAX_AVATAR_BYTES) {
+      return { error: 'That profile picture is too large. Please choose a smaller image.' };
+    }
+    const mime = match[1] === 'jpeg' ? 'image/jpeg' : `image/${match[1]}`;
+    return { data: `data:${mime};base64,${match[2]}`, mime, bytes };
+  } catch {
+    return { error: 'That profile picture could not be read.' };
+  }
+}
+
 async function hashPassword(password, saltBytes = crypto.getRandomValues(new Uint8Array(16))) {
   const key = await crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, ['deriveBits']);
   const bits = await crypto.subtle.deriveBits(
@@ -149,7 +173,22 @@ function cleanSlug(value) {
 }
 
 function publicUser(row) {
-  return row ? { id: row.id, username: row.username, createdAt: row.created_at } : null;
+  if (!row) return null;
+  const createdAt = Number(row.created_at || 0);
+  const usernameChangedAt = Number(row.username_changed_at || 0) || null;
+  const nextUsernameChangeAt = usernameChangedAt
+    ? usernameChangedAt + USERNAME_CHANGE_COOLDOWN_MS
+    : createdAt + FIRST_USERNAME_LOCK_MS;
+
+  return {
+    id: row.id,
+    username: row.username,
+    createdAt,
+    avatarUpdatedAt: Number(row.avatar_updated_at || 0) || null,
+    usernameChangedAt,
+    nextUsernameChangeAt,
+    canChangeUsername: Date.now() >= nextUsernameChangeAt
+  };
 }
 
 export class CommunityStore {
@@ -194,7 +233,20 @@ export class CommunityStore {
           attempts INTEGER NOT NULL,
           window_started INTEGER NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS username_reservations (
+          username_key TEXT PRIMARY KEY,
+          user_id TEXT NOT NULL,
+          reserved_until INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_username_reservations_until ON username_reservations(reserved_until);
       `);
+
+      const userColumns = new Set(
+        this.sql.exec('PRAGMA table_info(users)').toArray().map((column) => String(column.name))
+      );
+      if (!userColumns.has('avatar_data')) this.sql.exec('ALTER TABLE users ADD COLUMN avatar_data TEXT');
+      if (!userColumns.has('avatar_updated_at')) this.sql.exec('ALTER TABLE users ADD COLUMN avatar_updated_at INTEGER');
+      if (!userColumns.has('username_changed_at')) this.sql.exec('ALTER TABLE users ADD COLUMN username_changed_at INTEGER');
     });
   }
 
@@ -208,6 +260,9 @@ export class CommunityStore {
       if (url.pathname === '/signup' && method === 'POST') return this.signup(body);
       if (url.pathname === '/login' && method === 'POST') return this.login(body);
       if (url.pathname === '/user' && method === 'GET') return this.getUser(url.searchParams.get('id'));
+      if (url.pathname === '/avatar' && method === 'GET') return this.getAvatar(url.searchParams.get('id'));
+      if (url.pathname === '/avatar' && method === 'POST') return this.saveAvatar(body);
+      if (url.pathname === '/username-change' && method === 'POST') return this.changeUsername(body);
       if (url.pathname === '/records' && method === 'GET') return this.records(url.searchParams.get('userId'));
       if (url.pathname === '/score' && method === 'POST') return this.saveScore(body);
       if (url.pathname === '/leaderboard' && method === 'GET') {
@@ -245,11 +300,32 @@ export class CommunityStore {
     return true;
   }
 
+  clearExpiredReservations() {
+    this.sql.exec('DELETE FROM username_reservations WHERE reserved_until <= ?', Date.now());
+  }
+
   usernameAvailability(value) {
     const checked = validateUsername(value);
     if (checked.error) return json({ available: false, error: checked.error });
+    this.clearExpiredReservations();
+
     const existing = this.sql.exec('SELECT id FROM users WHERE username_key = ?', checked.key).toArray()[0];
-    return json({ available: !existing, username: checked.username });
+    if (existing) return json({ available: false, error: 'That username is already taken.' });
+
+    const reservation = this.sql.exec(
+      'SELECT reserved_until FROM username_reservations WHERE username_key = ? AND reserved_until > ?',
+      checked.key,
+      Date.now()
+    ).toArray()[0];
+    if (reservation) {
+      return json({
+        available: false,
+        error: 'That username is temporarily reserved. Please choose another one.',
+        reservedUntil: reservation.reserved_until
+      });
+    }
+
+    return json({ available: true, username: checked.username });
   }
 
   async signup(body) {
@@ -263,19 +339,28 @@ export class CommunityStore {
     const passwordError = validatePassword(body.password);
     if (passwordError) return json({ error: passwordError }, 400);
 
+    this.clearExpiredReservations();
     const existing = this.sql.exec('SELECT id FROM users WHERE username_key = ?', checked.key).toArray()[0];
     if (existing) return json({ error: 'That username is already taken.' }, 409);
+    const reservation = this.sql.exec(
+      'SELECT user_id FROM username_reservations WHERE username_key = ? AND reserved_until > ?',
+      checked.key,
+      Date.now()
+    ).toArray()[0];
+    if (reservation) return json({ error: 'That username is temporarily reserved.' }, 409);
 
     const password = await hashPassword(String(body.password));
     const user = {
       id: crypto.randomUUID(),
       username: checked.username,
-      created_at: Date.now()
+      created_at: Date.now(),
+      avatar_updated_at: null,
+      username_changed_at: null
     };
 
     try {
       this.sql.exec(
-        'INSERT INTO users(id, username, username_key, password_hash, password_salt, created_at, status) VALUES(?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO users(id, username, username_key, password_hash, password_salt, created_at, status, avatar_data, avatar_updated_at, username_changed_at) VALUES(?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL)',
         user.id,
         user.username,
         checked.key,
@@ -303,7 +388,7 @@ export class CommunityStore {
     }
 
     const user = this.sql.exec(
-      'SELECT id, username, password_hash, password_salt, created_at, status FROM users WHERE username_key = ?',
+      'SELECT id, username, password_hash, password_salt, created_at, status, avatar_updated_at, username_changed_at FROM users WHERE username_key = ?',
       checked.key
     ).toArray()[0];
 
@@ -319,11 +404,138 @@ export class CommunityStore {
     const userId = String(id || '').slice(0, 80);
     if (!userId) return json({ user: null });
     const user = this.sql.exec(
-      'SELECT id, username, created_at FROM users WHERE id = ? AND status = ?',
+      'SELECT id, username, created_at, avatar_updated_at, username_changed_at FROM users WHERE id = ? AND status = ?',
       userId,
       'active'
     ).toArray()[0];
     return json({ user: publicUser(user) });
+  }
+
+  getAvatar(id) {
+    const userId = String(id || '').slice(0, 80);
+    if (!userId) return new Response(null, { status: 404 });
+    const user = this.sql.exec(
+      'SELECT avatar_data, avatar_updated_at FROM users WHERE id = ? AND status = ?',
+      userId,
+      'active'
+    ).toArray()[0];
+    if (!user?.avatar_data) return new Response(null, { status: 404 });
+
+    const avatar = validateAvatarData(user.avatar_data);
+    if (avatar.error || !avatar.data) return new Response(null, { status: 404 });
+    return new Response(avatar.bytes, {
+      status: 200,
+      headers: {
+        'Content-Type': avatar.mime,
+        'Content-Length': String(avatar.bytes.length),
+        'Cache-Control': 'public, max-age=86400, immutable',
+        'X-Content-Type-Options': 'nosniff',
+        ETag: `"avatar-${user.avatar_updated_at || 0}"`
+      }
+    });
+  }
+
+  saveAvatar(body) {
+    const userId = String(body.userId || '').slice(0, 80);
+    if (!userId) return json({ error: 'Account not found.' }, 404);
+    if (!this.consumeRateLimit(`avatar:${userId}`, 20, 86400)) {
+      return json({ error: 'Too many profile picture changes. Please try again tomorrow.' }, 429);
+    }
+
+    const avatar = validateAvatarData(body.avatarData);
+    if (avatar.error) return json({ error: avatar.error }, 400);
+    const existing = this.sql.exec('SELECT id FROM users WHERE id = ? AND status = ?', userId, 'active').toArray()[0];
+    if (!existing) return json({ error: 'Account not found.' }, 404);
+
+    const updatedAt = avatar.data ? Date.now() : null;
+    this.sql.exec(
+      'UPDATE users SET avatar_data = ?, avatar_updated_at = ? WHERE id = ?',
+      avatar.data || null,
+      updatedAt,
+      userId
+    );
+    const user = this.sql.exec(
+      'SELECT id, username, created_at, avatar_updated_at, username_changed_at FROM users WHERE id = ?',
+      userId
+    ).toArray()[0];
+    return json({ ok: true, user: publicUser(user) });
+  }
+
+  async changeUsername(body) {
+    const userId = String(body.userId || '').slice(0, 80);
+    if (!userId) return json({ error: 'Account not found.' }, 404);
+    if (!this.consumeRateLimit(`username-change:${userId}`, 5, 86400)) {
+      return json({ error: 'Too many username attempts. Please try again later.' }, 429);
+    }
+
+    const checked = validateUsername(body.username);
+    if (checked.error) return json({ error: checked.error }, 400);
+    const user = this.sql.exec(
+      'SELECT id, username, username_key, password_hash, password_salt, created_at, status, avatar_updated_at, username_changed_at FROM users WHERE id = ?',
+      userId
+    ).toArray()[0];
+    if (!user || user.status !== 'active') return json({ error: 'Account not found.' }, 404);
+    if (!(await verifyPassword(String(body.password || ''), user.password_salt, user.password_hash))) {
+      return json({ error: 'Enter your current password to change your username.' }, 401);
+    }
+    if (checked.key === String(user.username_key).toLowerCase()) {
+      return json({ error: 'Choose a username different from your current one.' }, 400);
+    }
+
+    const now = Date.now();
+    const firstAllowedAt = Number(user.created_at) + FIRST_USERNAME_LOCK_MS;
+    const nextAllowedAt = user.username_changed_at
+      ? Number(user.username_changed_at) + USERNAME_CHANGE_COOLDOWN_MS
+      : firstAllowedAt;
+    if (now < nextAllowedAt) {
+      return json({
+        error: user.username_changed_at
+          ? 'Your username can only be changed once every 30 days.'
+          : 'New accounts must wait 7 days before changing their username.',
+        nextUsernameChangeAt: nextAllowedAt
+      }, 409);
+    }
+
+    this.clearExpiredReservations();
+    const existing = this.sql.exec('SELECT id FROM users WHERE username_key = ?', checked.key).toArray()[0];
+    if (existing) return json({ error: 'That username is already taken.' }, 409);
+    const reservation = this.sql.exec(
+      'SELECT user_id, reserved_until FROM username_reservations WHERE username_key = ? AND reserved_until > ?',
+      checked.key,
+      now
+    ).toArray()[0];
+    if (reservation && reservation.user_id !== userId) {
+      return json({ error: 'That username is temporarily reserved.', reservedUntil: reservation.reserved_until }, 409);
+    }
+
+    try {
+      this.sql.exec('BEGIN IMMEDIATE');
+      this.sql.exec(
+        'INSERT INTO username_reservations(username_key, user_id, reserved_until) VALUES(?, ?, ?) ON CONFLICT(username_key) DO UPDATE SET user_id = excluded.user_id, reserved_until = excluded.reserved_until',
+        user.username_key,
+        userId,
+        now + OLD_USERNAME_RESERVATION_MS
+      );
+      this.sql.exec('DELETE FROM username_reservations WHERE username_key = ? AND user_id = ?', checked.key, userId);
+      this.sql.exec(
+        'UPDATE users SET username = ?, username_key = ?, username_changed_at = ? WHERE id = ?',
+        checked.username,
+        checked.key,
+        now,
+        userId
+      );
+      this.sql.exec('COMMIT');
+    } catch (error) {
+      try { this.sql.exec('ROLLBACK'); } catch (_) {}
+      if (String(error).toLowerCase().includes('unique')) return json({ error: 'That username is already taken.' }, 409);
+      throw error;
+    }
+
+    const updated = this.sql.exec(
+      'SELECT id, username, created_at, avatar_updated_at, username_changed_at FROM users WHERE id = ?',
+      userId
+    ).toArray()[0];
+    return json({ ok: true, user: publicUser(updated), previousUsernameReservedUntil: now + OLD_USERNAME_RESERVATION_MS });
   }
 
   records(userIdValue) {
