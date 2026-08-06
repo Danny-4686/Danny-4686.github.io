@@ -1,4 +1,5 @@
 import worker from './worker.js';
+export { CommunityStore } from './community-store.js';
 
 function allowAdminMediaPreview(response, request) {
   const url = new URL(request.url);
