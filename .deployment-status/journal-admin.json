@@ -1,27 +1,8 @@
 {
   "workflow": "Deploy Journal Admin",
-  "commit": "501e33887dc12442f2e9dad50dfb2f42012a1588",
+  "commit": "8091e4fcb7a035e2ac86056fb42fb5a1412f1325",
   "outcome": "success",
-  "smokeOutcome": "success",
-  "completedAt": "2026-08-06T23:30:03.918106+00:00",
-  "communityApi": {
-    "healthHttpStatus": "200",
-    "health": {
-      "ok": true,
-      "service": "cloudlab-community",
-      "storageConfigured": true,
-      "sessionsConfigured": true,
-      "turnstileConfigured": true,
-      "build": "2026-08-06.1",
-      "storageReady": true,
-      "storageBackend": "sqlite",
-      "storageResponseStatus": 200
-    },
-    "usernameHttpStatus": "200",
-    "usernameCheck": {
-      "available": true,
-      "username": "DeployCheck45"
-    },
-    "usernameChecked": "DeployCheck45"
-  }
+  "smokeOutcome": "cancelled",
+  "completedAt": "2026-08-06T23:32:23.790604+00:00",
+  "communityApi": {}
 }
