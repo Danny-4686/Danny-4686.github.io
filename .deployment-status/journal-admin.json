@@ -1,8 +1,37 @@
 {
   "workflow": "Deploy Journal Admin",
-  "commit": "a776c044584fc7cfc6280cdf78475f0324030ccc",
-  "outcome": "cancelled",
-  "smokeOutcome": "skipped",
-  "completedAt": "2026-08-06T23:32:48.895608+00:00",
-  "communityApi": {}
+  "commit": "f4917f31d14d7cb8c2bbe8c99f90500f789939d8",
+  "outcome": "success",
+  "smokeOutcome": "failure",
+  "completedAt": "2026-08-06T23:33:36.060663+00:00",
+  "communityApi": {
+    "healthHttpStatus": "503",
+    "health": {
+      "ok": true,
+      "service": "cloudlab-community",
+      "storageConfigured": true,
+      "sessionsConfigured": true,
+      "turnstileConfigured": true,
+      "build": "2026-08-06.2",
+      "deepCheck": true,
+      "storageReady": false,
+      "storageBackend": "unavailable",
+      "storageResponseStatus": 500,
+      "signupReady": false,
+      "signupStage": "exception",
+      "storageResponse": {
+        "ok": false,
+        "storage": "sqlite",
+        "signupReady": false,
+        "stage": "exception",
+        "error": "Pbkdf2 failed: iteration counts above 100000 are not supported (requested 240000)."
+      }
+    },
+    "usernameHttpStatus": "200",
+    "usernameCheck": {
+      "available": true,
+      "username": "DeployCheck48"
+    },
+    "usernameChecked": "DeployCheck48"
+  }
 }
