@@ -1,4 +1,20 @@
 (() => {
+  if (!document.querySelector('link[data-community-ui]')) {
+    const styles = document.createElement('link');
+    styles.rel = 'stylesheet';
+    styles.href = '/community/community.css?v=1';
+    styles.dataset.communityUi = 'true';
+    document.head.append(styles);
+  }
+  if (!document.querySelector('script[data-community-ui]')) {
+    const script = document.createElement('script');
+    script.src = '/community/community-client.js?v=1';
+    script.dataset.communityUi = 'true';
+    document.head.append(script);
+  }
+})();
+
+(() => {
   const path = window.location.pathname.toLowerCase();
   if (!path.startsWith('/games/')) return;
 
