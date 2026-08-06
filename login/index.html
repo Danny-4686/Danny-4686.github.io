@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Sign in to your Danny4686.com CloudLab Arcade account.">
+  <meta name="description" content="Sign in to your Danny4686.com CloudLab account.">
   <meta name="theme-color" content="#061117">
   <title>Sign In | Danny4686</title>
   <link rel="icon" href="/assets/images/cloudlab-logo.png" type="image/png">
@@ -11,35 +11,27 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/community/account.css?v=2">
-  <link rel="stylesheet" href="/community/account-polish.css?v=1">
+  <link rel="stylesheet" href="/community/account-polish.css?v=2">
 </head>
 <body data-account-page="login">
   <header class="account-header">
     <a class="account-brand" href="/"><img src="/assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>Danny4686</strong><small>CloudLab Account</small></span></a>
-    <nav class="account-header-nav" aria-label="Account page navigation"><a href="/">Home</a><a href="/games/">Arcade</a></nav>
+    <nav class="account-header-nav" aria-label="Account page navigation"><a href="/">Home</a></nav>
   </header>
 
-  <main class="account-shell">
-    <section class="account-story">
-      <p class="eyebrow">CLOUDLAB PLAYER ACCOUNT</p>
-      <h1>One account for every record.</h1>
-      <p class="lead">Sign in to keep your Arcade personal bests synced, appear on community leaderboards, and support Journal posts you enjoy.</p>
-      <div class="benefit-grid">
-        <article class="benefit"><span class="benefit-icon">↗</span><strong>Synced records</strong><small>Your improved personal bests follow your account.</small></article>
-        <article class="benefit"><span class="benefit-icon">#</span><strong>Community rankings</strong><small>See how your best runs compare with other players.</small></article>
-        <article class="benefit"><span class="benefit-icon">♥</span><strong>Journal likes</strong><small>Like and unlike full posts with one saved account.</small></article>
-      </div>
-    </section>
-
+  <main class="account-shell auth-only-shell">
     <section class="account-card" aria-labelledby="loginTitle">
       <nav class="auth-tabs" aria-label="Account access">
         <a class="active" href="/login/" aria-current="page">Sign in</a>
         <a href="/signup/">Create account</a>
       </nav>
 
-      <div class="card-head">
-        <div><p class="eyebrow">WELCOME BACK</p><h1 id="loginTitle">Sign in</h1><p>Enter your CloudLab username and password to continue.</p></div>
-        <span class="secure-badge">SECURE</span>
+      <div class="card-head simple-card-head">
+        <div>
+          <p class="eyebrow">CLOUDLAB ACCOUNT</p>
+          <h1 id="loginTitle">Welcome back</h1>
+          <p>Enter your username and password to sign in.</p>
+        </div>
       </div>
 
       <div id="authFeedback" class="auth-feedback" hidden role="status" aria-live="polite"></div>
@@ -48,12 +40,11 @@
         <label class="field"><span>Username</span><input id="username" name="username" autocomplete="username" maxlength="20" required placeholder="Your username"></label>
         <label class="field"><span>Password</span><span class="password-wrap"><input id="password" name="password" type="password" autocomplete="current-password" maxlength="128" required placeholder="Your password"><button class="password-toggle" type="button" data-password-toggle="password">Show</button></span></label>
         <div id="turnstileSlot" class="turnstile-slot"></div>
-        <button class="auth-submit" type="submit">Sign in to CloudLab</button>
+        <button class="auth-submit" type="submit">Sign in</button>
       </form>
 
-      <div class="auth-assurance">Your password stays inside the private Cloudflare account service.</div>
-      <p class="auth-switch">New to the Arcade? <a href="/signup/">Create a free account</a></p>
-      <p class="account-footnote">CloudLab player accounts are separate from the private website-owner dashboard.</p>
+      <div class="auth-assurance">Your account information is securely protected.</div>
+      <p class="auth-switch">Need an account? <a href="/signup/">Join CloudLab</a></p>
     </section>
   </main>
 
