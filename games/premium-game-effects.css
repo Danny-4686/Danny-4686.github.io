@@ -1,0 +1,288 @@
+/* Shared premium motion for CloudLab Arcade game pages and classic library cards. */
+
+.premium-game .game-panel {
+  isolation: isolate;
+}
+
+.premium-game .game-panel::after {
+  content: "";
+  position: absolute;
+  inset: -45%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: .34;
+  background: conic-gradient(
+    from 20deg,
+    transparent,
+    rgba(104, 208, 223, .09),
+    transparent 26%,
+    rgba(242, 199, 92, .055),
+    transparent 58%,
+    rgba(139, 207, 155, .055),
+    transparent 82%
+  );
+  animation: premiumPanelOrbit 18s linear infinite;
+}
+
+.premium-game .game-panel > * {
+  position: relative;
+  z-index: 1;
+}
+
+.premium-game .game-stage,
+.premium-game .pong-stage,
+.premium-game .mine-board,
+.premium-game .ttt-board,
+.premium-game .memory-board,
+.premium-game .board-2048 {
+  transition: border-color .25s ease, box-shadow .25s ease, filter .25s ease;
+}
+
+.premium-game .game-stage:hover,
+.premium-game .pong-stage:hover,
+.premium-game .mine-board:hover,
+.premium-game .ttt-board:hover,
+.premium-game .memory-board:hover,
+.premium-game .board-2048:hover {
+  border-color: rgba(104, 208, 223, .36);
+  box-shadow: 0 25px 62px rgba(0, 0, 0, .33), 0 0 34px rgba(104, 208, 223, .07);
+}
+
+.premium-game .game-button,
+.premium-game .touch-button,
+.premium-game .difficulty-select {
+  position: relative;
+  overflow: hidden;
+  transform: translateZ(0);
+  transition: transform .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease, filter .18s ease;
+}
+
+.premium-game .game-button::after,
+.premium-game .touch-button::after {
+  content: "";
+  position: absolute;
+  inset: -80% -45%;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(110deg, transparent 38%, rgba(255, 255, 255, .2) 50%, transparent 62%);
+  transform: translateX(-45%) rotate(8deg);
+  transition: opacity .2s ease, transform .48s ease;
+}
+
+.premium-game .game-button:hover::after,
+.premium-game .touch-button:hover::after {
+  opacity: .72;
+  transform: translateX(45%) rotate(8deg);
+}
+
+.premium-game .game-button.premium-press,
+.premium-game .touch-button.premium-press {
+  animation: premiumButtonPress .3s cubic-bezier(.2, .8, .2, 1);
+}
+
+.premium-game .score-chip {
+  transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease, background .22s ease;
+}
+
+.premium-game .score-chip:hover {
+  transform: translateY(-2px);
+  border-color: rgba(104, 208, 223, .34);
+  background: rgba(104, 208, 223, .045);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, .2);
+}
+
+.premium-score-pop {
+  animation: premiumScorePop .42s cubic-bezier(.2, .86, .22, 1);
+}
+
+.premium-stage-hit {
+  animation: premiumStageHit .48s cubic-bezier(.2, .8, .2, 1);
+}
+
+.premium-message-pop {
+  animation: premiumMessagePop .45s cubic-bezier(.18, .84, .2, 1) both;
+}
+
+.ttt-board button.premium-cell-pop,
+.mine-cell.premium-cell-pop {
+  animation: premiumCellPop .38s cubic-bezier(.18, .9, .22, 1);
+}
+
+.ttt-board button.win {
+  animation: premiumWinnerPulse .75s ease-in-out infinite alternate;
+}
+
+.mine-cell.revealed:not(.mine) {
+  transition: transform .16s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+
+.mine-cell.flagged .flag-icon {
+  transform-origin: 35% 86%;
+}
+
+/* 2048 motion control */
+.motion-toggle-button {
+  min-width: 170px;
+  gap: 8px;
+}
+
+.motion-toggle-button::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--mint);
+  box-shadow: 0 0 14px rgba(139, 207, 155, .52);
+}
+
+.motion-toggle-button[aria-pressed="false"]::before {
+  background: var(--danger);
+  box-shadow: 0 0 14px rgba(239, 109, 104, .42);
+}
+
+.motion-toggle-button.is-system-controlled {
+  cursor: help;
+  opacity: .72;
+}
+
+html.game-motion-off .game-2048-stage *,
+html.game-motion-off .game-2048-stage *::before,
+html.game-motion-off .game-2048-stage *::after,
+html.game-motion-off body:has(.game-2048-stage) .score-chip strong,
+html.game-motion-off body:has(.game-2048-stage) .score-gain {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+
+html.game-motion-off .board-2048::before {
+  display: none;
+}
+
+/* Automatic premium motion for the six classic library previews. */
+.upgraded-snake-preview .s1,
+.upgraded-snake-preview .s2,
+.upgraded-snake-preview .s3,
+.upgraded-snake-preview .s4,
+.upgraded-snake-preview .s5 {
+  animation: classicSnakeFlow 2.6s ease-in-out infinite;
+}
+.upgraded-snake-preview .s2 { animation-delay: -2.45s; }
+.upgraded-snake-preview .s3 { animation-delay: -2.3s; }
+.upgraded-snake-preview .s4 { animation-delay: -2.15s; }
+.upgraded-snake-preview .s5 { animation-delay: -2s; }
+.snake-banner-apple { animation: classicAppleFloat 2.15s ease-in-out infinite; }
+
+.polished-2048-preview .tile-2,
+.polished-2048-preview .tile-16,
+.polished-2048-preview .tile-128,
+.polished-2048-preview .tile-512,
+.polished-2048-preview .tile-2048 {
+  animation: classic2048Pulse 3.2s cubic-bezier(.2, .8, .2, 1) infinite;
+}
+.polished-2048-preview .tile-16 { animation-delay: -.55s; }
+.polished-2048-preview .tile-128 { animation-delay: -1.1s; }
+.polished-2048-preview .tile-512 { animation-delay: -1.65s; }
+.polished-2048-preview .tile-2048 { animation-delay: -2.2s; }
+
+.polished-memory-preview .preview-card {
+  animation: classicMemoryGlow 3.4s ease-in-out infinite;
+}
+.polished-memory-preview .preview-card.two { animation-delay: -.6s; }
+.polished-memory-preview .preview-card.three { animation-delay: -1.2s; }
+.polished-memory-preview .preview-card.four { animation-delay: -1.8s; }
+.polished-memory-preview .preview-card.five { animation-delay: -2.4s; }
+.polished-memory-preview .image-card img { animation: classicMemoryImage 2.8s ease-in-out infinite; }
+
+.pong-preview .left { animation: classicPongLeft 1.65s ease-in-out infinite alternate; }
+.pong-preview .right { animation: classicPongRight 1.65s ease-in-out infinite alternate; }
+.pong-preview .pong-ball { animation: classicPongBall 1.65s cubic-bezier(.42, 0, .58, 1) infinite alternate; }
+
+.ttt-preview .x { animation: classicTttX 2.6s ease-in-out infinite; }
+.ttt-preview .o { animation: classicTttO 2.6s ease-in-out infinite; }
+.ttt-preview span:nth-child(3),
+.ttt-preview span:nth-child(4) { animation-delay: -.45s; }
+.ttt-preview span:nth-child(5),
+.ttt-preview span:nth-child(6) { animation-delay: -.9s; }
+.ttt-preview span:nth-child(7),
+.ttt-preview span:nth-child(8),
+.ttt-preview span:nth-child(9) { animation-delay: -1.35s; }
+
+.upgraded-mine-preview .flag img { animation: classicFlagWave 1.85s ease-in-out infinite; transform-origin: 33% 88%; }
+.upgraded-mine-preview .mine img { animation: classicBombBreathe 1.65s ease-in-out infinite; }
+.upgraded-mine-preview .one,
+.upgraded-mine-preview .two { animation: classicNumberGlow 2.6s ease-in-out infinite; }
+
+/* Use the real CloudLab gold collectible in the Cloud Hopper library card. */
+.hopper-preview .preview-coin {
+  width: 48px;
+  height: 48px;
+  border-radius: 0;
+  background: url("../assets/images/memory/clgold.png") center / contain no-repeat;
+  box-shadow: none;
+  filter: drop-shadow(0 8px 10px rgba(0, 0, 0, .28)) drop-shadow(0 0 14px rgba(242, 199, 92, .32));
+  animation: premiumCloudCoin 1.8s ease-in-out infinite;
+}
+
+@keyframes premiumPanelOrbit { to { transform: rotate(360deg); } }
+@keyframes premiumButtonPress { 45% { transform: translateY(1px) scale(.955); filter: brightness(1.08); } }
+@keyframes premiumScorePop { 45% { transform: translateY(-4px) scale(1.18); color: var(--cyan); text-shadow: 0 0 18px rgba(104, 208, 223, .46); } }
+@keyframes premiumStageHit { 45% { filter: brightness(1.07); box-shadow: 0 0 0 3px rgba(104, 208, 223, .09), 0 28px 65px rgba(0, 0, 0, .34); } }
+@keyframes premiumMessagePop { from { opacity: 0; transform: translateY(14px) scale(.955); } to { opacity: 1; transform: none; } }
+@keyframes premiumCellPop { 0% { transform: scale(.72); opacity: .4; } 62% { transform: scale(1.08); } 100% { transform: scale(1); opacity: 1; } }
+@keyframes premiumWinnerPulse { to { transform: translateY(-3px) scale(1.045); filter: brightness(1.2); box-shadow: 0 0 28px rgba(104, 208, 223, .22); } }
+@keyframes classicSnakeFlow { 0%, 100% { translate: 0 0; filter: brightness(1); } 50% { translate: 0 -4px; filter: brightness(1.08); } }
+@keyframes classicAppleFloat { 0%, 100% { translate: 0 0; rotate: 4deg; scale: 1; } 50% { translate: 0 -8px; rotate: -4deg; scale: 1.055; } }
+@keyframes classic2048Pulse { 0%, 72%, 100% { scale: 1; filter: brightness(1); } 84% { scale: 1.095; filter: brightness(1.12); } }
+@keyframes classicMemoryGlow { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.09) drop-shadow(0 10px 12px rgba(0, 0, 0, .18)); } }
+@keyframes classicMemoryImage { 0%, 100% { scale: .96; } 50% { scale: 1.035; } }
+@keyframes classicPongLeft { from { translate: 0 -11%; } to { translate: 0 18%; } }
+@keyframes classicPongRight { from { translate: 0 16%; } to { translate: 0 -14%; } }
+@keyframes classicPongBall { 0% { translate: -42px 24px; scale: .92; } 50% { translate: 0 -18px; scale: 1.08; } 100% { translate: 42px 13px; scale: .96; } }
+@keyframes classicTttX { 0%, 78%, 100% { translate: 0 0; rotate: 0deg; scale: 1; text-shadow: none; } 88% { translate: 0 -4px; rotate: -5deg; scale: 1.1; text-shadow: 0 0 18px rgba(104, 208, 223, .45); } }
+@keyframes classicTttO { 0%, 78%, 100% { translate: 0 0; rotate: 0deg; scale: 1; text-shadow: none; } 88% { translate: 0 -4px; rotate: 6deg; scale: 1.1; text-shadow: 0 0 18px rgba(242, 199, 92, .42); } }
+@keyframes classicFlagWave { 0%, 100% { rotate: -3deg; translate: 0 0; } 50% { rotate: 5deg; translate: 0 -3px; } }
+@keyframes classicBombBreathe { 0%, 100% { scale: 1; filter: drop-shadow(0 6px 7px rgba(0, 0, 0, .25)); } 50% { scale: 1.09; filter: drop-shadow(0 8px 9px rgba(0, 0, 0, .28)) drop-shadow(0 0 12px rgba(239, 109, 104, .24)); } }
+@keyframes classicNumberGlow { 0%, 100% { text-shadow: none; } 50% { text-shadow: 0 0 15px currentColor; } }
+@keyframes premiumCloudCoin { 0%, 100% { translate: 0 0; rotate: -5deg; scale: 1; } 50% { translate: 0 -7px; rotate: 6deg; scale: 1.07; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .premium-game .game-panel::after,
+  .premium-score-pop,
+  .premium-stage-hit,
+  .premium-message-pop,
+  .ttt-board button.premium-cell-pop,
+  .mine-cell.premium-cell-pop,
+  .ttt-board button.win,
+  .upgraded-snake-preview span,
+  .snake-banner-apple,
+  .polished-2048-preview span,
+  .polished-memory-preview .preview-card,
+  .polished-memory-preview .image-card img,
+  .pong-preview .left,
+  .pong-preview .right,
+  .pong-preview .pong-ball,
+  .ttt-preview .x,
+  .ttt-preview .o,
+  .upgraded-mine-preview .flag img,
+  .upgraded-mine-preview .mine img,
+  .upgraded-mine-preview .one,
+  .upgraded-mine-preview .two,
+  .hopper-preview .preview-coin {
+    animation: none !important;
+  }
+
+  .premium-game .game-button,
+  .premium-game .touch-button,
+  .premium-game .difficulty-select,
+  .premium-game .score-chip,
+  .premium-game .game-stage,
+  .premium-game .pong-stage,
+  .premium-game .mine-board,
+  .premium-game .ttt-board,
+  .premium-game .memory-board,
+  .premium-game .board-2048 {
+    transition: none !important;
+  }
+}
