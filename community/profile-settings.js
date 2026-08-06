@@ -5,11 +5,12 @@
 
   let csrfToken = '';
   let currentUser = null;
+  let currentProfile = null;
   let usernameTimer = null;
 
   const avatarImage = document.getElementById('profileAvatarImage');
   const avatarWrap = document.getElementById('profileAvatarWrap');
-  const avatarSettingsPreview = document.getElementById('avatarSettingsPreview');
+  const avatarPreview = document.getElementById('avatarSettingsPreview');
   const avatarInput = document.getElementById('avatarInput');
   const avatarChoose = document.getElementById('avatarChoose');
   const avatarRemove = document.getElementById('avatarRemove');
@@ -19,6 +20,12 @@
   const usernameHint = document.getElementById('settingsUsernameHint');
   const usernameCooldown = document.getElementById('usernameCooldown');
   const usernameSave = document.getElementById('usernameSave');
+  const profileDetailsForm = document.getElementById('profileDetailsForm');
+  const statusInput = document.getElementById('profileStatusInput');
+  const bioInput = document.getElementById('profileBioInput');
+  const statusCount = document.getElementById('statusCount');
+  const bioCount = document.getElementById('bioCount');
+  const profileDetailsSave = document.getElementById('profileDetailsSave');
   const feedback = document.getElementById('profileSettingsFeedback');
 
   async function api(path, options = {}) {
@@ -57,37 +64,45 @@
     });
   }
 
+  function updateCharacterCounts() {
+    if (statusCount && statusInput) statusCount.textContent = `${statusInput.value.length} / 20`;
+    if (bioCount && bioInput) bioCount.textContent = `${bioInput.value.length} / 160`;
+  }
+
   function applyAvatar(user) {
     const fallback = document.getElementById('profileAvatar');
     if (fallback) fallback.textContent = user.username.slice(0, 1).toUpperCase();
-    const source = user.avatarUrl || '/assets/images/cloudlab-logo.png';
-    if (avatarSettingsPreview) avatarSettingsPreview.src = source;
     if (!avatarImage || !avatarWrap) return;
 
     if (user.avatarUrl) {
       avatarImage.src = user.avatarUrl;
       avatarImage.hidden = false;
       avatarWrap.classList.add('has-image');
-      avatarRemove.disabled = false;
+      if (avatarPreview) avatarPreview.src = user.avatarUrl;
+      if (avatarRemove) avatarRemove.disabled = false;
     } else {
       avatarImage.removeAttribute('src');
       avatarImage.hidden = true;
       avatarWrap.classList.remove('has-image');
-      avatarRemove.disabled = true;
+      if (avatarPreview) avatarPreview.src = '/assets/images/cloudlab-logo.png';
+      if (avatarRemove) avatarRemove.disabled = true;
     }
   }
 
   function applyUsernameState(user) {
     currentUser = user;
     const title = document.getElementById('profileUsername');
+    const joined = document.getElementById('profileJoined');
     if (title) title.textContent = user.username;
-    usernameInput.value = user.username;
+    if (joined && user.createdAt) joined.textContent = `Account created ${formatDate(user.createdAt)}`;
+    if (usernameInput) usernameInput.value = user.username;
 
     const canChange = Boolean(user.canChangeUsername);
-    usernameInput.disabled = !canChange;
-    usernamePassword.disabled = !canChange;
-    usernameSave.disabled = !canChange;
+    if (usernameInput) usernameInput.disabled = !canChange;
+    if (usernamePassword) usernamePassword.disabled = !canChange;
+    if (usernameSave) usernameSave.disabled = !canChange;
 
+    if (!usernameCooldown || !usernameHint) return;
     if (canChange) {
       usernameCooldown.className = 'username-cooldown ready';
       usernameCooldown.textContent = 'Username change available. After changing it, the next change unlocks in 30 days.';
@@ -106,6 +121,23 @@
     currentUser = user;
     applyAvatar(user);
     applyUsernameState(user);
+  }
+
+  function applyProfile(profile) {
+    currentProfile = profile;
+    const statusDisplay = document.getElementById('profileStatusDisplay');
+    const bioDisplay = document.getElementById('profileBioDisplay');
+    const statusText = String(profile.statusText || '');
+    const bio = String(profile.bio || '');
+
+    if (statusDisplay) {
+      statusDisplay.textContent = statusText;
+      statusDisplay.hidden = !statusText;
+    }
+    if (bioDisplay) bioDisplay.textContent = bio || 'No bio added yet.';
+    if (statusInput) statusInput.value = statusText;
+    if (bioInput) bioInput.value = bio;
+    updateCharacterCounts();
   }
 
   function loadImage(file) {
@@ -173,7 +205,7 @@
       showFeedback(error.message, 'error');
     } finally {
       setBusy(avatarChoose, false);
-      avatarInput.value = '';
+      if (avatarInput) avatarInput.value = '';
     }
   }
 
@@ -191,13 +223,13 @@
       showFeedback(error.message, 'error');
     } finally {
       setBusy(avatarRemove, false);
-      avatarRemove.disabled = !currentUser?.avatarUrl;
+      if (!currentUser?.avatarUrl && avatarRemove) avatarRemove.disabled = true;
     }
   }
 
   async function checkUsername() {
+    if (!usernameInput || !usernameHint || !currentUser?.canChangeUsername) return;
     const value = usernameInput.value.trim();
-    if (!currentUser?.canChangeUsername) return;
     if (value.toLowerCase() === currentUser.username.toLowerCase()) {
       usernameHint.textContent = 'This is your current username.';
       usernameHint.className = 'field-hint';
@@ -221,7 +253,7 @@
 
   async function changeUsername(event) {
     event.preventDefault();
-    if (!currentUser?.canChangeUsername) return;
+    if (!currentUser?.canChangeUsername || !usernameInput || !usernamePassword) return;
     const username = usernameInput.value.trim();
     const password = usernamePassword.value;
 
@@ -235,17 +267,56 @@
       csrfToken = data.csrfToken || csrfToken;
       usernamePassword.value = '';
       applyUser(data.user);
+      if (currentProfile) applyProfile({ ...currentProfile, username: data.user.username });
       showFeedback(`Your username is now ${data.user.username}. Your previous name is reserved for 7 days.`, 'success');
-      window.setTimeout(() => location.reload(), 1200);
     } catch (error) {
-      if (error.data?.nextUsernameChangeAt) {
+      if (error.data?.nextUsernameChangeAt && usernameCooldown) {
         usernameCooldown.textContent = `Your next username change unlocks on ${formatDate(error.data.nextUsernameChangeAt)}.`;
       }
       showFeedback(error.message, 'error');
     } finally {
       setBusy(usernameSave, false);
-      if (currentUser && !currentUser.canChangeUsername) usernameSave.disabled = true;
+      if (currentUser && !currentUser.canChangeUsername && usernameSave) usernameSave.disabled = true;
     }
+  }
+
+  async function saveProfileDetails(event) {
+    event.preventDefault();
+    if (!statusInput || !bioInput) return;
+    try {
+      showFeedback('');
+      setBusy(profileDetailsSave, true, 'Saving…');
+      const data = await api('/profile', {
+        method: 'POST',
+        body: JSON.stringify({
+          statusText: statusInput.value.trim(),
+          bio: bioInput.value.trim()
+        })
+      });
+      applyProfile(data.profile);
+      showFeedback('Your public profile has been updated.', 'success');
+    } catch (error) {
+      showFeedback(error.message, 'error');
+    } finally {
+      setBusy(profileDetailsSave, false);
+    }
+  }
+
+  function connectEvents() {
+    avatarChoose?.addEventListener('click', () => avatarInput?.click());
+    avatarInput?.addEventListener('change', () => {
+      const file = avatarInput.files?.[0];
+      if (file) uploadAvatar(file);
+    });
+    avatarRemove?.addEventListener('click', removeAvatar);
+    usernameForm?.addEventListener('submit', changeUsername);
+    usernameInput?.addEventListener('input', () => {
+      clearTimeout(usernameTimer);
+      usernameTimer = setTimeout(checkUsername, 320);
+    });
+    profileDetailsForm?.addEventListener('submit', saveProfileDetails);
+    statusInput?.addEventListener('input', updateCharacterCounts);
+    bioInput?.addEventListener('input', updateCharacterCounts);
   }
 
   async function init() {
@@ -255,17 +326,9 @@
       csrfToken = session.csrfToken || '';
       applyUser(session.user);
 
-      avatarChoose.addEventListener('click', () => avatarInput.click());
-      avatarInput.addEventListener('change', () => {
-        const file = avatarInput.files?.[0];
-        if (file) uploadAvatar(file);
-      });
-      avatarRemove.addEventListener('click', removeAvatar);
-      usernameForm.addEventListener('submit', changeUsername);
-      usernameInput.addEventListener('input', () => {
-        clearTimeout(usernameTimer);
-        usernameTimer = setTimeout(checkUsername, 320);
-      });
+      const profileData = await api('/profile');
+      applyProfile(profileData.profile);
+      connectEvents();
     } catch (error) {
       showFeedback(error.message, 'error');
     }
