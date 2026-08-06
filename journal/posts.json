@@ -1,5 +1,21 @@
 [
   {
+    "slug": "fortnite-sprites",
+    "title": "Fortnite Sprites",
+    "description": "After three long days of grinding and dealing with Fortnite bugs, we finally mastered every Sprite! It definitely wasn’t easy, but it feels great to have them all finished. Now it’s time to see what Fortnite has planned for us on August 6!",
+    "date": "2026-08-04",
+    "displayDate": "August 4, 2026",
+    "tags": [
+      "Game"
+    ],
+    "mediaType": "image",
+    "thumbnail": "/assets/images/journal/fortnite-sprites/img-5094.jpeg",
+    "fit": "contain",
+    "mode": "card",
+    "comingSoon": false,
+    "cardOnly": true
+  },
+  {
     "slug": "danny4686-com-is-officially-live",
     "title": "Danny4686.com is officially live",
     "description": "This is the start of something bigger, with new projects, updates, features, and upgrades coming soon. The site is ready to grow, improve, and become something amazing.",
