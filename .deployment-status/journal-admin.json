@@ -1,8 +1,8 @@
 {
   "workflow": "Deploy Journal Admin",
-  "commit": "8091e4fcb7a035e2ac86056fb42fb5a1412f1325",
-  "outcome": "success",
-  "smokeOutcome": "cancelled",
-  "completedAt": "2026-08-06T23:32:23.790604+00:00",
+  "commit": "a776c044584fc7cfc6280cdf78475f0324030ccc",
+  "outcome": "cancelled",
+  "smokeOutcome": "skipped",
+  "completedAt": "2026-08-06T23:32:48.895608+00:00",
   "communityApi": {}
 }
