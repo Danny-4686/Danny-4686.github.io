@@ -1,5 +1,5 @@
 import app from './index.js';
-import { handleCommunityApi } from './community-api.js';
+import { handleCommunityApi } from './community-api-runtime.js';
 import { handleFreshAbyss } from './fresh-abyss.js';
 import { loginPage } from './admin-login-page.js';
 import {
