@@ -100,6 +100,29 @@ export async function handleCommunityApi(request, env) {
   const url = new URL(request.url);
   const path = pathAfterPrefix(url.pathname);
 
+  if (path === '/health' && request.method === 'GET') {
+    const baseResponse = await handleBaseCommunityApi(request, env);
+    const baseData = await baseResponse.json().catch(() => ({ ok: false }));
+
+    try {
+      const storageResponse = await storeFetch(env, '/health');
+      const storageData = await storageResponse.json().catch(() => ({}));
+      const storageReady = Boolean(storageResponse.ok && storageData.ok);
+      return json(request, env, {
+        ...baseData,
+        storageReady,
+        storageBackend: storageReady ? (storageData.storage || 'sqlite') : 'unavailable'
+      }, storageReady ? 200 : 503);
+    } catch (error) {
+      console.error('Community storage health check failed', error);
+      return json(request, env, {
+        ...baseData,
+        storageReady: false,
+        storageBackend: 'unavailable'
+      }, 503);
+    }
+  }
+
   const publicProfileMatch = path.match(/^\/profiles\/([A-Za-z0-9-]+)$/);
   if (publicProfileMatch && request.method === 'GET') {
     return publicProfile(request, env, publicProfileMatch[1]);
