@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="View your CloudLab Arcade account and saved records.">
+  <meta name="theme-color" content="#061117">
+  <title>My Account | Danny4686</title>
+  <link rel="icon" href="/assets/images/cloudlab-logo.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/community/account.css?v=1">
+</head>
+<body data-account-page="account">
+  <header class="account-header">
+    <a class="account-brand" href="/"><img src="/assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>Danny4686</strong><small>CloudLab Account</small></span></a>
+    <nav class="account-header-nav"><a href="/games/">Play games</a><a href="/journal/">Journal</a></nav>
+  </header>
+  <main class="account-shell profile-shell">
+    <section id="profileCard" class="account-card">
+      <div id="authFeedback" class="auth-feedback" hidden role="status" aria-live="polite"></div>
+      <div class="profile-top">
+        <div class="profile-identity"><span id="profileAvatar" class="profile-avatar">C</span><div><p class="eyebrow">CLOUDLAB PLAYER</p><h1 id="profileUsername">Loading…</h1><p id="profileJoined">Loading account details…</p></div></div>
+        <button id="logoutButton" class="secondary-button" type="button">Sign out</button>
+      </div>
+      <div class="records-heading"><div><p class="eyebrow">ARCADE</p><h2>Saved personal records</h2></div><p>Only improved records replace your existing best.</p></div>
+      <div id="recordGrid" class="record-grid"><div class="empty-records">Loading your saved records…</div></div>
+    </section>
+  </main>
+  <footer class="account-footer"><span>© <span id="year"></span> Danny4686.</span><a href="/">Back to Danny4686.com</a></footer>
+  <script>document.getElementById('year').textContent=new Date().getFullYear()</script>
+  <script src="/community/account.js?v=1"></script>
+</body>
+</html>
