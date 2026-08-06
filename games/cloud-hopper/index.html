@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Play Cloud Hopper in the CloudLab Arcade.">
+  <meta name="theme-color" content="#061117">
+  <title>Cloud Hopper | CloudLab Arcade</title>
+  <link rel="icon" href="../../assets/images/cloudlab-logo.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../hub.css">
+  <style>
+    .hopper-stage{position:relative;width:min(620px,100%);margin:0 auto;overflow:hidden;border:1px solid var(--line);border-radius:24px;background:#07151c;box-shadow:inset 0 0 0 1px rgba(255,255,255,.025),0 20px 50px rgba(0,0,0,.24)}
+    #hopperCanvas{display:block;width:100%;height:auto;aspect-ratio:4/5;touch-action:none}.hopper-touch{display:flex;justify-content:center;gap:12px;margin-top:16px}.hopper-touch .touch-button{width:92px;height:58px}.game-message{background:rgba(4,13,18,.58);backdrop-filter:blur(8px);transition:opacity .2s ease,visibility .2s ease}.game-message.hidden{display:grid;opacity:0;visibility:hidden;pointer-events:none}.game-message h2{font-size:clamp(2rem,7vw,3.5rem)}
+  </style>
+</head>
+<body>
+  <header class="hub-header"><a class="hub-brand" href="/" aria-label="Return to Danny4686.com"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>Danny4686</strong><small>CloudLab Studio</small></span></a><nav class="hub-nav" aria-label="Site navigation"><a class="active" href="/games/">Games</a><a href="/journal/">Journal</a><a href="/">Home</a></nav><a class="header-action" href="/games/">All Games</a></header>
+  <main class="page-shell game-page">
+    <a class="back-link reveal" href="/games/">← Back to Browser Games</a>
+    <div class="game-heading reveal"><div><p class="eyebrow">CLOUDLAB ARCADE</p><h1>Cloud Hopper</h1><p>Bounce from platform to platform, collect Cloud Coins, and climb as high as possible.</p></div><div class="score-row"><div class="score-chip"><small>HEIGHT</small><strong id="heightScore">0</strong></div><div class="score-chip"><small>COINS</small><strong id="coins">0</strong></div><div class="score-chip"><small>BEST</small><strong id="best">0</strong></div></div></div>
+    <section class="game-panel reveal" aria-label="Cloud Hopper game">
+      <div class="hopper-stage"><canvas id="hopperCanvas" width="640" height="800" aria-label="Cloud Hopper board"></canvas><div class="game-message" id="gameMessage"><div><h2 id="messageTitle">Ready to hop?</h2><p id="messageText">Press Start and steer with A/D, the arrow keys, or the touch buttons.</p></div></div></div>
+      <div class="game-toolbar"><button class="game-button primary" id="startButton" type="button">Start Run</button><button class="game-button" id="pauseButton" type="button">Pause</button><button class="game-button" id="restartButton" type="button">Restart</button></div>
+      <div class="hopper-touch" aria-label="Touch movement controls"><button class="touch-button" type="button" data-move="left" aria-label="Move left">←</button><button class="touch-button" type="button" data-move="right" aria-label="Move right">→</button></div>
+      <p class="control-note"><span class="desktop-only">Use A/D or the arrow keys.</span> The cloud bounces automatically when it lands.</p>
+    </section>
+  </main>
+  <footer class="site-footer"><a class="footer-brand" href="/"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>Cloud Hopper</small></span></a><p>© <span id="year"></span> Danny4686.</p></footer>
+  <script src="../../hub.js"></script>
+  <script>
+  (() => {
+    const canvas = document.getElementById('hopperCanvas');
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width;
+    const H = canvas.height;
+    const heightEl = document.getElementById('heightScore');
+    const coinsEl = document.getElementById('coins');
+    const bestEl = document.getElementById('best');
+    const message = document.getElementById('gameMessage');
+    const messageTitle = document.getElementById('messageTitle');
+    const messageText = document.getElementById('messageText');
+    const startButton = document.getElementById('startButton');
+    const pauseButton = document.getElementById('pauseButton');
+    const keys = { left: false, right: false };
+    let player;
+    let platforms = [];
+    let particles = [];
+    let running = false;
+    let paused = false;
+    let started = false;
+    let score = 0;
+    let coins = 0;
+    let best = Number(localStorage.getItem('cloudlab-hopper-best') || 0);
+    let camera = 0;
+    let last = 0;
+    let raf = 0;
+
+    function showMessage(title, text) { messageTitle.textContent = title; messageText.textContent = text; message.classList.remove('hidden'); }
+    function hideMessage() { message.classList.add('hidden'); }
+    function updateStats() { heightEl.textContent = Math.floor(score); coinsEl.textContent = coins; bestEl.textContent = Math.max(best, Math.floor(score)); }
+
+    function randomPlatform(y, previousX = W / 2) {
+      const w = 105 + Math.random() * 55;
+      const maxShift = 190;
+      const x = Math.max(12, Math.min(W - w - 12, previousX + (Math.random() * 2 - 1) * maxShift));
+      return { x, y, w, h: 16, coin: Math.random() < .42, moving: Math.random() < .18, vx: Math.random() < .5 ? -42 : 42 };
+    }
+
+    function resetGame() {
+      cancelAnimationFrame(raf);
+      score = 0;
+      coins = 0;
+      camera = 0;
+      running = false;
+      paused = false;
+      started = false;
+      particles = [];
+      player = { x: W / 2 - 28, y: H - 120, w: 56, h: 38, vx: 0, vy: -650 };
+      platforms = [{ x: W / 2 - 85, y: H - 64, w: 170, h: 18, coin: false, moving: false, vx: 0 }];
+      let y = H - 155;
+      let lastX = W / 2 - 65;
+      while (y > -500) {
+        const p = randomPlatform(y, lastX);
+        platforms.push(p);
+        lastX = p.x;
+        y -= 82 + Math.random() * 34;
+      }
+      startButton.textContent = 'Start Run';
+      pauseButton.textContent = 'Pause';
+      updateStats();
+      showMessage('Ready to hop?', 'Press Start and steer with A/D, the arrow keys, or the touch buttons.');
+      draw();
+    }
+
+    function start() {
+      if (running) return;
+      if (!started && player.y > H + 80) resetGame();
+      started = true;
+      running = true;
+      paused = false;
+      startButton.textContent = 'Running';
+      pauseButton.textContent = 'Pause';
+      hideMessage();
+      last = performance.now();
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(loop);
+    }
+
+    function togglePause() {
+      if (!started || !running) return;
+      paused = !paused;
+      pauseButton.textContent = paused ? 'Resume' : 'Pause';
+      if (paused) showMessage('Paused', 'Press Resume when you are ready.');
+      else { hideMessage(); last = performance.now(); raf = requestAnimationFrame(loop); }
+    }
+
+    function spawnBurst(x, y, color) {
+      for (let i = 0; i < 10; i += 1) particles.push({ x, y, vx: (Math.random() - .5) * 170, vy: -40 - Math.random() * 130, life: .65, color });
+    }
+
+    function ensurePlatforms() {
+      let highest = Math.min(...platforms.map((p) => p.y));
+      let lastX = platforms.find((p) => p.y === highest)?.x || W / 2;
+      while (highest > camera - 500) {
+        highest -= 82 + Math.random() * 36;
+        const p = randomPlatform(highest, lastX);
+        platforms.push(p);
+        lastX = p.x;
+      }
+      platforms = platforms.filter((p) => p.y - camera < H + 130);
+    }
+
+    function update(dt) {
+      const direction = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
+      const target = direction * 330;
+      player.vx += (target - player.vx) * Math.min(1, dt * 10);
+      if (!direction) player.vx *= Math.pow(.02, dt);
+      player.vy += 1550 * dt;
+      player.x += player.vx * dt;
+      player.y += player.vy * dt;
+      if (player.x + player.w < 0) player.x = W;
+      if (player.x > W) player.x = -player.w;
+
+      platforms.forEach((p) => {
+        if (!p.moving) return;
+        p.x += p.vx * dt;
+        if (p.x < 8 || p.x + p.w > W - 8) { p.vx *= -1; p.x = Math.max(8, Math.min(W - p.w - 8, p.x)); }
+      });
+
+      if (player.vy > 0) {
+        const previousBottom = player.y + player.h - player.vy * dt;
+        for (const p of platforms) {
+          const currentBottom = player.y + player.h;
+          const horizontal = player.x + player.w * .78 > p.x && player.x + player.w * .22 < p.x + p.w;
+          if (horizontal && previousBottom <= p.y && currentBottom >= p.y && currentBottom <= p.y + p.h + 20) {
+            player.y = p.y - player.h;
+            player.vy = -710;
+            spawnBurst(player.x + player.w / 2, p.y, '#68d0df');
+            if (p.coin) { p.coin = false; coins += 1; score += 35; spawnBurst(p.x + p.w / 2, p.y - 18, '#f2c75c'); }
+            break;
+          }
+        }
+      }
+
+      const screenY = player.y - camera;
+      if (screenY < H * .42) {
+        const shift = H * .42 - screenY;
+        camera -= shift;
+        score += shift * .12;
+      }
+
+      ensurePlatforms();
+      particles.forEach((p) => { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 420 * dt; p.life -= dt; });
+      particles = particles.filter((p) => p.life > 0);
+      updateStats();
+
+      if (player.y - camera > H + 100) {
+        running = false;
+        started = false;
+        best = Math.max(best, Math.floor(score));
+        localStorage.setItem('cloudlab-hopper-best', String(best));
+        updateStats();
+        startButton.textContent = 'Play Again';
+        showMessage('Run Over', `Height ${Math.floor(score)} with ${coins} Cloud ${coins === 1 ? 'Coin' : 'Coins'}.`);
+      }
+    }
+
+    function drawCloud(x, y) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.shadowColor = '#68d0df';
+      ctx.shadowBlur = 20;
+      ctx.fillStyle = '#dffbff';
+      ctx.beginPath();
+      ctx.arc(16, 22, 15, 0, Math.PI * 2);
+      ctx.arc(31, 14, 20, 0, Math.PI * 2);
+      ctx.arc(47, 23, 15, 0, Math.PI * 2);
+      ctx.roundRect(9, 20, 46, 20, 10);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#0a2a34';
+      ctx.beginPath(); ctx.arc(24, 24, 2.5, 0, Math.PI * 2); ctx.arc(39, 24, 2.5, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#0a2a34'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(31.5, 27, 7, .25, Math.PI - .25); ctx.stroke();
+      ctx.restore();
+    }
+
+    function draw() {
+      const bg = ctx.createLinearGradient(0, 0, 0, H);
+      bg.addColorStop(0, '#0b3140');
+      bg.addColorStop(.55, '#08212b');
+      bg.addColorStop(1, '#040e13');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.fillStyle = 'rgba(255,255,255,.32)';
+      for (let i = 0; i < 38; i += 1) {
+        const x = (i * 97) % W;
+        const y = ((i * 151 + Math.abs(camera) * (.05 + (i % 3) * .02)) % (H + 100)) - 50;
+        ctx.fillRect(x, y, i % 4 === 0 ? 2 : 1, i % 4 === 0 ? 2 : 1);
+      }
+
+      for (const p of platforms) {
+        const y = p.y - camera;
+        if (y < -50 || y > H + 50) continue;
+        ctx.save();
+        ctx.shadowColor = '#68d0df';
+        ctx.shadowBlur = 12;
+        const grad = ctx.createLinearGradient(p.x, y, p.x, y + p.h);
+        grad.addColorStop(0, '#9deaf2');
+        grad.addColorStop(1, '#3aa7bd');
+        ctx.fillStyle = grad;
+        ctx.beginPath(); ctx.roundRect(p.x, y, p.w, p.h, 9); ctx.fill();
+        ctx.restore();
+        if (p.coin) {
+          ctx.save();
+          ctx.translate(p.x + p.w / 2, y - 22);
+          ctx.rotate(performance.now() / 500);
+          ctx.shadowColor = '#f2c75c'; ctx.shadowBlur = 16; ctx.fillStyle = '#f2c75c';
+          ctx.beginPath(); ctx.roundRect(-9, -12, 18, 24, 7); ctx.fill();
+          ctx.fillStyle = '#8b6514'; ctx.font = '900 13px Inter'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('C', 0, 1);
+          ctx.restore();
+        }
+      }
+
+      particles.forEach((p) => { ctx.globalAlpha = Math.max(0, p.life / .65); ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y - camera, 4, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; });
+      drawCloud(player.x, player.y - camera);
+    }
+
+    function loop(now) {
+      if (!running || paused) return;
+      const dt = Math.min(.022, (now - last) / 1000 || 0);
+      last = now;
+      update(dt);
+      draw();
+      if (running && !paused) raf = requestAnimationFrame(loop);
+    }
+
+    function bindHold(button, key) {
+      const on = (event) => { event.preventDefault(); keys[key] = true; };
+      const off = () => { keys[key] = false; };
+      button.addEventListener('pointerdown', on); button.addEventListener('pointerup', off); button.addEventListener('pointercancel', off); button.addEventListener('pointerleave', off);
+    }
+    document.querySelectorAll('[data-move]').forEach((button) => bindHold(button, button.dataset.move));
+    window.addEventListener('keydown', (event) => {
+      if (['ArrowLeft','a','A'].includes(event.key)) { keys.left = true; event.preventDefault(); }
+      if (['ArrowRight','d','D'].includes(event.key)) { keys.right = true; event.preventDefault(); }
+      if (event.code === 'Space') { event.preventDefault(); if (!started) start(); else togglePause(); }
+    });
+    window.addEventListener('keyup', (event) => { if (['ArrowLeft','a','A'].includes(event.key)) keys.left = false; if (['ArrowRight','d','D'].includes(event.key)) keys.right = false; });
+    startButton.addEventListener('click', start);
+    pauseButton.addEventListener('click', togglePause);
+    document.getElementById('restartButton').addEventListener('click', resetGame);
+    bestEl.textContent = best;
+    resetGame();
+  })();
+  </script>
+</body>
+</html>
