@@ -3,33 +3,97 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="View your CloudLab Arcade account and saved records.">
+  <meta name="description" content="Manage your CloudLab account, profile, and saved records.">
   <meta name="theme-color" content="#061117">
   <title>My Account | Danny4686</title>
   <link rel="icon" href="/assets/images/cloudlab-logo.png" type="image/png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/community/account.css?v=1">
+  <link rel="stylesheet" href="/community/account.css?v=3">
+  <link rel="stylesheet" href="/community/profile-settings.css?v=1">
 </head>
 <body data-account-page="account">
   <header class="account-header">
     <a class="account-brand" href="/"><img src="/assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>Danny4686</strong><small>CloudLab Account</small></span></a>
-    <nav class="account-header-nav"><a href="/games/">Play games</a><a href="/journal/">Journal</a></nav>
+    <nav class="account-header-nav"><a href="/games/">Games</a><a href="/journal/">Journal</a></nav>
   </header>
+
   <main class="account-shell profile-shell">
     <section id="profileCard" class="account-card">
       <div id="authFeedback" class="auth-feedback" hidden role="status" aria-live="polite"></div>
+
       <div class="profile-top">
-        <div class="profile-identity"><span id="profileAvatar" class="profile-avatar">C</span><div><p class="eyebrow">CLOUDLAB PLAYER</p><h1 id="profileUsername">Loading…</h1><p id="profileJoined">Loading account details…</p></div></div>
-        <button id="logoutButton" class="secondary-button" type="button">Sign out</button>
+        <div class="profile-identity">
+          <div id="profileAvatarWrap" class="profile-avatar-wrap">
+            <span id="profileAvatar" class="profile-avatar">C</span>
+            <img id="profileAvatarImage" class="profile-avatar-image" alt="Your CloudLab profile picture" hidden>
+          </div>
+          <div>
+            <p class="eyebrow">CLOUDLAB ACCOUNT</p>
+            <h1 id="profileUsername">Loading…</h1>
+            <p id="profileJoined">Loading account details…</p>
+          </div>
+        </div>
+        <div class="profile-top-actions">
+          <button id="logoutButton" class="secondary-button" type="button">Sign out</button>
+        </div>
       </div>
-      <div class="records-heading"><div><p class="eyebrow">ARCADE</p><h2>Saved personal records</h2></div><p>Only improved records replace your existing best.</p></div>
+
+      <section id="profileSettings" class="profile-settings" aria-labelledby="profileSettingsTitle">
+        <div class="profile-settings-heading">
+          <div><p class="eyebrow">PROFILE SETTINGS</p><h2 id="profileSettingsTitle">Your profile</h2></div>
+          <p>Update your picture or manage your public username.</p>
+        </div>
+
+        <div id="profileSettingsFeedback" class="profile-settings-feedback" hidden role="status" aria-live="polite"></div>
+
+        <div class="profile-settings-grid">
+          <article class="profile-setting-card">
+            <h3>Profile picture</h3>
+            <p>Choose a square photo that represents you across your CloudLab account.</p>
+            <div class="avatar-setting-row">
+              <div class="avatar-setting-preview" aria-hidden="true">
+                <img src="/assets/images/cloudlab-logo.png" alt="">
+              </div>
+              <div class="avatar-setting-buttons">
+                <input id="avatarInput" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+                <button id="avatarChoose" class="settings-button primary" type="button">Choose photo</button>
+                <button id="avatarRemove" class="settings-button" type="button" disabled>Remove</button>
+              </div>
+            </div>
+            <p class="setting-note">PNG, JPG, or WebP. The image is automatically cropped and resized.</p>
+          </article>
+
+          <article class="profile-setting-card">
+            <h3>Username</h3>
+            <p>Your username is public. Changes require your current password.</p>
+            <div id="usernameCooldown" class="username-cooldown">Checking username availability…</div>
+            <form id="usernameSettingsForm" class="settings-form">
+              <label class="field">
+                <span>New username</span>
+                <input id="settingsUsername" name="username" autocomplete="username" maxlength="20" required placeholder="Your new username">
+                <small id="settingsUsernameHint" class="field-hint">3–20 characters using letters, numbers, or underscores.</small>
+              </label>
+              <label class="field">
+                <span>Current password</span>
+                <input id="settingsPassword" name="password" type="password" autocomplete="current-password" maxlength="128" required placeholder="Confirm your password">
+              </label>
+              <button id="usernameSave" class="settings-button primary" type="submit">Save username</button>
+            </form>
+            <p class="setting-note">New accounts wait 7 days. After a change, the next change unlocks in 30 days and the old name stays reserved for 7 days.</p>
+          </article>
+        </div>
+      </section>
+
+      <div class="records-heading"><div><p class="eyebrow">SAVED RECORDS</p><h2>Personal bests</h2></div><p>Only improved records replace your existing best.</p></div>
       <div id="recordGrid" class="record-grid"><div class="empty-records">Loading your saved records…</div></div>
     </section>
   </main>
+
   <footer class="account-footer"><span>© <span id="year"></span> Danny4686.</span><a href="/">Back to Danny4686.com</a></footer>
   <script>document.getElementById('year').textContent=new Date().getFullYear()</script>
-  <script src="/community/account.js?v=1"></script>
+  <script src="/community/account.js?v=3"></script>
+  <script src="/community/profile-settings.js?v=1"></script>
 </body>
 </html>
