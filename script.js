@@ -2,14 +2,14 @@
   if (!document.querySelector('link[data-community-home]')) {
     const styles = document.createElement('link');
     styles.rel = 'stylesheet';
-    styles.href = '/community/community.css?v=2';
+    styles.href = '/community/community.css?v=3';
     styles.dataset.communityHome = 'true';
     document.head.append(styles);
   }
 
   if (!document.querySelector('script[data-community-home]')) {
     const script = document.createElement('script');
-    script.src = '/community/home-client.js?v=1';
+    script.src = '/community/home-client.js?v=2';
     script.dataset.communityHome = 'true';
     document.head.append(script);
   }
