@@ -7,6 +7,14 @@
     document.head.append(styles);
   }
 
+  if (!document.querySelector('link[data-home-mobile-nav]')) {
+    const navigationStyles = document.createElement('link');
+    navigationStyles.rel = 'stylesheet';
+    navigationStyles.href = '/home-mobile-nav.css?v=1';
+    navigationStyles.dataset.homeMobileNav = 'true';
+    document.head.append(navigationStyles);
+  }
+
   if (!document.querySelector('script[data-community-home]')) {
     const script = document.createElement('script');
     script.src = '/community/home-client.js?v=2';
