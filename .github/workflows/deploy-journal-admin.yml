@@ -36,11 +36,59 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: cloudflare-admin
           command: deploy
+      - name: Verify live community API
+        id: community_smoke
+        if: steps.cloudflare_deploy.outcome == 'success'
+        continue-on-error: true
+        working-directory: .
+        run: |
+          sleep 12
+          HEALTH_CODE="$(curl -sS --retry 3 --retry-delay 2 --retry-all-errors --max-time 25 -o /tmp/community-health.json -w '%{http_code}' 'https://api.danny4686.com/v1/health' || printf '000')"
+          CHECK_NAME="DeployCheck${GITHUB_RUN_NUMBER}"
+          CHECK_NAME="${CHECK_NAME:0:20}"
+          USERNAME_CODE="$(curl -sS --retry 3 --retry-delay 2 --retry-all-errors --max-time 25 -o /tmp/community-username.json -w '%{http_code}' "https://api.danny4686.com/v1/username?name=${CHECK_NAME}" || printf '000')"
+          export HEALTH_CODE USERNAME_CODE CHECK_NAME
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+
+          def read_json(path):
+              try:
+                  return json.loads(Path(path).read_text(encoding="utf-8"))
+              except Exception as exc:
+                  try:
+                      raw = Path(path).read_text(encoding="utf-8")[:2000]
+                  except Exception:
+                      raw = ""
+                  return {"parseError": str(exc), "raw": raw}
+
+          health = read_json("/tmp/community-health.json")
+          username = read_json("/tmp/community-username.json")
+          result = {
+              "healthHttpStatus": os.environ.get("HEALTH_CODE", "000"),
+              "health": health,
+              "usernameHttpStatus": os.environ.get("USERNAME_CODE", "000"),
+              "usernameCheck": username,
+              "usernameChecked": os.environ.get("CHECK_NAME", "")
+          }
+          Path("/tmp/community-smoke.json").write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
+
+          healthy = (
+              os.environ.get("HEALTH_CODE") == "200"
+              and health.get("ok") is True
+              and health.get("storageReady") is True
+              and os.environ.get("USERNAME_CODE") == "200"
+              and isinstance(username.get("available"), bool)
+          )
+          if not healthy:
+              raise SystemExit(1)
+          PY
       - name: Publish safe deployment status
         if: always()
         working-directory: .
         env:
           DEPLOY_OUTCOME: ${{ steps.cloudflare_deploy.outcome }}
+          SMOKE_OUTCOME: ${{ steps.community_smoke.outcome }}
         run: |
           git fetch origin main
           git rebase origin/main
@@ -48,12 +96,23 @@ jobs:
           python - <<'PY'
           import json, os
           from datetime import datetime, timezone
+          from pathlib import Path
+
+          smoke = {}
+          smoke_path = Path("/tmp/community-smoke.json")
+          if smoke_path.exists():
+              try:
+                  smoke = json.loads(smoke_path.read_text(encoding="utf-8"))
+              except Exception as exc:
+                  smoke = {"parseError": str(exc)}
 
           status = {
               "workflow": "Deploy Journal Admin",
               "commit": os.environ.get("GITHUB_SHA", ""),
               "outcome": os.environ.get("DEPLOY_OUTCOME", "unknown"),
-              "completedAt": datetime.now(timezone.utc).isoformat()
+              "smokeOutcome": os.environ.get("SMOKE_OUTCOME", "unknown"),
+              "completedAt": datetime.now(timezone.utc).isoformat(),
+              "communityApi": smoke
           }
           with open(".deployment-status/journal-admin.json", "w", encoding="utf-8") as handle:
               json.dump(status, handle, indent=2)
@@ -64,6 +123,6 @@ jobs:
           git add .deployment-status/journal-admin.json
           git diff --cached --quiet || git commit -m "Record Journal Admin deployment status [skip ci]"
           git push origin HEAD:main
-      - name: Fail workflow when deployment failed
-        if: steps.cloudflare_deploy.outcome != 'success'
+      - name: Fail workflow when deployment or live verification failed
+        if: steps.cloudflare_deploy.outcome != 'success' || steps.community_smoke.outcome != 'success'
         run: exit 1
