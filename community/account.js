@@ -1,9 +1,13 @@
 (() => {
   const API = 'https://api.danny4686.com/v1';
-  const page = document.body.dataset.accountPage || '';
+  const initialPage = document.body.dataset.accountPage || '';
+  const isAuthPage = initialPage === 'login' || initialPage === 'signup';
+  let authMode = initialPage === 'signup' ? 'signup' : 'login';
   let csrfToken = '';
-  let turnstileWidget = null;
-  let turnstileToken = '';
+  const turnstileWidgets = { login: null, signup: null };
+  const turnstileTokens = { login: '', signup: '' };
+  let turnstileConfigPromise = null;
+  let turnstileScriptPromise = null;
 
   async function api(path, options = {}) {
     const headers = new Headers(options.headers || {});
@@ -15,8 +19,12 @@
     return data;
   }
 
-  function setFeedback(message, type = '') {
-    const element = document.getElementById('authFeedback');
+  function feedbackElement(mode = authMode) {
+    return document.querySelector(`[data-auth-feedback="${mode}"]`) || document.getElementById('authFeedback');
+  }
+
+  function setFeedback(message, type = '', mode = authMode) {
+    const element = feedbackElement(mode);
     if (!element) return;
     element.hidden = !message;
     element.className = `auth-feedback${type ? ` ${type}` : ''}`;
@@ -60,43 +68,71 @@
       });
     });
 
-    const password = document.getElementById('password');
+    const password = document.getElementById('signupPassword');
     const meter = document.getElementById('passwordMeter');
-    if (password && meter) password.addEventListener('input', () => { meter.dataset.level = String(passwordStrength(password.value)); });
+    if (password && meter) {
+      password.addEventListener('input', () => {
+        meter.dataset.level = String(passwordStrength(password.value));
+      });
+    }
   }
 
-  async function setupTurnstile(action) {
-    const slot = document.getElementById('turnstileSlot');
-    if (!slot) return;
-    try {
-      const config = await api('/config');
-      if (!config.turnstileEnabled || !config.turnstileSiteKey) return;
-      await new Promise((resolve, reject) => {
-        if (window.turnstile) return resolve();
+  function getTurnstileSlot(mode) {
+    return document.getElementById(mode === 'signup' ? 'turnstileSlotSignup' : 'turnstileSlotLogin');
+  }
+
+  async function getTurnstileConfig() {
+    if (!turnstileConfigPromise) turnstileConfigPromise = api('/config');
+    return turnstileConfigPromise;
+  }
+
+  async function loadTurnstileScript() {
+    if (window.turnstile) return;
+    if (!turnstileScriptPromise) {
+      turnstileScriptPromise = new Promise((resolve, reject) => {
+        const existing = document.querySelector('script[data-cloudlab-turnstile]');
+        if (existing) {
+          existing.addEventListener('load', resolve, { once: true });
+          existing.addEventListener('error', reject, { once: true });
+          return;
+        }
         const script = document.createElement('script');
         script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
         script.async = true;
         script.defer = true;
+        script.dataset.cloudlabTurnstile = 'true';
         script.onload = resolve;
         script.onerror = reject;
         document.head.append(script);
       });
-      turnstileWidget = window.turnstile.render(slot, {
+    }
+    await turnstileScriptPromise;
+  }
+
+  async function setupTurnstile(mode) {
+    const slot = getTurnstileSlot(mode);
+    if (!slot || turnstileWidgets[mode] !== null) return;
+    try {
+      const config = await getTurnstileConfig();
+      if (!config.turnstileEnabled || !config.turnstileSiteKey) return;
+      await loadTurnstileScript();
+      turnstileWidgets[mode] = window.turnstile.render(slot, {
         sitekey: config.turnstileSiteKey,
         theme: 'dark',
-        action,
-        callback: (token) => { turnstileToken = token; },
-        'expired-callback': () => { turnstileToken = ''; },
-        'error-callback': () => { turnstileToken = ''; }
+        action: mode,
+        callback: (token) => { turnstileTokens[mode] = token; },
+        'expired-callback': () => { turnstileTokens[mode] = ''; },
+        'error-callback': () => { turnstileTokens[mode] = ''; }
       });
     } catch (_) {
       slot.replaceChildren();
     }
   }
 
-  function resetTurnstile() {
-    turnstileToken = '';
-    if (window.turnstile && turnstileWidget !== null) window.turnstile.reset(turnstileWidget);
+  function resetTurnstile(mode) {
+    turnstileTokens[mode] = '';
+    const widget = turnstileWidgets[mode];
+    if (window.turnstile && widget !== null) window.turnstile.reset(widget);
   }
 
   async function checkUsername(name) {
@@ -118,8 +154,8 @@
   }
 
   function setupUsernameCheck() {
-    const username = document.getElementById('username');
-    if (!username || page !== 'signup') return;
+    const username = document.getElementById('signupUsername');
+    if (!username) return;
     let timer = null;
     username.addEventListener('input', () => {
       window.clearTimeout(timer);
@@ -128,7 +164,7 @@
   }
 
   async function existingSessionRedirect() {
-    if (page === 'account') return null;
+    if (!isAuthPage) return null;
     try {
       const session = await api('/session');
       if (session.authenticated) {
@@ -139,39 +175,126 @@
     return false;
   }
 
-  function setupAuthForm() {
-    const form = document.querySelector('[data-auth-form]');
-    if (!form) return;
-    const submit = form.querySelector('[type="submit"]');
-    form.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      setFeedback('');
-      const username = form.elements.username.value.trim();
-      const password = form.elements.password.value;
+  function updateAuthMetadata(mode) {
+    const title = mode === 'signup' ? 'Join CloudLab | Danny4686' : 'Sign In | Danny4686';
+    const description = mode === 'signup'
+      ? 'Create your Danny4686.com CloudLab account.'
+      : 'Sign in to your Danny4686.com CloudLab account.';
+    document.title = title;
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta) meta.content = description;
+  }
 
-      if (page === 'signup') {
-        const confirmation = form.elements.confirmPassword.value;
-        if (password !== confirmation) {
-          setFeedback('The two passwords do not match.', 'error');
-          return;
+  function setAuthPanelState(mode) {
+    document.querySelectorAll('[data-mode-panel]').forEach((panel) => {
+      const inactive = panel.dataset.modePanel !== mode;
+      panel.setAttribute('aria-hidden', String(inactive));
+      panel.toggleAttribute('inert', inactive);
+    });
+
+    document.querySelectorAll('.auth-mobile-tabs [data-auth-switch]').forEach((button) => {
+      const active = button.dataset.authSwitch === mode;
+      button.classList.toggle('is-active', active);
+      button.setAttribute('aria-pressed', String(active));
+    });
+  }
+
+  function authUrl(mode) {
+    const url = new URL(location.href);
+    url.pathname = mode === 'signup' ? '/signup/' : '/login/';
+    return `${url.pathname}${url.search}${url.hash}`;
+  }
+
+  function switchAuthMode(mode, options = {}) {
+    if (mode !== 'login' && mode !== 'signup') return;
+    const { updateHistory = true, focus = true } = options;
+    const card = document.querySelector('.auth-switch-card');
+    if (!card) return;
+
+    authMode = mode;
+    document.body.dataset.accountPage = mode;
+    card.dataset.authMode = mode;
+    card.classList.add('is-switching');
+    setAuthPanelState(mode);
+    setFeedback('', '', mode);
+    updateAuthMetadata(mode);
+
+    if (updateHistory && location.pathname !== (mode === 'signup' ? '/signup/' : '/login/')) {
+      history.pushState({ authMode: mode }, '', authUrl(mode));
+    }
+
+    setupTurnstile(mode);
+    window.setTimeout(() => card.classList.remove('is-switching'), 560);
+
+    if (focus) {
+      const inputId = mode === 'signup' ? 'signupUsername' : 'loginUsername';
+      window.setTimeout(() => document.getElementById(inputId)?.focus({ preventScroll: true }), 360);
+    }
+  }
+
+  function setupAuthSwitcher() {
+    const welcome = document.querySelector('.auth-welcome-panel');
+    if (welcome) welcome.removeAttribute('aria-hidden');
+
+    document.querySelectorAll('[data-auth-switch]').forEach((control) => {
+      control.addEventListener('click', () => switchAuthMode(control.dataset.authSwitch));
+    });
+
+    window.addEventListener('popstate', () => {
+      const mode = location.pathname.toLowerCase().startsWith('/signup') ? 'signup' : 'login';
+      switchAuthMode(mode, { updateHistory: false, focus: false });
+    });
+
+    setAuthPanelState(authMode);
+  }
+
+  function clearFormPasswords(form) {
+    form.querySelectorAll('input[type="password"], input[data-password-input]').forEach((input) => {
+      input.value = '';
+      input.type = 'password';
+    });
+    form.querySelectorAll('[data-password-toggle]').forEach((button) => { button.textContent = 'Show'; });
+    const meter = form.querySelector('.password-meter');
+    if (meter) meter.dataset.level = '0';
+  }
+
+  function setupAuthForms() {
+    document.querySelectorAll('[data-auth-form]').forEach((form) => {
+      const mode = form.dataset.authForm === 'signup' ? 'signup' : 'login';
+      const submit = form.querySelector('[type="submit"]');
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        setFeedback('', '', mode);
+        const username = form.elements.username.value.trim();
+        const password = form.elements.password.value;
+
+        if (mode === 'signup') {
+          const confirmation = form.elements.confirmPassword.value;
+          if (password !== confirmation) {
+            setFeedback('The two passwords do not match.', 'error', mode);
+            return;
+          }
         }
-      }
 
-      try {
-        setBusy(submit, true, page === 'signup' ? 'Creating account…' : 'Signing in…');
-        const data = await api(page === 'signup' ? '/signup' : '/login', {
-          method: 'POST',
-          body: JSON.stringify({ username, password, turnstileToken })
-        });
-        csrfToken = data.csrfToken || '';
-        setFeedback(page === 'signup' ? `Welcome, ${data.user.username}. Your account is ready.` : `Welcome back, ${data.user.username}.`, 'success');
-        window.setTimeout(() => location.replace(page === 'signup' ? '/account/?welcome=1' : safeNext()), 520);
-      } catch (error) {
-        setFeedback(error.message, 'error');
-        resetTurnstile();
-      } finally {
-        setBusy(submit, false);
-      }
+        try {
+          setBusy(submit, true, mode === 'signup' ? 'Creating account…' : 'Signing in…');
+          const data = await api(mode === 'signup' ? '/signup' : '/login', {
+            method: 'POST',
+            body: JSON.stringify({ username, password, turnstileToken: turnstileTokens[mode] })
+          });
+          csrfToken = data.csrfToken || '';
+          clearFormPasswords(form);
+          setFeedback(mode === 'signup' ? `Welcome, ${data.user.username}. Your account is ready.` : `Welcome back, ${data.user.username}.`, 'success', mode);
+          window.setTimeout(() => location.replace(mode === 'signup' ? '/account/?welcome=1' : safeNext()), 520);
+        } catch (error) {
+          clearFormPasswords(form);
+          setFeedback(error.message, 'error', mode);
+          resetTurnstile(mode);
+        } finally {
+          setBusy(submit, false);
+        }
+      });
     });
   }
 
@@ -243,12 +366,14 @@
     setupPasswordControls();
     setupUsernameCheck();
     setupLogout();
-    if (page === 'login' || page === 'signup') {
+
+    if (isAuthPage) {
       const redirected = await existingSessionRedirect();
       if (redirected) return;
-      setupAuthForm();
-      setupTurnstile(page);
-    } else if (page === 'account') {
+      setupAuthSwitcher();
+      setupAuthForms();
+      setupTurnstile(authMode);
+    } else if (initialPage === 'account') {
       loadAccount();
     }
   }
