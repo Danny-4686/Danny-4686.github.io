@@ -42,7 +42,7 @@
     ],
     "mediaType": "image",
     "thumbnail": "/assets/images/journal/danny4686-com-is-officially-live/live-website.png",
-    "fit": "contain",
+    "fit": "cover",
     "mode": "card",
     "comingSoon": false,
     "cardOnly": true
