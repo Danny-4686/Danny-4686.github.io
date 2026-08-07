@@ -1,0 +1,14 @@
+/* Final sizing for the animated login/signup switcher. */
+@media (min-width:761px){
+  .auth-switch-card[data-auth-mode="login"]{height:580px!important}
+  .auth-switch-card[data-auth-mode="signup"]{height:720px!important}
+  .auth-switch-card[data-auth-mode="login"]:has(.auth-panel[data-mode-panel="login"] .auth-feedback:not([hidden])){height:650px!important}
+  .auth-switch-card[data-auth-mode="signup"]:has(.auth-panel[data-mode-panel="signup"] .auth-feedback:not([hidden])){height:790px!important}
+}
+
+@media (max-width:760px){
+  .auth-switch-card[data-auth-mode="login"]{height:620px!important}
+  .auth-switch-card[data-auth-mode="signup"]{height:760px!important}
+  .auth-switch-card[data-auth-mode="login"]:has(.auth-panel[data-mode-panel="login"] .auth-feedback:not([hidden])){height:690px!important}
+  .auth-switch-card[data-auth-mode="signup"]:has(.auth-panel[data-mode-panel="signup"] .auth-feedback:not([hidden])){height:830px!important}
+}
