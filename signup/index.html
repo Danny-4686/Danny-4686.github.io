@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/community/account.css?v=2">
-  <link rel="stylesheet" href="/community/account-polish.css?v=2">
+  <link rel="stylesheet" href="/community/account-polish.css?v=4">
 </head>
 <body data-account-page="signup">
   <header class="account-header">
@@ -20,37 +20,78 @@
   </header>
 
   <main class="account-shell auth-only-shell">
-    <section class="account-card" aria-labelledby="signupTitle">
-      <nav class="auth-tabs" aria-label="Account access">
-        <a href="/login/">Sign in</a>
-        <a class="active" href="/signup/" aria-current="page">Create account</a>
+    <section class="account-card auth-switch-card" data-auth-mode="signup" aria-label="CloudLab account access">
+      <nav class="auth-mobile-tabs" aria-label="Account access">
+        <button type="button" data-auth-switch="login" aria-pressed="false">Sign in</button>
+        <button type="button" class="is-active" data-auth-switch="signup" aria-pressed="true">Create account</button>
       </nav>
 
-      <div class="card-head simple-card-head">
-        <div>
-          <p class="eyebrow">JOIN CLOUDLAB</p>
-          <h1 id="signupTitle">Create your account</h1>
-          <p>Choose a username and password to get started.</p>
-        </div>
+      <div class="auth-form-zone">
+        <section class="auth-panel" data-mode-panel="login" aria-labelledby="loginTitle" aria-hidden="true" inert>
+          <div class="card-head simple-card-head">
+            <div>
+              <p class="eyebrow">CLOUDLAB ACCOUNT</p>
+              <h1 id="loginTitle">Welcome back</h1>
+              <p>Enter your username and password to sign in.</p>
+            </div>
+          </div>
+
+          <div class="auth-feedback" data-auth-feedback="login" hidden role="status" aria-live="polite"></div>
+
+          <form class="auth-form" data-auth-form="login">
+            <label class="field"><span>Username</span><input id="loginUsername" name="username" autocomplete="username" maxlength="20" required placeholder="Your username"></label>
+            <label class="field"><span>Password</span><span class="password-wrap"><input id="loginPassword" name="password" type="password" autocomplete="current-password" maxlength="128" required placeholder="Your password"><button class="password-toggle" type="button" data-password-toggle="loginPassword">Show</button></span></label>
+            <div id="turnstileSlotLogin" class="turnstile-slot"></div>
+            <button class="auth-submit" type="submit">Sign in</button>
+          </form>
+
+          <div class="auth-assurance">Your account information is securely protected.</div>
+        </section>
+
+        <section class="auth-panel" data-mode-panel="signup" aria-labelledby="signupTitle">
+          <div class="card-head simple-card-head">
+            <div>
+              <p class="eyebrow">JOIN CLOUDLAB</p>
+              <h1 id="signupTitle">Create your account</h1>
+              <p>Choose a username and password to get started.</p>
+            </div>
+          </div>
+
+          <div class="auth-feedback" data-auth-feedback="signup" hidden role="status" aria-live="polite"></div>
+
+          <form class="auth-form" data-auth-form="signup">
+            <label class="field"><span>Username</span><input id="signupUsername" name="username" autocomplete="username" maxlength="20" required placeholder="Example_Player"><small id="usernameHint" class="field-hint">3–20 characters using letters, numbers, or underscores.</small></label>
+            <label class="field"><span>Password</span><span class="password-wrap"><input id="signupPassword" name="password" type="password" autocomplete="new-password" maxlength="128" required placeholder="At least 10 characters"><button class="password-toggle" type="button" data-password-toggle="signupPassword">Show</button></span><span id="passwordMeter" class="password-meter" data-level="0"><span></span></span><small class="field-hint">Use at least one letter and one number.</small></label>
+            <label class="field"><span>Confirm password</span><span class="password-wrap"><input id="signupConfirmPassword" name="confirmPassword" type="password" autocomplete="new-password" maxlength="128" required placeholder="Type it again"><button class="password-toggle" type="button" data-password-toggle="signupConfirmPassword">Show</button></span></label>
+            <div id="turnstileSlotSignup" class="turnstile-slot"></div>
+            <button class="auth-submit" type="submit">Join CloudLab</button>
+          </form>
+
+          <div class="auth-assurance">Your password is securely protected.</div>
+        </section>
       </div>
 
-      <div id="authFeedback" class="auth-feedback" hidden role="status" aria-live="polite"></div>
-
-      <form class="auth-form" data-auth-form="signup">
-        <label class="field"><span>Username</span><input id="username" name="username" autocomplete="username" maxlength="20" required placeholder="Example_Player"><small id="usernameHint" class="field-hint">3–20 characters using letters, numbers, or underscores.</small></label>
-        <label class="field"><span>Password</span><span class="password-wrap"><input id="password" name="password" type="password" autocomplete="new-password" maxlength="128" required placeholder="At least 10 characters"><button class="password-toggle" type="button" data-password-toggle="password">Show</button></span><span id="passwordMeter" class="password-meter" data-level="0"><span></span></span><small class="field-hint">Use at least one letter and one number.</small></label>
-        <label class="field"><span>Confirm password</span><span class="password-wrap"><input id="confirmPassword" name="confirmPassword" type="password" autocomplete="new-password" maxlength="128" required placeholder="Type it again"><button class="password-toggle" type="button" data-password-toggle="confirmPassword">Show</button></span></label>
-        <div id="turnstileSlot" class="turnstile-slot"></div>
-        <button class="auth-submit" type="submit">Join CloudLab</button>
-      </form>
-
-      <div class="auth-assurance">Your password is securely protected.</div>
-      <p class="auth-switch">Already have an account? <a href="/login/">Sign in</a></p>
+      <aside class="auth-welcome-panel" aria-hidden="true">
+        <div class="auth-welcome-copy" data-welcome-mode="login">
+          <div class="auth-welcome-brand"><img src="/assets/images/cloudlab-logo.png" alt=""></div>
+          <p class="eyebrow">NEW HERE?</p>
+          <h2>Join CloudLab</h2>
+          <p>Create an account and make your profile part of the CloudLab community.</p>
+          <button class="auth-switch-button" type="button" data-auth-switch="signup">Create account</button>
+        </div>
+        <div class="auth-welcome-copy" data-welcome-mode="signup">
+          <div class="auth-welcome-brand"><img src="/assets/images/cloudlab-logo.png" alt=""></div>
+          <p class="eyebrow">WELCOME BACK</p>
+          <h2>Already a member?</h2>
+          <p>Sign in with your CloudLab username and password to continue.</p>
+          <button class="auth-switch-button" type="button" data-auth-switch="login">Sign in</button>
+        </div>
+      </aside>
     </section>
   </main>
 
   <footer class="account-footer"><span>© <span id="year"></span> Danny4686.</span><a href="/">Back to Danny4686.com</a></footer>
   <script>document.getElementById('year').textContent=new Date().getFullYear()</script>
-  <script src="/community/account.js?v=2"></script>
+  <script src="/community/account.js?v=4"></script>
 </body>
 </html>
