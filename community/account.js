@@ -249,13 +249,20 @@
   }
 
   function clearFormPasswords(form) {
-    form.querySelectorAll('input[type="password"], input[data-password-input]').forEach((input) => {
+    const password = form.elements.password;
+    const confirmation = form.elements.confirmPassword;
+    [password, confirmation].forEach((input) => {
+      if (!input) return;
       input.value = '';
       input.type = 'password';
     });
     form.querySelectorAll('[data-password-toggle]').forEach((button) => { button.textContent = 'Show'; });
     const meter = form.querySelector('.password-meter');
     if (meter) meter.dataset.level = '0';
+  }
+
+  function clearAllAuthPasswords() {
+    document.querySelectorAll('[data-auth-form]').forEach(clearFormPasswords);
   }
 
   function setupAuthForms() {
@@ -296,6 +303,8 @@
         }
       });
     });
+
+    window.addEventListener('pagehide', clearAllAuthPasswords);
   }
 
   const GAME_LABELS = {
