@@ -16,6 +16,7 @@
   const avatarRemove = document.getElementById('avatarRemove');
   const usernameForm = document.getElementById('usernameSettingsForm');
   const usernameInput = document.getElementById('settingsUsername');
+  const usernamePasswordField = document.getElementById('settingsPasswordField');
   const usernamePassword = document.getElementById('settingsPassword');
   const usernameHint = document.getElementById('settingsUsernameHint');
   const usernameCooldown = document.getElementById('usernameCooldown');
@@ -54,6 +55,19 @@
     if (!button.dataset.defaultText) button.dataset.defaultText = button.textContent;
     button.disabled = busy;
     button.textContent = busy ? busyText : button.dataset.defaultText;
+  }
+
+  function clearPasswordField(lock = true) {
+    if (!usernamePassword) return;
+    usernamePassword.value = '';
+    usernamePassword.type = 'password';
+    if (lock) usernamePassword.setAttribute('readonly', '');
+  }
+
+  function setPasswordFieldAvailability(canChange) {
+    clearPasswordField(true);
+    if (usernamePasswordField) usernamePasswordField.hidden = !canChange;
+    if (usernamePassword) usernamePassword.disabled = !canChange;
   }
 
   function formatDate(value) {
@@ -99,7 +113,7 @@
 
     const canChange = Boolean(user.canChangeUsername);
     if (usernameInput) usernameInput.disabled = !canChange;
-    if (usernamePassword) usernamePassword.disabled = !canChange;
+    setPasswordFieldAvailability(canChange);
     if (usernameSave) usernameSave.disabled = !canChange;
 
     if (!usernameCooldown || !usernameHint) return;
@@ -255,17 +269,19 @@
     event.preventDefault();
     if (!currentUser?.canChangeUsername || !usernameInput || !usernamePassword) return;
     const username = usernameInput.value.trim();
-    const password = usernamePassword.value;
+    let password = usernamePassword.value;
+    const requestBody = JSON.stringify({ username, password });
+    password = '';
+    clearPasswordField(true);
 
     try {
       showFeedback('');
       setBusy(usernameSave, true, 'Updating…');
       const data = await api('/profile/username', {
         method: 'POST',
-        body: JSON.stringify({ username, password })
+        body: requestBody
       });
       csrfToken = data.csrfToken || csrfToken;
-      usernamePassword.value = '';
       applyUser(data.user);
       if (currentProfile) applyProfile({ ...currentProfile, username: data.user.username });
       showFeedback(`Your username is now ${data.user.username}. Your previous name is reserved for 7 days.`, 'success');
@@ -275,6 +291,7 @@
       }
       showFeedback(error.message, 'error');
     } finally {
+      clearPasswordField(true);
       setBusy(usernameSave, false);
       if (currentUser && !currentUser.canChangeUsername && usernameSave) usernameSave.disabled = true;
     }
@@ -314,12 +331,20 @@
       clearTimeout(usernameTimer);
       usernameTimer = setTimeout(checkUsername, 320);
     });
+    usernamePassword?.addEventListener('focus', () => {
+      if (currentUser?.canChangeUsername) usernamePassword.removeAttribute('readonly');
+    });
+    usernamePassword?.addEventListener('blur', () => {
+      if (!usernamePassword.value) usernamePassword.setAttribute('readonly', '');
+    });
     profileDetailsForm?.addEventListener('submit', saveProfileDetails);
     statusInput?.addEventListener('input', updateCharacterCounts);
     bioInput?.addEventListener('input', updateCharacterCounts);
+    window.addEventListener('pagehide', () => clearPasswordField(true));
   }
 
   async function init() {
+    clearPasswordField(true);
     try {
       const session = await api('/session');
       if (!session.authenticated) return;
