@@ -7,19 +7,19 @@
 }
 
 @media (max-width:760px){
-  .auth-switch-card[data-auth-mode="login"]{height:690px!important}
-  .auth-switch-card[data-auth-mode="signup"]{height:900px!important}
-  .auth-switch-card[data-auth-mode="login"]:has(.auth-panel[data-mode-panel="login"] .auth-feedback:not([hidden])){height:770px!important}
-  .auth-switch-card[data-auth-mode="signup"]:has(.auth-panel[data-mode-panel="signup"] .auth-feedback:not([hidden])){height:990px!important}
+  .auth-switch-card[data-auth-mode="login"]{height:650px!important}
+  .auth-switch-card[data-auth-mode="signup"]{height:820px!important}
+  .auth-switch-card[data-auth-mode="login"]:has(.auth-panel[data-mode-panel="login"] .auth-feedback:not([hidden])){height:725px!important}
+  .auth-switch-card[data-auth-mode="signup"]:has(.auth-panel[data-mode-panel="signup"] .auth-feedback:not([hidden])){height:895px!important}
 
-  .auth-panel{padding-bottom:42px!important}
-  .turnstile-slot{margin-top:4px;margin-bottom:4px}
-  .auth-panel .auth-assurance{margin-bottom:8px}
+  .auth-panel{padding-bottom:32px!important}
+  .turnstile-slot{margin-top:2px;margin-bottom:2px}
+  .auth-panel .auth-assurance{margin-bottom:3px}
 }
 
 @media (max-width:390px){
-  .auth-switch-card[data-auth-mode="login"]{height:720px!important}
-  .auth-switch-card[data-auth-mode="signup"]{height:940px!important}
-  .auth-switch-card[data-auth-mode="login"]:has(.auth-panel[data-mode-panel="login"] .auth-feedback:not([hidden])){height:800px!important}
-  .auth-switch-card[data-auth-mode="signup"]:has(.auth-panel[data-mode-panel="signup"] .auth-feedback:not([hidden])){height:1030px!important}
+  .auth-switch-card[data-auth-mode="login"]{height:670px!important}
+  .auth-switch-card[data-auth-mode="signup"]{height:850px!important}
+  .auth-switch-card[data-auth-mode="login"]:has(.auth-panel[data-mode-panel="login"] .auth-feedback:not([hidden])){height:745px!important}
+  .auth-switch-card[data-auth-mode="signup"]:has(.auth-panel[data-mode-panel="signup"] .auth-feedback:not([hidden])){height:925px!important}
 }
