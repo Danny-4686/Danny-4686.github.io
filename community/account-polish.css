@@ -1,4 +1,4 @@
-/* Simple finishing layer for the public CloudLab account pages. */
+/* Animated finishing layer for the public CloudLab account pages. */
 body[data-account-page="login"],
 body[data-account-page="signup"]{
   background:
@@ -16,7 +16,7 @@ body[data-account-page="signup"]::before{
 
 body[data-account-page="login"] .account-header,
 body[data-account-page="signup"] .account-header{
-  width:min(900px,calc(100% - 28px));
+  width:min(930px,calc(100% - 28px));
   min-height:66px;
   border-radius:18px;
   background:rgba(4,14,19,.78);
@@ -25,109 +25,125 @@ body[data-account-page="signup"] .account-header{
 
 body[data-account-page="login"] .auth-only-shell,
 body[data-account-page="signup"] .auth-only-shell{
-  width:min(520px,calc(100% - 28px));
+  width:min(930px,calc(100% - 28px));
   min-height:calc(100vh - 164px);
   display:flex;
   align-items:center;
   justify-content:center;
-  padding:54px 0 70px;
+  padding:48px 0 66px;
 }
 
-body[data-account-page="login"] .account-card,
-body[data-account-page="signup"] .account-card{
+body[data-account-page="login"] .auth-switch-card,
+body[data-account-page="signup"] .auth-switch-card{
+  --auth-motion:520ms cubic-bezier(.2,.82,.2,1);
+  position:relative;
   width:100%;
-  padding:28px;
-  border-color:rgba(145,190,202,.23);
-  border-radius:24px;
+  height:620px;
+  padding:0;
+  overflow:hidden;
+  border:1px solid rgba(145,190,202,.23);
+  border-radius:28px;
   background:
-    linear-gradient(180deg,rgba(255,255,255,.035),transparent 25%),
+    linear-gradient(180deg,rgba(255,255,255,.032),transparent 27%),
     rgba(7,21,28,.97);
   box-shadow:0 30px 90px rgba(0,0,0,.38),0 0 0 1px rgba(255,255,255,.015) inset;
+  transition:height var(--auth-motion),box-shadow .25s ease,border-color .25s ease;
 }
 
-body[data-account-page="login"] .account-card::before,
-body[data-account-page="signup"] .account-card::before{
-  inset:auto -25% 67% 35%;
-  width:360px;
-  height:360px;
+body[data-account-page="login"] .auth-switch-card::before,
+body[data-account-page="signup"] .auth-switch-card::before{
+  content:"";
+  position:absolute;
+  inset:-30% 40% 36% -22%;
+  width:auto;
+  height:auto;
   border-radius:50%;
-  background:radial-gradient(circle,rgba(104,208,223,.09),transparent 68%);
+  pointer-events:none;
+  background:radial-gradient(circle,rgba(104,208,223,.075),transparent 67%);
   animation:none;
+  transition:transform var(--auth-motion),opacity var(--auth-motion);
 }
 
-.auth-tabs{
-  position:relative;
-  z-index:2;
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:5px;
-  margin-bottom:25px;
-  padding:5px;
-  border:1px solid var(--line);
-  border-radius:15px;
-  background:rgba(1,9,13,.48);
+.auth-mobile-tabs{
+  display:none;
 }
 
-.auth-tabs a{
-  min-height:42px;
-  padding:9px 12px;
+.auth-form-zone{
+  position:absolute;
+  inset:0 auto 0 0;
+  z-index:1;
+  width:50%;
+  transform:translateX(0);
+  transition:transform var(--auth-motion);
+}
+
+.auth-switch-card[data-auth-mode="signup"] .auth-form-zone{
+  transform:translateX(100%);
+}
+
+.auth-panel{
+  position:absolute;
+  inset:0;
+  padding:38px 44px;
   display:flex;
-  align-items:center;
+  flex-direction:column;
   justify-content:center;
-  border:1px solid transparent;
-  border-radius:11px;
-  color:var(--muted);
-  font-size:.77rem;
-  font-weight:900;
-  transition:color .18s ease,border-color .18s ease,background .18s ease,box-shadow .18s ease;
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transform:translateX(-28px) scale(.985);
+  transition:opacity 230ms ease,transform 430ms cubic-bezier(.2,.82,.2,1),visibility 0s linear 430ms;
 }
 
-.auth-tabs a:hover{
-  color:var(--text);
-  background:rgba(255,255,255,.025);
+.auth-panel[data-mode-panel="signup"]{
+  transform:translateX(28px) scale(.985);
 }
 
-.auth-tabs a.active{
-  color:#061117;
-  border-color:rgba(104,208,223,.46);
-  background:linear-gradient(145deg,#82dfe8,#59c2d3);
-  box-shadow:0 9px 21px rgba(72,186,208,.16),inset 0 1px rgba(255,255,255,.52);
+.auth-switch-card[data-auth-mode="login"] .auth-panel[data-mode-panel="login"],
+.auth-switch-card[data-auth-mode="signup"] .auth-panel[data-mode-panel="signup"]{
+  opacity:1;
+  visibility:visible;
+  pointer-events:auto;
+  transform:translateX(0) scale(1);
+  transition-delay:170ms,90ms,0s;
 }
 
-.simple-card-head{
+.auth-panel .simple-card-head{
   margin-bottom:22px;
 }
 
-.simple-card-head h1{
+.auth-panel .simple-card-head h1{
   margin-bottom:0;
-  font-size:clamp(2.15rem,7vw,3rem)!important;
-  line-height:1.02;
+  font-size:clamp(2.25rem,5vw,3.25rem)!important;
+  line-height:1.01;
 }
 
-.simple-card-head p:last-child{
-  max-width:380px;
+.auth-panel .simple-card-head p:last-child{
+  max-width:390px;
   margin:11px 0 0;
   color:var(--muted);
   font-size:.86rem;
   line-height:1.58;
 }
 
-body[data-account-page="login"] .field input,
-body[data-account-page="signup"] .field input{
-  min-height:52px;
+.auth-panel .field input{
+  min-height:50px;
   border-radius:13px;
   background:rgba(1,9,13,.67);
 }
 
-body[data-account-page="login"] .auth-submit,
-body[data-account-page="signup"] .auth-submit{
-  min-height:54px;
+.auth-panel .auth-submit{
+  min-height:52px;
   border-radius:13px;
 }
 
-.auth-assurance{
-  margin-top:16px;
-  padding-top:15px;
+.auth-panel .auth-feedback{
+  margin-bottom:16px;
+}
+
+.auth-panel .auth-assurance{
+  margin-top:15px;
+  padding-top:14px;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -139,7 +155,7 @@ body[data-account-page="signup"] .auth-submit{
   text-align:center;
 }
 
-.auth-assurance::before{
+.auth-panel .auth-assurance::before{
   content:"✓";
   width:20px;
   height:20px;
@@ -154,17 +170,154 @@ body[data-account-page="signup"] .auth-submit{
   font-weight:950;
 }
 
-body[data-account-page="login"] .auth-switch,
-body[data-account-page="signup"] .auth-switch{
-  margin-top:16px;
+.auth-welcome-panel{
+  position:absolute;
+  inset:0 0 0 auto;
+  z-index:3;
+  width:50%;
+  overflow:hidden;
+  display:grid;
+  place-items:center;
+  padding:52px;
+  color:#051116;
+  background:
+    radial-gradient(circle at 80% 10%,rgba(255,255,255,.48),transparent 26%),
+    radial-gradient(circle at 18% 86%,rgba(255,255,255,.22),transparent 31%),
+    linear-gradient(145deg,#86e2e9 0%,#66cad8 48%,#8bd7ad 100%);
+  box-shadow:-18px 0 50px rgba(2,8,11,.18);
+  transform:translateX(0);
+  transition:transform var(--auth-motion),border-radius var(--auth-motion),box-shadow var(--auth-motion);
 }
 
-@media(max-width:620px){
+.auth-welcome-panel::before{
+  content:"";
+  position:absolute;
+  width:340px;
+  height:340px;
+  right:-160px;
+  bottom:-170px;
+  border:1px solid rgba(5,17,22,.12);
+  border-radius:50%;
+  box-shadow:0 0 0 42px rgba(255,255,255,.06),0 0 0 84px rgba(5,17,22,.035);
+}
+
+.auth-welcome-panel::after{
+  content:"";
+  position:absolute;
+  width:180px;
+  height:180px;
+  left:-96px;
+  top:-76px;
+  border:1px solid rgba(5,17,22,.1);
+  border-radius:50%;
+  box-shadow:0 0 0 34px rgba(255,255,255,.06);
+}
+
+.auth-switch-card[data-auth-mode="signup"] .auth-welcome-panel{
+  transform:translateX(-100%);
+  box-shadow:18px 0 50px rgba(2,8,11,.18);
+}
+
+.auth-welcome-copy{
+  position:absolute;
+  z-index:1;
+  width:min(330px,100%);
+  opacity:0;
+  visibility:hidden;
+  text-align:center;
+  transform:translateY(14px) scale(.98);
+  transition:opacity 230ms ease,transform 430ms cubic-bezier(.2,.82,.2,1),visibility 0s linear 430ms;
+}
+
+.auth-switch-card[data-auth-mode="login"] .auth-welcome-copy[data-welcome-mode="login"],
+.auth-switch-card[data-auth-mode="signup"] .auth-welcome-copy[data-welcome-mode="signup"]{
+  opacity:1;
+  visibility:visible;
+  transform:translateY(0) scale(1);
+  transition-delay:190ms,120ms,0s;
+}
+
+.auth-welcome-brand{
+  width:58px;
+  height:58px;
+  margin:0 auto 22px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(5,17,22,.13);
+  border-radius:19px;
+  background:rgba(255,255,255,.22);
+  box-shadow:0 15px 35px rgba(5,17,22,.08);
+}
+
+.auth-welcome-brand img{
+  width:42px;
+  height:42px;
+  object-fit:contain;
+}
+
+.auth-welcome-copy .eyebrow{
+  margin-bottom:11px;
+  color:rgba(5,17,22,.65);
+}
+
+.auth-welcome-copy h2{
+  margin:0;
+  font-size:clamp(2rem,4vw,3.1rem);
+  line-height:1;
+  letter-spacing:-.055em;
+}
+
+.auth-welcome-copy p{
+  margin:15px auto 0;
+  color:rgba(5,17,22,.67);
+  font-size:.9rem;
+  line-height:1.6;
+}
+
+.auth-switch-button{
+  min-width:160px;
+  min-height:48px;
+  margin-top:24px;
+  padding:10px 20px;
+  border:1px solid rgba(5,17,22,.22);
+  border-radius:13px;
+  color:#051116;
+  background:rgba(255,255,255,.18);
+  box-shadow:inset 0 1px rgba(255,255,255,.38);
+  cursor:pointer;
+  font:inherit;
+  font-size:.78rem;
+  font-weight:900;
+  transition:transform .18s ease,background .18s ease,box-shadow .18s ease;
+}
+
+.auth-switch-button:hover{
+  transform:translateY(-2px);
+  background:rgba(255,255,255,.3);
+  box-shadow:0 10px 25px rgba(5,17,22,.08),inset 0 1px rgba(255,255,255,.42);
+}
+
+.auth-switch-card.is-switching .auth-form-zone,
+.auth-switch-card.is-switching .auth-welcome-panel{
+  will-change:transform;
+}
+
+.turnstile-slot{
+  min-width:0;
+  overflow:hidden;
+}
+
+@media(max-width:760px){
   body[data-account-page="login"] .account-header,
   body[data-account-page="signup"] .account-header,
   body[data-account-page="login"] .auth-only-shell,
   body[data-account-page="signup"] .auth-only-shell{
     width:calc(100% - 20px);
+  }
+
+  body[data-account-page="login"] .account-header,
+  body[data-account-page="signup"] .account-header{
+    margin-top:7px;
   }
 
   body[data-account-page="login"] .account-header-nav a,
@@ -178,17 +331,101 @@ body[data-account-page="signup"] .auth-switch{
     padding:30px 0 48px;
   }
 
-  body[data-account-page="login"] .account-card,
-  body[data-account-page="signup"] .account-card{
-    padding:20px;
-    border-radius:20px;
+  body[data-account-page="login"] .auth-switch-card,
+  body[data-account-page="signup"] .auth-switch-card{
+    width:min(520px,100%);
+    height:550px;
+    border-radius:22px;
+    transition:height 430ms cubic-bezier(.2,.82,.2,1);
   }
 
-  .auth-tabs{
-    margin-bottom:21px;
+  body[data-account-page="signup"] .auth-switch-card,
+  .auth-switch-card[data-auth-mode="signup"]{
+    height:700px;
+  }
+
+  .auth-mobile-tabs{
+    position:absolute;
+    z-index:6;
+    top:18px;
+    left:18px;
+    right:18px;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:5px;
+    padding:5px;
+    border:1px solid var(--line);
+    border-radius:15px;
+    background:rgba(1,9,13,.62);
+    backdrop-filter:blur(14px);
+  }
+
+  .auth-mobile-tabs button{
+    min-height:40px;
+    padding:8px 10px;
+    border:1px solid transparent;
+    border-radius:11px;
+    color:var(--muted);
+    background:transparent;
+    cursor:pointer;
+    font:inherit;
+    font-size:.75rem;
+    font-weight:900;
+    transition:color .18s ease,background .18s ease,box-shadow .18s ease;
+  }
+
+  .auth-mobile-tabs button.is-active{
+    color:#061117;
+    border-color:rgba(104,208,223,.46);
+    background:linear-gradient(145deg,#82dfe8,#59c2d3);
+    box-shadow:0 9px 21px rgba(72,186,208,.16),inset 0 1px rgba(255,255,255,.52);
+  }
+
+  .auth-form-zone{
+    width:100%;
+    transform:none!important;
+  }
+
+  .auth-panel{
+    padding:88px 22px 24px;
+    justify-content:flex-start;
+    transform:translateX(-32px) scale(.99);
+  }
+
+  .auth-panel[data-mode-panel="signup"]{
+    transform:translateX(32px) scale(.99);
+  }
+
+  .auth-welcome-panel{
+    display:none;
+  }
+
+  .auth-panel .simple-card-head h1{
+    font-size:clamp(2.15rem,10vw,3rem)!important;
+  }
+}
+
+@media(max-width:390px){
+  .auth-panel{
+    padding-left:17px;
+    padding-right:17px;
+  }
+
+  .auth-mobile-tabs{
+    left:14px;
+    right:14px;
   }
 }
 
 @media(prefers-reduced-motion:reduce){
-  .auth-tabs a{transition:none}
+  body[data-account-page="login"] .auth-switch-card,
+  body[data-account-page="signup"] .auth-switch-card,
+  .auth-form-zone,
+  .auth-panel,
+  .auth-welcome-panel,
+  .auth-welcome-copy,
+  .auth-switch-button,
+  .auth-mobile-tabs button{
+    transition:none!important;
+  }
 }
