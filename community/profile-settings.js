@@ -66,7 +66,10 @@
 
   function setPasswordFieldAvailability(canChange) {
     clearPasswordField(true);
-    if (usernamePasswordField) usernamePasswordField.hidden = !canChange;
+    if (usernamePasswordField) {
+      usernamePasswordField.hidden = !canChange;
+      usernamePasswordField.style.display = canChange ? '' : 'none';
+    }
     if (usernamePassword) usernamePassword.disabled = !canChange;
   }
 
