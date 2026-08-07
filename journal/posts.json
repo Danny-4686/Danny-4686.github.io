@@ -26,7 +26,7 @@
     ],
     "mediaType": "image",
     "thumbnail": "/assets/images/journal/fortnite-sprites/img-5094.jpeg",
-    "fit": "contain",
+    "fit": "cover",
     "mode": "card",
     "comingSoon": false,
     "cardOnly": true
