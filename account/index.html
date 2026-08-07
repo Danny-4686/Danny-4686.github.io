@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/community/account.css?v=3">
-  <link rel="stylesheet" href="/community/profile-settings.css?v=2">
+  <link rel="stylesheet" href="/community/profile-settings.css?v=3">
 </head>
 <body data-account-page="account">
   <header class="account-header">
@@ -73,15 +73,15 @@
             <h3>Username</h3>
             <p>Your username is public. Changes require your current password.</p>
             <div id="usernameCooldown" class="username-cooldown">Checking username availability…</div>
-            <form id="usernameSettingsForm" class="settings-form">
+            <form id="usernameSettingsForm" class="settings-form" autocomplete="off">
               <label class="field">
                 <span>New username</span>
-                <input id="settingsUsername" name="username" autocomplete="username" maxlength="20" required placeholder="Your new username">
+                <input id="settingsUsername" name="username" autocomplete="off" maxlength="20" required placeholder="Your new username">
                 <small id="settingsUsernameHint" class="field-hint">3–20 characters using letters, numbers, or underscores.</small>
               </label>
-              <label class="field">
+              <label id="settingsPasswordField" class="field username-password-field" hidden>
                 <span>Current password</span>
-                <input id="settingsPassword" name="password" type="password" autocomplete="current-password" maxlength="128" required placeholder="Confirm your password">
+                <input id="settingsPassword" name="cloudlab-password-confirmation" type="password" autocomplete="off" maxlength="128" required placeholder="Confirm your password" value="" readonly data-lpignore="true" data-1p-ignore>
               </label>
               <button id="usernameSave" class="settings-button primary" type="submit">Save username</button>
             </form>
@@ -115,6 +115,6 @@
   <footer class="account-footer"><span>© <span id="year"></span> Danny4686.</span><a href="/">Back to Danny4686.com</a></footer>
   <script>document.getElementById('year').textContent=new Date().getFullYear()</script>
   <script src="/community/account.js?v=3"></script>
-  <script src="/community/profile-settings.js?v=3"></script>
+  <script src="/community/profile-settings.js?v=4"></script>
 </body>
 </html>
