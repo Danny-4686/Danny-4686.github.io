@@ -13,8 +13,6 @@
   try { lastSeen = Number(localStorage.getItem(STORAGE_KEY) || 0); } catch (_) {}
   const hourlyIntroDue = Date.now() - lastSeen >= INTRO_WINDOW_MS;
 
-  if (hourlyIntroDue) document.documentElement.classList.add('cloudlab-intro-pending');
-
   let mounted = false;
   let released = false;
 
@@ -59,6 +57,16 @@
     window.setTimeout(() => releasePage(overlay), remaining);
   }
 
+  function playIntro() {
+    document.documentElement.classList.add('cloudlab-intro-pending');
+    try { localStorage.setItem(STORAGE_KEY, String(Date.now())); } catch (_) {}
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', mountIntro, { once: true });
+    } else {
+      mountIntro();
+    }
+  }
+
   async function readForceSetting() {
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), 900);
@@ -78,35 +86,15 @@
     }
   }
 
-  async function start() {
-    const forced = await readForceSetting();
-    const shouldPlay = forced || hourlyIntroDue;
-
-    if (!shouldPlay) {
-      document.documentElement.classList.remove('cloudlab-intro-pending');
-      return;
-    }
-
-    document.documentElement.classList.add('cloudlab-intro-pending');
-    try { localStorage.setItem(STORAGE_KEY, String(Date.now())); } catch (_) {}
-
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', mountIntro, { once: true });
-    } else {
-      mountIntro();
-    }
+  if (hourlyIntroDue) {
+    playIntro();
+  } else {
+    readForceSetting().then((forced) => {
+      if (forced) playIntro();
+    }).catch(() => {});
   }
 
-  start().catch(() => {
-    if (hourlyIntroDue) {
-      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mountIntro, { once: true });
-      else mountIntro();
-    } else {
-      document.documentElement.classList.remove('cloudlab-intro-pending');
-    }
-  });
-
-  // Never allow a loader or settings request failure to keep the page hidden.
+  // Never allow a loader failure to keep the page hidden.
   window.setTimeout(() => {
     if (!mounted && document.documentElement.classList.contains('cloudlab-intro-pending')) {
       released = true;
