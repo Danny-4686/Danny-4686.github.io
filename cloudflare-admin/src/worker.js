@@ -2,6 +2,7 @@ import app from './index.js';
 import { handleCommunityApi } from './community-api-runtime.js';
 import { handleFreshAbyss } from './fresh-abyss.js';
 import { loginPage } from './admin-login-page.js';
+import { commitFiles, readJsonFile } from './github.js';
 import {
   CSRF_COOKIE,
   SESSION_COOKIE,
@@ -11,6 +12,10 @@ import {
   safeStringEqual,
   verifySession
 } from './utils.js';
+
+const SITE_SETTINGS_PATH = 'site-settings.json';
+let siteSettingsCache = null;
+let siteSettingsCacheUntil = 0;
 
 function missingSettings(env, names) {
   return names.filter((name) => !env[name]);
@@ -59,6 +64,72 @@ function validCsrf(request, session) {
   );
 }
 
+function normalizeSiteSettings(value) {
+  return {
+    forceSiteIntro: Boolean(value?.forceSiteIntro),
+    updatedAt: typeof value?.updatedAt === 'string' ? value.updatedAt : '',
+    updatedBy: typeof value?.updatedBy === 'string' ? value.updatedBy : ''
+  };
+}
+
+async function readSiteSettings(env, forceRefresh = false) {
+  const now = Date.now();
+  if (!forceRefresh && siteSettingsCache && now < siteSettingsCacheUntil) return siteSettingsCache;
+  const value = await readJsonFile(env, SITE_SETTINGS_PATH, { forceSiteIntro: false });
+  siteSettingsCache = normalizeSiteSettings(value);
+  siteSettingsCacheUntil = now + 5000;
+  return siteSettingsCache;
+}
+
+function publicSiteSettingsJson(data, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': 'no-store',
+      'Access-Control-Allow-Origin': '*',
+      'X-Content-Type-Options': 'nosniff'
+    }
+  });
+}
+
+async function publicSiteSettings(env) {
+  try {
+    const settings = await readSiteSettings(env);
+    return publicSiteSettingsJson({
+      ok: true,
+      forceSiteIntro: settings.forceSiteIntro,
+      updatedAt: settings.updatedAt || null
+    });
+  } catch (error) {
+    console.error('Could not read public site intro setting', error);
+    return publicSiteSettingsJson({ ok: false, forceSiteIntro: false, updatedAt: null });
+  }
+}
+
+async function handleSiteIntroAdmin(request, env, session) {
+  if (request.method === 'GET') {
+    const settings = await readSiteSettings(env, true);
+    return json({ ok: true, ...settings });
+  }
+
+  if (request.method !== 'POST') return json({ error: 'Method not allowed.' }, 405);
+  const body = await request.json().catch(() => ({}));
+  const settings = {
+    forceSiteIntro: body.forceSiteIntro === true,
+    updatedAt: new Date().toISOString(),
+    updatedBy: session.login
+  };
+  const commit = await commitFiles(env, [{
+    path: SITE_SETTINGS_PATH,
+    text: `${JSON.stringify(settings, null, 2)}\n`
+  }], settings.forceSiteIntro ? 'Site intro: force animation on' : 'Site intro: restore hourly animation');
+
+  siteSettingsCache = settings;
+  siteSettingsCacheUntil = Date.now() + 5000;
+  return json({ ok: true, ...settings, commit });
+}
+
 function allowExternalImagePreviews(response, path) {
   if (path !== '/' && path !== '/admin') return response;
   const contentType = response.headers.get('Content-Type') || '';
@@ -92,6 +163,7 @@ export default {
     const communityHost = url.hostname.toLowerCase() === 'api.danny4686.com';
 
     if (communityHost) {
+      if (path === '/v1/site-settings' && request.method === 'GET') return publicSiteSettings(env);
       if (path === '/') return Response.redirect('https://danny4686.com/account/', 302);
       if (!path.startsWith('/v1')) return json({ error: 'Community API route not found.' }, 404);
       return handleCommunityApi(request, env);
@@ -137,6 +209,15 @@ export default {
           return json({ error: 'Security token expired. Refresh the dashboard and try again.' }, 403);
         }
         return handleFreshAbyss(request, env, session);
+      }
+
+      if (path === '/api/site-intro') {
+        const session = await getSession(request, env);
+        if (!session) return json({ error: 'Authentication required.' }, 401);
+        if (request.method !== 'GET' && !validCsrf(request, session)) {
+          return json({ error: 'Security token expired. Refresh the dashboard and try again.' }, 403);
+        }
+        return handleSiteIntroAdmin(request, env, session);
       }
 
       const rawResponse = await app.fetch(request, env, ctx);
