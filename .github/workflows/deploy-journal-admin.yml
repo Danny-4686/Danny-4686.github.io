@@ -68,6 +68,7 @@ jobs:
           health = read_json("/tmp/community-health.json")
           username = read_json("/tmp/community-username.json")
           admin_html = Path("/tmp/admin-root.html").read_text(encoding="utf-8", errors="replace") if Path("/tmp/admin-root.html").exists() else ""
+          admin_login_visible = 'href="/auth/login"' in admin_html
           result = {
               "healthHttpStatus": os.environ.get("HEALTH_CODE", "000"),
               "health": health,
@@ -75,7 +76,7 @@ jobs:
               "usernameCheck": username,
               "usernameChecked": os.environ.get("CHECK_NAME", ""),
               "adminHttpStatus": os.environ.get("ADMIN_CODE", "000"),
-              "adminLoginVisible": "Sign in with GitHub" in admin_html
+              "adminLoginVisible": admin_login_visible
           }
           Path("/tmp/community-smoke.json").write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
 
@@ -87,7 +88,7 @@ jobs:
               and os.environ.get("USERNAME_CODE") == "200"
               and isinstance(username.get("available"), bool)
               and os.environ.get("ADMIN_CODE") == "200"
-              and "Sign in with GitHub" in admin_html
+              and admin_login_visible
           )
           if not healthy:
               raise SystemExit(1)
