@@ -4,9 +4,14 @@
   const filters = document.getElementById('journalFilters');
   if (!grid || !search || !filters) return;
 
+  const BATCH_SIZE = 9;
+  const EARTH_LOGO = '/assets/images/cloudlab-logo.png';
   let posts = [];
+  let filteredPosts = [];
+  let renderedCount = 0;
   let activeTag = 'all';
   let videoObserver = null;
+  let batchObserver = null;
 
   function postMode(post) {
     if (post.mode) return post.mode;
@@ -15,13 +20,48 @@
     return 'article';
   }
 
+  function createEarthLoader(label = '', compact = false) {
+    const loader = document.createElement('div');
+    loader.className = `journal-earth-loader${compact ? ' compact' : ''}`;
+    const image = document.createElement('img');
+    image.src = EARTH_LOGO;
+    image.alt = '';
+    image.setAttribute('aria-hidden', 'true');
+    loader.append(image);
+    if (label) {
+      const text = document.createElement('span');
+      text.textContent = label;
+      loader.append(text);
+    }
+    return loader;
+  }
+
+  function finishMedia(media, loader) {
+    if (media.classList.contains('is-media-ready')) return;
+    media.classList.remove('is-media-loading', 'is-media-error');
+    media.classList.add('is-media-ready');
+    window.setTimeout(() => loader.remove(), 480);
+  }
+
+  function failMedia(media, loader) {
+    media.classList.remove('is-media-loading');
+    media.classList.add('is-media-error');
+    const text = loader.querySelector('span') || document.createElement('span');
+    text.textContent = 'Media unavailable';
+    if (!text.parentNode) loader.querySelector('.journal-earth-loader')?.append(text);
+  }
+
   function createMedia(post) {
     const media = document.createElement('div');
-    media.className = 'card-media';
+    media.className = 'card-media is-media-loading';
+
+    const loader = document.createElement('div');
+    loader.className = 'journal-media-loader';
+    loader.append(createEarthLoader('', true));
+    media.append(loader);
 
     if (post.mediaType === 'video') {
       const video = document.createElement('video');
-      video.src = post.thumbnail;
       video.muted = true;
       video.loop = true;
       video.playsInline = true;
@@ -29,14 +69,21 @@
       video.setAttribute('data-autoplay', '');
       video.setAttribute('aria-label', `${post.title} preview`);
       if (post.poster) video.poster = post.poster;
+      video.addEventListener('loadedmetadata', () => finishMedia(media, loader), { once: true });
+      video.addEventListener('error', () => failMedia(media, loader), { once: true });
+      video.src = post.thumbnail;
       media.append(video);
     } else {
       const image = document.createElement('img');
-      image.src = post.thumbnail;
       image.alt = `${post.title} thumbnail`;
       image.loading = 'lazy';
+      image.decoding = 'async';
       if (post.fit === 'contain') image.classList.add('contain-media');
+      image.addEventListener('load', () => finishMedia(media, loader), { once: true });
+      image.addEventListener('error', () => failMedia(media, loader), { once: true });
+      image.src = post.thumbnail;
       media.append(image);
+      if (image.complete && image.naturalWidth > 0) queueMicrotask(() => finishMedia(media, loader));
     }
 
     return media;
@@ -73,7 +120,6 @@
     const date = document.createElement('time');
     date.dateTime = post.date;
     date.textContent = post.displayDate;
-
     meta.append(badge, date);
 
     const title = document.createElement('h3');
@@ -130,17 +176,74 @@
     videos.forEach((video) => videoObserver.observe(video));
   }
 
+  function removeBatchSentinel() {
+    batchObserver?.disconnect();
+    batchObserver = null;
+    grid.querySelector('.journal-load-sentinel')?.remove();
+  }
+
+  function addBatchSentinel() {
+    removeBatchSentinel();
+    if (renderedCount >= filteredPosts.length) return;
+
+    const sentinel = document.createElement('div');
+    sentinel.className = 'journal-load-sentinel';
+    sentinel.setAttribute('aria-label', 'Loading more journal posts');
+    sentinel.append(createEarthLoader('Loading more posts'));
+    grid.append(sentinel);
+
+    if ('IntersectionObserver' in window) {
+      batchObserver = new IntersectionObserver((entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        removeBatchSentinel();
+        renderNextBatch();
+      }, { rootMargin: '650px 0px', threshold: 0.01 });
+      batchObserver.observe(sentinel);
+    } else {
+      sentinel.replaceChildren();
+      const button = document.createElement('button');
+      button.className = 'journal-load-fallback';
+      button.type = 'button';
+      button.textContent = 'Load more posts';
+      button.addEventListener('click', () => {
+        removeBatchSentinel();
+        renderNextBatch();
+      });
+      sentinel.append(button);
+    }
+  }
+
+  function revealCards(cards) {
+    requestAnimationFrame(() => cards.forEach((card) => card.classList.add('visible')));
+  }
+
+  function renderNextBatch() {
+    removeBatchSentinel();
+    const batch = filteredPosts.slice(renderedCount, renderedCount + BATCH_SIZE);
+    if (!batch.length) return;
+
+    const cards = batch.map((post, index) => createPostCard(post, index));
+    cards.forEach((card) => grid.append(card));
+    renderedCount += batch.length;
+    revealCards(cards);
+    observeVideos();
+    addBatchSentinel();
+  }
+
   function renderPosts() {
     const query = search.value.trim().toLowerCase();
-    const filtered = posts.filter((post) => {
+    filteredPosts = posts.filter((post) => {
       const matchesTag = activeTag === 'all' || post.tags?.includes(activeTag);
       const searchable = `${post.title} ${post.description} ${(post.tags || []).join(' ')}`.toLowerCase();
       return matchesTag && searchable.includes(query);
     });
 
+    videoObserver?.disconnect();
+    removeBatchSentinel();
+    renderedCount = 0;
     grid.replaceChildren();
 
-    if (!filtered.length) {
+    if (!filteredPosts.length) {
       const empty = document.createElement('div');
       empty.className = 'empty-state';
       empty.textContent = 'No journal posts match that search.';
@@ -148,11 +251,7 @@
       return;
     }
 
-    filtered.forEach((post, index) => grid.append(createPostCard(post, index)));
-    requestAnimationFrame(() => {
-      grid.querySelectorAll('.reveal').forEach((element) => element.classList.add('visible'));
-    });
-    observeVideos();
+    renderNextBatch();
   }
 
   function buildFilters() {
@@ -191,6 +290,7 @@
     })
     .catch((error) => {
       console.error(error);
+      removeBatchSentinel();
       grid.replaceChildren();
       const empty = document.createElement('div');
       empty.className = 'empty-state';
