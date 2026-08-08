@@ -1,0 +1,3 @@
+cloudflare-admin/node_modules/
+cloudflare-admin/.wrangler/
+*.log

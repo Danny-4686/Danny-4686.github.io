@@ -5,13 +5,14 @@
   if (!grid || !search || !filters) return;
 
   const BATCH_SIZE = 9;
-  const EARTH_LOGO = '/assets/images/cloudlab-logo.png';
+  const EARTH_LOGO = '/assets/images/optimized/cloudlab-logo-256.webp';
   let posts = [];
   let filteredPosts = [];
   let renderedCount = 0;
   let activeTag = 'all';
   let videoObserver = null;
   let batchObserver = null;
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   function postMode(post) {
     if (post.mode) return post.mode;
@@ -102,7 +103,6 @@
       card.href = `/journal/posts/${encodeURIComponent(post.slug)}/`;
     } else {
       card.setAttribute('aria-label', `${post.title}, ${isComingSoon ? 'coming soon' : 'journal post'}`);
-      card.setAttribute('aria-disabled', 'true');
     }
 
     card.append(createMedia(post));
@@ -160,7 +160,7 @@
   function observeVideos() {
     videoObserver?.disconnect();
     const videos = [...grid.querySelectorAll('video[data-autoplay]')];
-    if (!videos.length || !('IntersectionObserver' in window)) return;
+    if (!videos.length || reducedMotion || !('IntersectionObserver' in window)) return;
 
     videoObserver = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
@@ -262,6 +262,7 @@
       button.type = 'button';
       button.dataset.tag = tag;
       button.textContent = tag;
+      button.setAttribute('aria-pressed', 'false');
       filters.append(button);
     });
 
@@ -271,6 +272,7 @@
       activeTag = button.dataset.tag;
       filters.querySelectorAll('[data-tag]').forEach((item) => {
         item.classList.toggle('active', item === button);
+        item.setAttribute('aria-pressed', String(item === button));
       });
       renderPosts();
     });
@@ -278,7 +280,7 @@
 
   search.addEventListener('input', renderPosts);
 
-  fetch('posts.json', { cache: 'no-store' })
+  fetch('posts.json', { cache: 'no-cache' })
     .then((response) => {
       if (!response.ok) throw new Error(`Journal data returned ${response.status}`);
       return response.json();

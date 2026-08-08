@@ -5,31 +5,37 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Play Cloud Hopper in the CloudLab Arcade.">
   <meta name="theme-color" content="#061117">
+  <meta name="author" content="Danny4686"><meta name="application-name" content="CloudLab"><meta name="apple-mobile-web-app-title" content="CloudLab">
+  <link rel="canonical" href="https://danny4686.com/games/cloud-hopper/">
+  <meta property="og:site_name" content="CloudLab"><meta property="og:title" content="Cloud Hopper | CloudLab Arcade"><meta property="og:description" content="Play Cloud Hopper in the CloudLab Arcade."><meta property="og:type" content="website"><meta property="og:url" content="https://danny4686.com/games/cloud-hopper/"><meta property="og:image" content="https://danny4686.com/assets/images/cloudlab-logo.png"><meta property="og:image:alt" content="CloudLab Earth logo">
+  <meta name="twitter:card" content="summary"><meta name="twitter:title" content="Cloud Hopper | CloudLab Arcade"><meta name="twitter:description" content="Play Cloud Hopper in the CloudLab Arcade."><meta name="twitter:image" content="https://danny4686.com/assets/images/cloudlab-logo.png">
   <title>Cloud Hopper | CloudLab Arcade</title>
   <link rel="icon" href="../../assets/images/cloudlab-logo.png" type="image/png">
+  <link rel="apple-touch-icon" href="/assets/images/cloudlab-logo.png"><link rel="manifest" href="/site.webmanifest"><link rel="stylesheet" href="/site-loader.css?v=20260808"><script src="/site-loader.js?v=20260808"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../hub.css">
+  <link rel="stylesheet" href="/site-quality.css?v=20260808">
   <style>
     .hopper-stage{position:relative;width:min(620px,100%);margin:0 auto;overflow:hidden;border:1px solid var(--line);border-radius:24px;background:#07151c;box-shadow:inset 0 0 0 1px rgba(255,255,255,.025),0 20px 50px rgba(0,0,0,.24)}
     #hopperCanvas{display:block;width:100%;height:auto;aspect-ratio:4/5;touch-action:none}.hopper-touch{display:flex;justify-content:center;gap:12px;margin-top:16px}.hopper-touch .touch-button{width:92px;height:58px}.game-message{background:rgba(4,13,18,.58);backdrop-filter:blur(8px);transition:opacity .2s ease,visibility .2s ease}.game-message.hidden{display:grid;opacity:0;visibility:hidden;pointer-events:none}.game-message h2{font-size:clamp(2rem,7vw,3.5rem)}
   </style>
 </head>
 <body>
-  <header class="hub-header"><a class="hub-brand" href="/" aria-label="Return to Danny4686.com"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>Danny4686</strong><small>CloudLab Studio</small></span></a><nav class="hub-nav" aria-label="Site navigation"><a class="active" href="/games/">Games</a><a href="/journal/">Journal</a><a href="/">Home</a></nav><a class="header-action" href="/games/">All Games</a></header>
+  <header class="hub-header"><a class="hub-brand" href="/" aria-label="Return to Danny4686.com"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>Danny4686</strong><small>CloudLab Studio</small></span></a><nav class="hub-nav" aria-label="Site navigation"><a href="/#about">About</a><a href="/#projects">Projects</a><a class="active" href="/games/" aria-current="page">Games</a><a href="/journal/">Journal</a><a href="/#connect">Connect</a></nav><a class="header-action" href="/games/">All Games</a></header>
   <main class="page-shell game-page">
     <a class="back-link reveal" href="/games/">← Back to Browser Games</a>
-    <div class="game-heading reveal"><div><p class="eyebrow">CLOUDLAB ARCADE</p><h1>Cloud Hopper</h1><p>Bounce from platform to platform, collect Cloud Coins, and climb as high as possible.</p></div><div class="score-row"><div class="score-chip"><small>HEIGHT</small><strong id="heightScore">0</strong></div><div class="score-chip"><small>COINS</small><strong id="coins">0</strong></div><div class="score-chip"><small>BEST</small><strong id="best">0</strong></div></div></div>
+    <div class="game-heading reveal"><div><p class="eyebrow">CLOUDLAB ARCADE</p><h1>Cloud Hopper</h1><p>Bounce from platform to platform, collect Cloud Coins, and climb as high as possible.</p></div><div class="score-row"><div class="score-chip"><small>SCORE</small><strong id="heightScore">0</strong></div><div class="score-chip"><small>COINS</small><strong id="coins">0</strong></div><div class="score-chip"><small>BEST</small><strong id="best">0</strong></div></div></div>
     <section class="game-panel reveal" aria-label="Cloud Hopper game">
-      <div class="hopper-stage"><canvas id="hopperCanvas" width="640" height="800" aria-label="Cloud Hopper board"></canvas><div class="game-message" id="gameMessage"><div><h2 id="messageTitle">Ready to hop?</h2><p id="messageText">Press Start and steer with A/D, the arrow keys, or the touch buttons.</p></div></div></div>
+      <div class="hopper-stage"><canvas id="hopperCanvas" width="640" height="800" role="img" aria-label="Cloud Hopper board"></canvas><div class="game-message" id="gameMessage"><div><h2 id="messageTitle">Ready to hop?</h2><p id="messageText">Press Start and steer with A/D, the arrow keys, or the touch buttons.</p></div></div></div>
       <div class="game-toolbar"><button class="game-button primary" id="startButton" type="button">Start Run</button><button class="game-button" id="pauseButton" type="button">Pause</button><button class="game-button" id="restartButton" type="button">Restart</button></div>
-      <div class="hopper-touch" aria-label="Touch movement controls"><button class="touch-button" type="button" data-move="left" aria-label="Move left">←</button><button class="touch-button" type="button" data-move="right" aria-label="Move right">→</button></div>
+      <div class="hopper-touch" role="group" aria-label="Touch movement controls"><button class="touch-button" type="button" data-move="left" aria-label="Move left">←</button><button class="touch-button" type="button" data-move="right" aria-label="Move right">→</button></div>
       <p class="control-note"><span class="desktop-only">Use A/D or the arrow keys.</span> The cloud bounces automatically when it lands.</p>
     </section>
   </main>
   <footer class="site-footer"><a class="footer-brand" href="/"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>Cloud Hopper</small></span></a><p>© <span id="year"></span> Danny4686.</p></footer>
-  <script src="../../hub.js"></script>
+  <script src="../../hub.js?v=20260808"></script>
   <script>
   (() => {
     const canvas = document.getElementById('hopperCanvas');
@@ -54,7 +60,11 @@
     let gameOver = false;
     let score = 0;
     let coins = 0;
-    let best = Number(localStorage.getItem('cloudlab-hopper-best') || 0);
+    let best = 0;
+    try {
+      const savedBest = Number(localStorage.getItem('cloudlab-hopper-best') || 0);
+      best = Number.isFinite(savedBest) && savedBest >= 0 ? savedBest : 0;
+    } catch (_) {}
     let camera = 0;
     let last = 0;
     let raf = 0;
@@ -184,10 +194,10 @@
         started = false;
         gameOver = true;
         best = Math.max(best, Math.floor(score));
-        localStorage.setItem('cloudlab-hopper-best', String(best));
+        try { localStorage.setItem('cloudlab-hopper-best', String(best)); } catch (_) {}
         updateStats();
         startButton.textContent = 'Play Again';
-        showMessage('Run Over', `Height ${Math.floor(score)} with ${coins} Cloud ${coins === 1 ? 'Coin' : 'Coins'}.`);
+        showMessage('Run Over', `Score ${Math.floor(score)} with ${coins} Cloud ${coins === 1 ? 'Coin' : 'Coins'}.`);
       }
     }
 

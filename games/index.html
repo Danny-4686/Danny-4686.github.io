@@ -28,83 +28,86 @@
   <link rel="manifest" href="/site.webmanifest">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/site-loader.css?v=20260808">
+  <script src="/site-loader.js?v=20260808"></script>
   <link rel="stylesheet" href="../hub.css">
   <link rel="stylesheet" href="games.css">
   <link rel="stylesheet" href="new-games.css?v=1">
+  <link rel="stylesheet" href="/site-quality.css?v=20260808">
 </head>
 <body>
   <header class="hub-header">
-    <a class="hub-brand" href="/" aria-label="Return to Danny4686.com"><img src="../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>Danny4686</strong><small>CloudLab Studio</small></span></a>
-    <nav class="hub-nav" aria-label="Site navigation"><a class="active" href="/games/">Games</a><a href="/journal/">Journal</a><a href="/">Home</a></nav>
+    <a class="hub-brand" href="/" aria-label="Return to Danny4686.com"><img src="../assets/images/optimized/cloudlab-logo-256.webp" width="256" height="256" alt="CloudLab logo"><span><strong>Danny4686</strong><small>CloudLab Studio</small></span></a>
+    <nav class="hub-nav" aria-label="Site navigation"><a href="/#about">About</a><a href="/#projects">Projects</a><a class="active" href="/games/" aria-current="page">Games</a><a href="/journal/">Journal</a><a href="/#connect">Connect</a></nav>
     <a class="header-action" href="/">Back Home</a>
   </header>
 
   <main>
     <section class="page-shell arcade-hero reveal">
       <div class="arcade-hero-copy"><p class="eyebrow">CLOUDLAB ARCADE</p><h1>Pick a game and play.</h1><p class="lead">A growing collection of browser games built for quick sessions on desktop or mobile. Every game opens instantly, and useful scores stay saved on your device.</p></div>
-      <div class="arcade-summary" aria-label="Arcade summary"><div><strong>10</strong><span>Playable games</span></div><div><strong>0</strong><span>Downloads needed</span></div><div><strong>100%</strong><span>Browser based</span></div></div>
+      <div class="arcade-summary" role="group" aria-label="Arcade summary"><div><strong>10</strong><span>Playable games</span></div><div><strong>0</strong><span>Downloads needed</span></div><div><strong>100%</strong><span>Browser based</span></div></div>
     </section>
 
     <section class="page-shell arcade-library">
       <div class="library-heading reveal"><div><p class="eyebrow">GAME LIBRARY</p><h2>Find something to play.</h2></div><input class="search-box" id="gameSearch" type="search" placeholder="Search games" aria-label="Search games"></div>
-      <div class="filters reveal" id="gameFilters" aria-label="Filter games"><button class="filter-button active" type="button" data-filter="all" aria-pressed="true">All</button><button class="filter-button" type="button" data-filter="arcade" aria-pressed="false">Arcade</button><button class="filter-button" type="button" data-filter="puzzle" aria-pressed="false">Puzzle</button><button class="filter-button" type="button" data-filter="strategy" aria-pressed="false">Strategy</button><button class="filter-button" type="button" data-filter="memory" aria-pressed="false">Memory</button></div>
+      <div class="filters reveal" id="gameFilters" role="group" aria-label="Filter games"><button class="filter-button active" type="button" data-filter="all" aria-pressed="true">All</button><button class="filter-button" type="button" data-filter="arcade" aria-pressed="false">Arcade</button><button class="filter-button" type="button" data-filter="puzzle" aria-pressed="false">Puzzle</button><button class="filter-button" type="button" data-filter="strategy" aria-pressed="false">Strategy</button><button class="filter-button" type="button" data-filter="memory" aria-pressed="false">Memory</button></div>
 
       <div class="card-grid arcade-grid" id="gameGrid">
         <a class="game-card reveal" href="/games/breakout/" data-title="Breakout" data-genre="arcade" data-keywords="bricks paddle ball score classic">
-          <div class="card-media"><div class="breakout-preview" aria-label="Breakout game preview"><div class="breakout-bricks"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><span class="preview-paddle"></span><span class="preview-ball"></span></div></div>
+          <div class="card-media"><div class="breakout-preview" role="img" aria-label="Breakout game preview"><div class="breakout-bricks"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><span class="preview-paddle"></span><span class="preview-ball"></span></div></div>
           <div class="card-body"><div class="card-meta"><span class="badge">ARCADE</span><span>Solo</span></div><h3>Breakout</h3><p>Keep the ball alive, smash every glowing brick, and chase a new high score.</p><span class="card-link">Open game <span>→</span></span></div>
         </a>
 
         <a class="game-card reveal" href="/games/connect-four/" data-title="Connect Four" data-genre="strategy" data-keywords="connect discs cpu two player board four">
-          <div class="card-media"><div class="connect-preview" aria-label="Connect Four game preview"><div class="connect-preview-grid"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span class="gold falling"></span><span></span><span></span><span></span><span></span><span></span><span class="cyan"></span><span class="gold"></span><span></span><span></span><span></span><span></span><span class="cyan"></span><span class="gold"></span><span class="cyan"></span><span></span><span></span><span></span></div></div></div>
+          <div class="card-media"><div class="connect-preview" role="img" aria-label="Connect Four game preview"><div class="connect-preview-grid"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span class="gold falling"></span><span></span><span></span><span></span><span></span><span></span><span class="cyan"></span><span class="gold"></span><span></span><span></span><span></span><span></span><span class="cyan"></span><span class="gold"></span><span class="cyan"></span><span></span><span></span><span></span></div></div></div>
           <div class="card-body"><div class="card-meta"><span class="badge">STRATEGY</span><span>1–2 players</span></div><h3>Connect Four</h3><p>Build a line of four against three CPU difficulties or share the board with a friend.</p><span class="card-link">Open game <span>→</span></span></div>
         </a>
 
         <a class="game-card reveal" href="/games/cloud-hopper/" data-title="Cloud Hopper" data-genre="arcade" data-keywords="cloud jump platforms coins endless height">
-          <div class="card-media"><div class="hopper-preview" aria-label="Cloud Hopper game preview"><span class="star one"></span><span class="star two"></span><span class="star three"></span><span class="hopper-platform one"></span><span class="hopper-platform two"></span><span class="hopper-platform three"></span><span class="preview-cloud"></span><span class="preview-coin"></span></div></div>
+          <div class="card-media"><div class="hopper-preview" role="img" aria-label="Cloud Hopper game preview"><span class="star one"></span><span class="star two"></span><span class="star three"></span><span class="hopper-platform one"></span><span class="hopper-platform two"></span><span class="hopper-platform three"></span><span class="preview-cloud"></span><span class="preview-coin"></span></div></div>
           <div class="card-body"><div class="card-meta"><span class="badge">ARCADE</span><span>Solo</span></div><h3>Cloud Hopper</h3><p>Bounce across floating platforms, collect Cloud Coins, and keep climbing.</p><span class="card-link">Open game <span>→</span></span></div>
         </a>
 
         <a class="game-card reveal" href="/games/tower-stacker/" data-title="Tower Stacker" data-genre="arcade" data-keywords="tower stack blocks timing skill perfect">
-          <div class="card-media"><div class="stacker-preview" aria-label="Tower Stacker game preview"><div class="stacker-tower"><span></span><span></span><span></span><span></span><span></span><span></span></div></div></div>
+          <div class="card-media"><div class="stacker-preview" role="img" aria-label="Tower Stacker game preview"><div class="stacker-tower"><span></span><span></span><span></span><span></span><span></span><span></span></div></div></div>
           <div class="card-body"><div class="card-meta"><span class="badge">ARCADE</span><span>Solo</span></div><h3>Tower Stacker</h3><p>Time each drop, trim the overhang, and build the tallest tower possible.</p><span class="card-link">Open game <span>→</span></span></div>
         </a>
 
         <a class="game-card reveal" href="/games/snake/" data-title="Snake" data-genre="arcade" data-keywords="classic score food tail">
-          <div class="card-media"><div class="snake-preview upgraded-snake-preview" aria-label="Snake game preview"><span class="s1"></span><span class="s2"></span><span class="s3"></span><span class="s4"></span><span class="s5 snake-head"></span><img class="snake-banner-apple" src="../assets/images/memory/apple.png" alt=""></div></div>
+          <div class="card-media"><div class="snake-preview upgraded-snake-preview" role="img" aria-label="Snake game preview"><span class="s1"></span><span class="s2"></span><span class="s3"></span><span class="s4"></span><span class="s5 snake-head"></span><img class="snake-banner-apple" src="../assets/images/memory/optimized/apple-160.webp" width="160" height="160" alt=""></div></div>
           <div class="card-body"><div class="card-meta"><span class="badge">ARCADE</span><span>Solo</span></div><h3>Snake</h3><p>Collect glowing food, grow longer, and avoid the walls and your own tail.</p><span class="card-link">Open game <span>→</span></span></div>
         </a>
 
         <a class="game-card reveal" href="/games/2048/" data-title="2048" data-genre="puzzle" data-keywords="tiles numbers merge swipe">
-          <div class="card-media"><div class="preview-2048 polished-2048-preview" aria-label="2048 game preview"><span></span><span class="tile-2">2</span><span class="tile-4">4</span><span></span><span class="tile-8">8</span><span class="tile-16">16</span><span></span><span class="tile-32">32</span><span></span><span class="tile-64">64</span><span class="tile-128">128</span><span></span><span class="tile-256">256</span><span class="tile-512">512</span><span class="tile-1024">1024</span><span class="tile-2048">2048</span></div></div>
+          <div class="card-media"><div class="preview-2048 polished-2048-preview" role="img" aria-label="2048 game preview"><span></span><span class="tile-2">2</span><span class="tile-4">4</span><span></span><span class="tile-8">8</span><span class="tile-16">16</span><span></span><span class="tile-32">32</span><span></span><span class="tile-64">64</span><span class="tile-128">128</span><span></span><span class="tile-256">256</span><span class="tile-512">512</span><span class="tile-1024">1024</span><span class="tile-2048">2048</span></div></div>
           <div class="card-body"><div class="card-meta"><span class="badge">PUZZLE</span><span>Solo</span></div><h3>2048</h3><p>Slide and merge matching tiles while building toward 2048 and beyond.</p><span class="card-link">Open game <span>→</span></span></div>
         </a>
 
         <a class="game-card reveal" href="/games/memory-match/" data-title="Memory Match" data-genre="memory" data-keywords="images globes cards pairs timer moves">
-          <div class="card-media"><div class="memory-preview polished-memory-preview" aria-label="Memory Match image preview"><span class="preview-card back-card one"></span><span class="preview-card image-card two"><img src="../assets/images/memory/light_blue.png" alt=""></span><span class="preview-card image-card three"><img src="../assets/images/memory/clgold.png" alt=""></span><span class="preview-card back-card four"></span><span class="preview-card image-card five"><img src="../assets/images/memory/red.png" alt=""></span></div></div>
+          <div class="card-media"><div class="memory-preview polished-memory-preview" role="img" aria-label="Memory Match image preview"><span class="preview-card back-card one"></span><span class="preview-card image-card two"><img src="../assets/images/memory/light_blue.png" alt=""></span><span class="preview-card image-card three"><img src="../assets/images/memory/clgold.png" alt=""></span><span class="preview-card back-card four"></span><span class="preview-card image-card five"><img src="../assets/images/memory/red.png" alt=""></span></div></div>
           <div class="card-body"><div class="card-meta"><span class="badge">MEMORY</span><span>Solo</span></div><h3>Memory Match</h3><p>Match 10 colorful globe designs and clear all 20 image cards in as few moves as possible.</p><span class="card-link">Open game <span>→</span></span></div>
         </a>
 
         <a class="game-card reveal" href="/games/pong/" data-title="Pong" data-genre="arcade" data-keywords="paddle ball cpu reflex">
-          <div class="card-media"><div class="pong-preview" aria-label="Pong game preview"><span class="paddle left"></span><span class="paddle right"></span><span class="pong-ball"></span><i></i></div></div>
+          <div class="card-media"><div class="pong-preview" role="img" aria-label="Pong game preview"><span class="paddle left"></span><span class="paddle right"></span><span class="pong-ball"></span><i></i></div></div>
           <div class="card-body"><div class="card-meta"><span class="badge">ARCADE</span><span>Vs CPU</span></div><h3>Pong</h3><p>Control your paddle, return the ball, and race the computer to seven points.</p><span class="card-link">Open game <span>→</span></span></div>
         </a>
 
         <a class="game-card reveal" href="/games/tic-tac-toe/" data-title="Tic-Tac-Toe" data-genre="strategy" data-keywords="x o computer two player board">
-          <div class="card-media"><div class="ttt-preview" aria-label="Tic-Tac-Toe game preview"><span class="x">X</span><span></span><span class="o">O</span><span></span><span class="x">X</span><span></span><span class="o">O</span><span></span><span class="x">X</span></div></div>
+          <div class="card-media"><div class="ttt-preview" role="img" aria-label="Tic-Tac-Toe game preview"><span class="x">X</span><span></span><span class="o">O</span><span></span><span class="x">X</span><span></span><span class="o">O</span><span></span><span class="x">X</span></div></div>
           <div class="card-body"><div class="card-meta"><span class="badge">STRATEGY</span><span>1–2 players</span></div><h3>Tic-Tac-Toe</h3><p>Build a row of three against the computer or share the board with a friend.</p><span class="card-link">Open game <span>→</span></span></div>
         </a>
 
         <a class="game-card reveal" href="/games/minesweeper/" data-title="Minesweeper" data-genre="strategy" data-keywords="mines flags numbers logic timer">
-          <div class="card-media"><div class="mine-preview upgraded-mine-preview" aria-label="Minesweeper game preview"><span></span><span class="one">1</span><span class="flag"><img src="../assets/images/memory/flag.png" alt=""></span><span></span><span class="two">2</span><span></span><span class="one">1</span><span></span><span></span><span class="mine"><img src="../assets/images/memory/bomb.png" alt=""></span><span class="two">2</span><span></span><span></span><span class="one">1</span><span></span><span></span></div></div>
+          <div class="card-media"><div class="mine-preview upgraded-mine-preview" role="img" aria-label="Minesweeper game preview"><span></span><span class="one">1</span><span class="flag"><img src="../assets/images/memory/optimized/flag-160.webp" width="160" height="160" alt=""></span><span></span><span class="two">2</span><span></span><span class="one">1</span><span></span><span></span><span class="mine"><img src="../assets/images/memory/optimized/bomb-160.webp" width="160" height="160" alt=""></span><span class="two">2</span><span></span><span></span><span class="one">1</span><span></span><span></span></div></div>
           <div class="card-body"><div class="card-meta"><span class="badge">STRATEGY</span><span>Solo</span></div><h3>Minesweeper</h3><p>Use numbers and flags to reveal every safe tile without triggering a mine.</p><span class="card-link">Open game <span>→</span></span></div>
         </a>
       </div>
       <div class="empty-state" id="gameEmpty" hidden>No games match that search or category.</div>
     </section>
   </main>
-  <footer class="site-footer"><a class="footer-brand" href="/"><img src="../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>CloudLab Arcade</small></span></a><p>© <span id="year"></span> Danny4686.</p></footer>
-  <script src="games.js?v=6"></script><script src="../hub.js"></script>
+  <footer class="site-footer"><a class="footer-brand" href="/"><img src="../assets/images/optimized/cloudlab-logo-256.webp" width="256" height="256" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>CloudLab Arcade</small></span></a><p>© <span id="year"></span> Danny4686.</p></footer>
+  <script src="games.js?v=20260808"></script><script src="../hub.js?v=20260808"></script>
 </body>
 </html>

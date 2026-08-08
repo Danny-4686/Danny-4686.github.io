@@ -258,11 +258,13 @@
     const reached2048 = board.some((row) => row.some((value) => value >= 2048));
     if (reached2048 && !winShown) {
       winShown = true;
+      inputLocked = true;
       showMessage('You reached 2048', 'Keep playing for a higher score or begin a new board.', true);
       return;
     }
 
     if (!canMove()) {
+      inputLocked = true;
       showMessage('No moves left', `Final score: ${formatNumber(score)}. Start a new game to try again.`, false);
     }
   }
@@ -360,7 +362,10 @@
 
   newGameButton.addEventListener('click', startNewGame);
   overlayRestartButton.addEventListener('click', startNewGame);
-  continueButton.addEventListener('click', hideMessage);
+  continueButton.addEventListener('click', () => {
+    inputLocked = false;
+    hideMessage();
+  });
   undoButton.addEventListener('click', undo);
 
   startNewGame();

@@ -15,16 +15,19 @@
   <link rel="shortcut icon" href="/assets/images/cloudlab-logo.png" type="image/png">
   <link rel="apple-touch-icon" href="/assets/images/cloudlab-logo.png">
   <link rel="manifest" href="/site.webmanifest">
+  <link rel="stylesheet" href="/site-loader.css?v=20260808">
+  <script src="/site-loader.js?v=20260808"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/community/account.css?v=2">
   <link rel="stylesheet" href="/community/account-polish.css?v=4">
   <link rel="stylesheet" href="/community/auth-switcher.css?v=3">
+  <link rel="stylesheet" href="/site-quality.css?v=20260808">
 </head>
 <body data-account-page="login">
   <header class="account-header">
-    <a class="account-brand" href="/"><img src="/assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>Danny4686</strong><small>CloudLab Account</small></span></a>
+    <a class="account-brand" href="/"><img src="/assets/images/optimized/cloudlab-logo-256.webp" width="256" height="256" alt="CloudLab logo"><span><strong>Danny4686</strong><small>CloudLab Account</small></span></a>
     <nav class="account-header-nav" aria-label="Account page navigation"><a href="/">Home</a></nav>
   </header>
 
@@ -47,9 +50,9 @@
 
           <div class="auth-feedback" data-auth-feedback="login" hidden role="status" aria-live="polite"></div>
 
-          <form class="auth-form" data-auth-form="login">
-            <label class="field"><span>Username</span><input id="loginUsername" name="username" autocomplete="username" maxlength="20" required placeholder="Your username"></label>
-            <label class="field"><span>Password</span><span class="password-wrap"><input id="loginPassword" name="password" type="password" autocomplete="current-password" maxlength="128" required placeholder="Your password"><button class="password-toggle" type="button" data-password-toggle="loginPassword">Show</button></span></label>
+          <form class="auth-form" data-auth-form="login" method="post" action="/login/">
+            <label class="field"><span>Username</span><input id="loginUsername" name="username" type="text" autocomplete="username" maxlength="20" required placeholder="Your username"></label>
+            <div class="field"><span><label for="loginPassword">Password</label></span><span class="password-wrap"><input id="loginPassword" name="password" type="password" autocomplete="current-password" maxlength="128" required placeholder="Your password"><button class="password-toggle" type="button" data-password-toggle="loginPassword">Show</button></span></div>
             <div id="turnstileSlotLogin" class="turnstile-slot"></div>
             <button class="auth-submit" type="submit">Sign in</button>
           </form>
@@ -68,10 +71,10 @@
 
           <div class="auth-feedback" data-auth-feedback="signup" hidden role="status" aria-live="polite"></div>
 
-          <form class="auth-form" data-auth-form="signup">
-            <label class="field"><span>Username</span><input id="signupUsername" name="username" autocomplete="username" maxlength="20" required placeholder="Example_Player"><small id="usernameHint" class="field-hint">3–20 characters using letters, numbers, or underscores.</small></label>
-            <label class="field"><span>Password</span><span class="password-wrap"><input id="signupPassword" name="password" type="password" autocomplete="new-password" maxlength="128" required placeholder="At least 10 characters"><button class="password-toggle" type="button" data-password-toggle="signupPassword">Show</button></span><span id="passwordMeter" class="password-meter" data-level="0"><span></span></span><small class="field-hint">Use at least one letter and one number.</small></label>
-            <label class="field"><span>Confirm password</span><span class="password-wrap"><input id="signupConfirmPassword" name="confirmPassword" type="password" autocomplete="new-password" maxlength="128" required placeholder="Type it again"><button class="password-toggle" type="button" data-password-toggle="signupConfirmPassword">Show</button></span></label>
+          <form class="auth-form" data-auth-form="signup" method="post" action="/signup/">
+            <label class="field"><span>Username</span><input id="signupUsername" name="username" type="text" autocomplete="username" maxlength="20" required placeholder="Example_Player" aria-describedby="usernameHint"><small id="usernameHint" class="field-hint" aria-live="polite">3–20 characters using letters, numbers, or underscores.</small></label>
+            <div class="field"><span><label for="signupPassword">Password</label></span><span class="password-wrap"><input id="signupPassword" name="password" type="password" autocomplete="new-password" maxlength="128" required placeholder="At least 10 characters"><button class="password-toggle" type="button" data-password-toggle="signupPassword">Show</button></span><span id="passwordMeter" class="password-meter" data-level="0"><span></span></span><small class="field-hint">Use at least one letter and one number.</small></div>
+            <div class="field"><span><label for="signupConfirmPassword">Confirm password</label></span><span class="password-wrap"><input id="signupConfirmPassword" name="confirmPassword" type="password" autocomplete="new-password" maxlength="128" required placeholder="Type it again"><button class="password-toggle" type="button" data-password-toggle="signupConfirmPassword">Show</button></span></div>
             <div id="turnstileSlotSignup" class="turnstile-slot"></div>
             <button class="auth-submit" type="submit">Join CloudLab</button>
           </form>
@@ -80,16 +83,16 @@
         </section>
       </div>
 
-      <aside class="auth-welcome-panel" aria-hidden="true">
+      <aside class="auth-welcome-panel">
         <div class="auth-welcome-copy" data-welcome-mode="login">
-          <div class="auth-welcome-brand"><img src="/assets/images/cloudlab-logo.png" alt=""></div>
+          <div class="auth-welcome-brand"><img src="/assets/images/optimized/cloudlab-logo-256.webp" width="256" height="256" alt=""></div>
           <p class="eyebrow">NEW HERE?</p>
           <h2>Join CloudLab</h2>
           <p>Create an account and make your profile part of the CloudLab community.</p>
           <button class="auth-switch-button" type="button" data-auth-switch="signup">Create account</button>
         </div>
         <div class="auth-welcome-copy" data-welcome-mode="signup">
-          <div class="auth-welcome-brand"><img src="/assets/images/cloudlab-logo.png" alt=""></div>
+          <div class="auth-welcome-brand"><img src="/assets/images/optimized/cloudlab-logo-256.webp" width="256" height="256" alt=""></div>
           <p class="eyebrow">WELCOME BACK</p>
           <h2>Already a member?</h2>
           <p>Sign in with your CloudLab username and password to continue.</p>
@@ -101,6 +104,6 @@
 
   <footer class="account-footer"><span>© <span id="year"></span> Danny4686.</span><a href="/">Back to Danny4686.com</a></footer>
   <script>document.getElementById('year').textContent=new Date().getFullYear()</script>
-  <script src="/community/account.js?v=4"></script>
+  <script src="/community/account.js?v=20260808"></script>
 </body>
 </html>

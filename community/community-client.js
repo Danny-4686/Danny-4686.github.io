@@ -4,11 +4,12 @@
   let sessionPromise = null;
   let profileOverlay = null;
   let profileReturnFocus = null;
+  let profileRequest = 0;
 
   if (!document.querySelector('link[data-public-profile-ui]')) {
     const styles = document.createElement('link');
     styles.rel = 'stylesheet';
-    styles.href = '/community/public-profile.css?v=1';
+    styles.href = '/community/public-profile.css?v=20260808';
     styles.dataset.publicProfileUi = 'true';
     document.head.append(styles);
   }
@@ -22,7 +23,7 @@
     '/games/minesweeper/': { id: 'minesweeper', name: 'Minesweeper', selector: '#best', metric: 'seconds', direction: 'asc' },
     '/games/breakout/': { id: 'breakout', name: 'Breakout', selector: '#best', metric: 'points', direction: 'desc' },
     '/games/connect-four/': { id: 'connect-four', name: 'Connect Four', selector: '#cyanWins', metric: 'wins', direction: 'desc' },
-    '/games/cloud-hopper/': { id: 'cloud-hopper', name: 'Cloud Hopper', selector: '#best', metric: 'height', direction: 'desc' },
+    '/games/cloud-hopper/': { id: 'cloud-hopper', name: 'Cloud Hopper', selector: '#best', metric: 'points', direction: 'desc' },
     '/games/tower-stacker/': { id: 'tower-stacker', name: 'Tower Stacker', selector: '#best', metric: 'height', direction: 'desc' }
   };
 
@@ -42,7 +43,10 @@
         session = data;
         window.CloudLabCommunity = { session, refresh: refreshSession, submitRecord };
         return session;
-      }).catch(() => session);
+      }).catch(() => {
+        sessionPromise = null;
+        return session;
+      });
     }
     return sessionPromise;
   }
@@ -69,9 +73,9 @@
     profileOverlay.className = 'community-profile-overlay';
     profileOverlay.hidden = true;
     profileOverlay.innerHTML = `
-      <section class="community-public-profile" role="dialog" aria-modal="true" aria-labelledby="communityProfileName">
+      <section class="community-public-profile" role="dialog" aria-modal="true" aria-label="CloudLab public profile">
         <button class="community-profile-close" type="button" aria-label="Close profile">×</button>
-        <div class="community-profile-loading">Loading profile…</div>
+        <div class="community-profile-loading" role="status" aria-live="polite">Loading profile…</div>
         <div class="community-profile-content" hidden>
           <div class="community-profile-head">
             <div class="community-profile-avatar"><span></span><img alt="" hidden></div>
@@ -93,6 +97,10 @@
     });
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && !profileOverlay.hidden) close();
+      if (event.key === 'Tab' && !profileOverlay.hidden) {
+        event.preventDefault();
+        profileOverlay.querySelector('.community-profile-close').focus();
+      }
     });
     return profileOverlay;
   }
@@ -107,6 +115,7 @@
 
   async function openPublicProfile(userId, trigger) {
     if (!userId) return;
+    const request = ++profileRequest;
     const overlay = ensureProfileOverlay();
     const loading = overlay.querySelector('.community-profile-loading');
     const content = overlay.querySelector('.community-profile-content');
@@ -120,6 +129,7 @@
 
     try {
       const data = await api(`/profiles/${encodeURIComponent(userId)}`);
+      if (request !== profileRequest || overlay.hidden) return;
       const profile = data.profile;
       const avatar = overlay.querySelector('.community-profile-avatar');
       const fallback = avatar.querySelector('span');
@@ -149,6 +159,7 @@
       loading.hidden = true;
       content.hidden = false;
     } catch (error) {
+      if (request !== profileRequest || overlay.hidden) return;
       loading.textContent = error.message;
     }
   }

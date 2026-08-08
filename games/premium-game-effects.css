@@ -219,7 +219,7 @@ html.game-motion-off .board-2048::before {
   width: 48px;
   height: 48px;
   border-radius: 0;
-  background: url("../assets/images/memory/clgold.png") center / contain no-repeat;
+  background: url("../assets/images/memory/optimized/clgold-256.webp") center / contain no-repeat;
   box-shadow: none;
   filter: drop-shadow(0 8px 10px rgba(0, 0, 0, .28)) drop-shadow(0 0 14px rgba(242, 199, 92, .32));
   animation: premiumCloudCoin 1.8s ease-in-out infinite;

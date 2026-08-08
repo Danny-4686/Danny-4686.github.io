@@ -40,7 +40,7 @@
         <div class="cloudlab-intro-earth-shell">
           <span class="cloudlab-intro-orbit"></span>
           <span class="cloudlab-intro-orbit secondary"></span>
-          <img class="cloudlab-intro-earth" src="/assets/images/cloudlab-logo.png" alt="">
+          <img class="cloudlab-intro-earth" src="/assets/images/optimized/cloudlab-logo-256.webp" width="256" height="256" alt="">
         </div>
         <p class="cloudlab-intro-kicker">CLOUDLAB</p>
         <h1 class="cloudlab-intro-title">Danny4686</h1>

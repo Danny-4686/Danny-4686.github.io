@@ -20,6 +20,8 @@
   let current = 'X';
   let over = false;
   let cpuThinking = false;
+  let cpuTimer = null;
+  let roundId = 0;
   let stats = loadStats();
 
   function loadStats() {
@@ -148,7 +150,10 @@
     cells.forEach((cell, index) => { cell.disabled = Boolean(board[index]) || cpuThinking; });
     updateStatus();
 
-    window.setTimeout(() => {
+    const scheduledRound = roundId;
+    window.clearTimeout(cpuTimer);
+    cpuTimer = window.setTimeout(() => {
+      if (scheduledRound !== roundId || mode.value !== 'computer' || current !== 'O' || over) return;
       const move = chooseCpuMove();
       cpuThinking = false;
       if (move !== undefined) place(move, 'O');
@@ -157,6 +162,9 @@
   }
 
   function newRound() {
+    window.clearTimeout(cpuTimer);
+    cpuTimer = null;
+    roundId += 1;
     board = Array(9).fill('');
     current = 'X';
     over = false;

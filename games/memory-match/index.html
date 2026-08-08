@@ -5,12 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Play Memory Match in the CloudLab Arcade.">
   <meta name="theme-color" content="#061117">
+  <meta name="author" content="Danny4686"><meta name="application-name" content="CloudLab"><meta name="apple-mobile-web-app-title" content="CloudLab">
+  <link rel="canonical" href="https://danny4686.com/games/memory-match/">
+  <meta property="og:site_name" content="CloudLab"><meta property="og:title" content="Memory Match | CloudLab Arcade"><meta property="og:description" content="Play Memory Match in the CloudLab Arcade."><meta property="og:type" content="website"><meta property="og:url" content="https://danny4686.com/games/memory-match/"><meta property="og:image" content="https://danny4686.com/assets/images/cloudlab-logo.png"><meta property="og:image:alt" content="CloudLab Earth logo">
+  <meta name="twitter:card" content="summary"><meta name="twitter:title" content="Memory Match | CloudLab Arcade"><meta name="twitter:description" content="Play Memory Match in the CloudLab Arcade."><meta name="twitter:image" content="https://danny4686.com/assets/images/cloudlab-logo.png">
   <title>Memory Match | CloudLab Arcade</title>
   <link rel="icon" href="../../assets/images/cloudlab-logo.png" type="image/png">
+  <link rel="apple-touch-icon" href="/assets/images/cloudlab-logo.png"><link rel="manifest" href="/site.webmanifest"><link rel="stylesheet" href="/site-loader.css?v=20260808"><script src="/site-loader.js?v=20260808"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../hub.css">
+  <link rel="stylesheet" href="/site-quality.css?v=20260808">
   <link rel="stylesheet" href="game.css?v=9">
   <link rel="stylesheet" href="../game-overlay-controls.css?v=1">
 </head>
@@ -21,9 +27,11 @@
       <span><strong>Danny4686</strong><small>CloudLab Studio</small></span>
     </a>
     <nav class="hub-nav" aria-label="Site navigation">
-      <a class="active" href="/games/">Games</a>
+      <a href="/#about">About</a>
+      <a href="/#projects">Projects</a>
+      <a class="active" href="/games/" aria-current="page">Games</a>
       <a href="/journal/">Journal</a>
-      <a href="/">Home</a>
+      <a href="/#connect">Connect</a>
     </nav>
     <a class="header-action" href="/games/">All Games</a>
   </header>
@@ -37,7 +45,7 @@
         <h1>Memory Match</h1>
         <p>Reveal two cards at a time, match all 10 globe designs, and clear the 20-card board in as few moves as possible.</p>
       </div>
-      <div class="score-row" aria-label="Game progress">
+      <div class="score-row" role="group" aria-label="Game progress">
         <div class="score-chip"><small>MOVES</small><strong id="moves">0</strong></div>
         <div class="score-chip"><small>TIME</small><strong id="time">0:00</strong></div>
         <div class="score-chip"><small>BEST</small><strong id="best">--</strong></div>
@@ -46,7 +54,7 @@
 
     <section class="game-panel reveal" aria-label="Memory Match game">
       <div class="game-stage memory-stage">
-        <div class="memory-board" id="memoryBoard" aria-label="Memory Match image cards"></div>
+        <div class="memory-board" id="memoryBoard" role="grid" aria-label="Memory Match image cards"></div>
         <div class="game-message hidden" id="gameMessage">
           <div>
             <h2>Board cleared</h2>
@@ -70,7 +78,7 @@
     <p>© <span id="year"></span> Danny4686.</p>
   </footer>
 
-  <script src="../../hub.js"></script>
+  <script src="../../hub.js?v=20260808"></script>
   <script src="game.js?v=9"></script>
 </body>
 </html>

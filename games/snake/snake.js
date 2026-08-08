@@ -18,14 +18,18 @@
   const storageKey = 'cloudlab-snake-best';
   const appleImage = new Image();
   appleImage.decoding = 'async';
-  appleImage.src = '../../assets/images/memory/apple.png';
+  appleImage.src = '../../assets/images/memory/optimized/apple-160.webp';
 
   let snake = [];
   let food = { x: 17, y: 10 };
   let direction = { x: 1, y: 0 };
   let queuedDirection = { x: 1, y: 0 };
   let score = 0;
-  let bestScore = Number.parseInt(localStorage.getItem(storageKey) || '0', 10);
+  let bestScore = 0;
+  try {
+    const savedBest = Number.parseInt(localStorage.getItem(storageKey) || '0', 10);
+    bestScore = Number.isSafeInteger(savedBest) && savedBest >= 0 ? savedBest : 0;
+  } catch (_) {}
   let state = 'idle';
   let lastMoveAt = 0;
   let particles = [];
@@ -104,7 +108,9 @@
     };
 
     const hitWall = head.x < 0 || head.y < 0 || head.x >= gridSize || head.y >= gridSize;
-    const hitSelf = snake.some((segment) => segment.x === head.x && segment.y === head.y);
+    const eating = head.x === food.x && head.y === food.y;
+    const collisionBody = eating ? snake : snake.slice(0, -1);
+    const hitSelf = collisionBody.some((segment) => segment.x === head.x && segment.y === head.y);
     if (hitWall || hitSelf) {
       endGame();
       return;
@@ -112,7 +118,7 @@
 
     snake.unshift(head);
 
-    if (head.x === food.x && head.y === food.y) {
+    if (eating) {
       score += 1;
       scoreElement.textContent = String(score);
       createFoodParticles(food.x, food.y);

@@ -7,6 +7,7 @@
   let currentUser = null;
   let currentProfile = null;
   let usernameTimer = null;
+  let usernameRequest = 0;
 
   const avatarImage = document.getElementById('profileAvatarImage');
   const avatarWrap = document.getElementById('profileAvatarWrap');
@@ -57,15 +58,14 @@
     button.textContent = busy ? busyText : button.dataset.defaultText;
   }
 
-  function clearPasswordField(lock = true) {
+  function clearPasswordField() {
     if (!usernamePassword) return;
     usernamePassword.value = '';
     usernamePassword.type = 'password';
-    if (lock) usernamePassword.setAttribute('readonly', '');
   }
 
   function setPasswordFieldAvailability(canChange) {
-    clearPasswordField(true);
+    clearPasswordField();
     if (usernamePasswordField) {
       usernamePasswordField.hidden = !canChange;
       usernamePasswordField.style.display = canChange ? '' : 'none';
@@ -101,7 +101,7 @@
       avatarImage.removeAttribute('src');
       avatarImage.hidden = true;
       avatarWrap.classList.remove('has-image');
-      if (avatarPreview) avatarPreview.src = '/assets/images/cloudlab-logo.png';
+      if (avatarPreview) avatarPreview.src = '/assets/images/optimized/cloudlab-logo-256.webp';
       if (avatarRemove) avatarRemove.disabled = true;
     }
   }
@@ -247,6 +247,7 @@
   async function checkUsername() {
     if (!usernameInput || !usernameHint || !currentUser?.canChangeUsername) return;
     const value = usernameInput.value.trim();
+    const request = ++usernameRequest;
     if (value.toLowerCase() === currentUser.username.toLowerCase()) {
       usernameHint.textContent = 'This is your current username.';
       usernameHint.className = 'field-hint';
@@ -260,9 +261,11 @@
 
     try {
       const data = await api(`/username?name=${encodeURIComponent(value)}`);
+      if (request !== usernameRequest) return;
       usernameHint.textContent = data.available ? `${data.username} is available.` : (data.error || 'That username is unavailable.');
       usernameHint.className = `field-hint ${data.available ? 'good' : 'bad'}`;
     } catch (error) {
+      if (request !== usernameRequest) return;
       usernameHint.textContent = error.message;
       usernameHint.className = 'field-hint bad';
     }
@@ -275,7 +278,7 @@
     let password = usernamePassword.value;
     const requestBody = JSON.stringify({ username, password });
     password = '';
-    clearPasswordField(true);
+    clearPasswordField();
 
     try {
       showFeedback('');
@@ -294,7 +297,7 @@
       }
       showFeedback(error.message, 'error');
     } finally {
-      clearPasswordField(true);
+      clearPasswordField();
       setBusy(usernameSave, false);
       if (currentUser && !currentUser.canChangeUsername && usernameSave) usernameSave.disabled = true;
     }
@@ -334,20 +337,14 @@
       clearTimeout(usernameTimer);
       usernameTimer = setTimeout(checkUsername, 320);
     });
-    usernamePassword?.addEventListener('focus', () => {
-      if (currentUser?.canChangeUsername) usernamePassword.removeAttribute('readonly');
-    });
-    usernamePassword?.addEventListener('blur', () => {
-      if (!usernamePassword.value) usernamePassword.setAttribute('readonly', '');
-    });
     profileDetailsForm?.addEventListener('submit', saveProfileDetails);
     statusInput?.addEventListener('input', updateCharacterCounts);
     bioInput?.addEventListener('input', updateCharacterCounts);
-    window.addEventListener('pagehide', () => clearPasswordField(true));
+    window.addEventListener('pagehide', clearPasswordField);
   }
 
   async function init() {
-    clearPasswordField(true);
+    clearPasswordField();
     try {
       const session = await api('/session');
       if (!session.authenticated) return;

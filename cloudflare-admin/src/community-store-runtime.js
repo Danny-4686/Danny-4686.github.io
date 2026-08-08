@@ -73,7 +73,6 @@ class CommunityStoreImplementation extends BaseCommunityStore {
 
     if (url.pathname === '/health' && method === 'GET') {
       const check = this.sql.exec('SELECT 1 AS ready').one();
-      if (url.searchParams.get('deep') === '1') return this.signupSelfTest();
       return json({ ok: check.ready === 1, storage: 'sqlite' });
     }
 
@@ -87,70 +86,6 @@ class CommunityStoreImplementation extends BaseCommunityStore {
     }
 
     return super.fetch(request);
-  }
-
-  async signupSelfTest() {
-    const suffix = Date.now().toString(36).slice(-8);
-    const username = `Probe${suffix}`.slice(0, 20);
-    const usernameKey = username.toLowerCase();
-    const ip = `health-${crypto.randomUUID()}`;
-    const rateKey = `signup:${ip}`;
-    let userId = '';
-
-    try {
-      const response = await super.signup({
-        username,
-        password: 'CloudLabProbe123!',
-        ip
-      });
-      const data = await response.json().catch(() => ({}));
-      userId = String(data.user?.id || '');
-
-      if (!response.ok || !userId) {
-        return json({
-          ok: false,
-          storage: 'sqlite',
-          signupReady: false,
-          stage: 'signup',
-          signupStatus: response.status,
-          signupResponse: data
-        }, 500);
-      }
-
-      const saved = this.sql.exec(
-        'SELECT id, username FROM users WHERE id = ? AND username_key = ?',
-        userId,
-        usernameKey
-      ).toArray()[0];
-
-      if (!saved) {
-        return json({
-          ok: false,
-          storage: 'sqlite',
-          signupReady: false,
-          stage: 'verification'
-        }, 500);
-      }
-
-      return json({
-        ok: true,
-        storage: 'sqlite',
-        signupReady: true,
-        stage: 'complete'
-      });
-    } catch (error) {
-      return json({
-        ok: false,
-        storage: 'sqlite',
-        signupReady: false,
-        stage: 'exception',
-        error: String(error?.message || error || 'Unknown signup self-test error').slice(0, 300)
-      }, 500);
-    } finally {
-      if (userId) this.sql.exec('DELETE FROM users WHERE id = ?', userId);
-      else this.sql.exec('DELETE FROM users WHERE username_key = ?', usernameKey);
-      this.sql.exec('DELETE FROM rate_limits WHERE rate_key = ?', rateKey);
-    }
   }
 
   getPublicProfile(userIdValue) {
