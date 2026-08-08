@@ -14,10 +14,20 @@ function heroBlock(post) {
   return `<img src="${escapeAttr(post.hero)}" alt="${escapeAttr(post.title)} hero image">`;
 }
 
+function absolutePublicUrl(value) {
+  const path = String(value || '').trim();
+  if (/^https?:\/\//i.test(path)) return path;
+  return `https://danny4686.com/${path.replace(/^\/+/, '')}`;
+}
+
 export function buildPostHtml(post) {
   const tags = post.tags.length
     ? post.tags.map((tag) => escapeHtml(tag.toUpperCase())).join(' · ')
     : 'JOURNAL';
+
+  const canonicalUrl = `https://danny4686.com/journal/posts/${encodeURIComponent(post.slug)}/`;
+  const previewMedia = mediaType(post.hero) === 'video' ? post.thumbnail : post.hero;
+  const shareImage = absolutePublicUrl(previewMedia || '/assets/images/cloudlab-logo.png');
 
   const sections = post.sections.map((section) => {
     const heading = section.heading ? `<h2>${escapeHtml(section.heading)}</h2>` : '';
@@ -36,12 +46,29 @@ export function buildPostHtml(post) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="${escapeAttr(post.description)}">
+  <meta name="author" content="Danny4686">
+  <meta name="application-name" content="CloudLab">
+  <meta name="apple-mobile-web-app-title" content="CloudLab">
   <meta name="theme-color" content="#061117">
+  <link rel="canonical" href="${escapeAttr(canonicalUrl)}">
+  <meta property="og:site_name" content="CloudLab">
   <meta property="og:title" content="${escapeAttr(post.title)}">
   <meta property="og:description" content="${escapeAttr(post.description)}">
-  <meta property="og:image" content="${escapeAttr(post.hero)}">
-  <title>${escapeHtml(post.title)} | Journal</title>
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="${escapeAttr(canonicalUrl)}">
+  <meta property="og:image" content="${escapeAttr(shareImage)}">
+  <meta property="og:image:alt" content="${escapeAttr(post.title)}">
+  <meta property="article:published_time" content="${escapeAttr(post.date)}">
+  ${post.tags.map((tag) => `<meta property="article:tag" content="${escapeAttr(tag)}">`).join('\n  ')}
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${escapeAttr(post.title)}">
+  <meta name="twitter:description" content="${escapeAttr(post.description)}">
+  <meta name="twitter:image" content="${escapeAttr(shareImage)}">
+  <title>${escapeHtml(post.title)} | CloudLab Journal</title>
   <link rel="icon" href="/assets/images/cloudlab-logo.png" type="image/png">
+  <link rel="shortcut icon" href="/assets/images/cloudlab-logo.png" type="image/png">
+  <link rel="apple-touch-icon" href="/assets/images/cloudlab-logo.png">
+  <link rel="manifest" href="/site.webmanifest">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
