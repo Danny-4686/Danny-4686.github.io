@@ -3,6 +3,7 @@
   const INTRO_WINDOW_MS = 60 * 60 * 1000;
   const MIN_VISIBLE_MS = 1350;
   const EXIT_MS = 560;
+  const SETTINGS_URL = 'https://api.danny4686.com/v1/site-settings';
   const startedAt = performance.now();
   const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
@@ -10,10 +11,9 @@
 
   let lastSeen = 0;
   try { lastSeen = Number(localStorage.getItem(STORAGE_KEY) || 0); } catch (_) {}
-  if (Date.now() - lastSeen < INTRO_WINDOW_MS) return;
+  const hourlyIntroDue = Date.now() - lastSeen >= INTRO_WINDOW_MS;
 
-  try { localStorage.setItem(STORAGE_KEY, String(Date.now())); } catch (_) {}
-  document.documentElement.classList.add('cloudlab-intro-pending');
+  if (hourlyIntroDue) document.documentElement.classList.add('cloudlab-intro-pending');
 
   let mounted = false;
   let released = false;
@@ -59,17 +59,58 @@
     window.setTimeout(() => releasePage(overlay), remaining);
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', mountIntro, { once: true });
-  } else {
-    mountIntro();
+  async function readForceSetting() {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 900);
+    try {
+      const response = await fetch(`${SETTINGS_URL}?t=${Date.now()}`, {
+        cache: 'no-store',
+        credentials: 'omit',
+        signal: controller.signal
+      });
+      if (!response.ok) return false;
+      const data = await response.json().catch(() => ({}));
+      return data.forceSiteIntro === true;
+    } catch (_) {
+      return false;
+    } finally {
+      window.clearTimeout(timeout);
+    }
   }
 
-  // Never allow a loader failure to keep the page hidden.
+  async function start() {
+    const forced = await readForceSetting();
+    const shouldPlay = forced || hourlyIntroDue;
+
+    if (!shouldPlay) {
+      document.documentElement.classList.remove('cloudlab-intro-pending');
+      return;
+    }
+
+    document.documentElement.classList.add('cloudlab-intro-pending');
+    try { localStorage.setItem(STORAGE_KEY, String(Date.now())); } catch (_) {}
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', mountIntro, { once: true });
+    } else {
+      mountIntro();
+    }
+  }
+
+  start().catch(() => {
+    if (hourlyIntroDue) {
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mountIntro, { once: true });
+      else mountIntro();
+    } else {
+      document.documentElement.classList.remove('cloudlab-intro-pending');
+    }
+  });
+
+  // Never allow a loader or settings request failure to keep the page hidden.
   window.setTimeout(() => {
-    if (!mounted) {
+    if (!mounted && document.documentElement.classList.contains('cloudlab-intro-pending')) {
       released = true;
       document.documentElement.classList.remove('cloudlab-intro-pending', 'cloudlab-intro-active');
     }
-  }, 3000);
+  }, 3500);
 })();
