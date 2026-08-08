@@ -1,0 +1,24 @@
+{
+  "name": "Danny4686 | CloudLab",
+  "short_name": "CloudLab",
+  "description": "Games, projects, journal updates, and community experiences from Danny4686 and CloudLab.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#02080b",
+  "theme_color": "#061117",
+  "icons": [
+    {
+      "src": "/assets/images/cloudlab-logo.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/images/cloudlab-logo.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
