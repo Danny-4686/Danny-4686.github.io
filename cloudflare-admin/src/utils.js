@@ -31,7 +31,7 @@ export function json(value, status = 200) {
 
 export function parseCookies(header = '') {
   const result = {};
-  for (const part of header.split(';')) {
+  for (const part of String(header || '').split(';')) {
     const at = part.indexOf('=');
     if (at < 0) continue;
     const key = part.slice(0, at).trim();

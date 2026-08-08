@@ -2,13 +2,13 @@
   if (!document.querySelector('link[data-community-ui]')) {
     const styles = document.createElement('link');
     styles.rel = 'stylesheet';
-    styles.href = '/community/community.css?v=1';
+    styles.href = '/community/community.css?v=20260808';
     styles.dataset.communityUi = 'true';
     document.head.append(styles);
   }
   if (!document.querySelector('script[data-community-ui]')) {
     const script = document.createElement('script');
-    script.src = '/community/community-client.js?v=2';
+    script.src = '/community/community-client.js?v=20260808';
     script.dataset.communityUi = 'true';
     document.head.append(script);
   }
@@ -61,7 +61,7 @@
   if (path.startsWith('/games/cloud-hopper/') && window.CanvasRenderingContext2D) {
     const coinSprite = new Image();
     coinSprite.decoding = 'async';
-    coinSprite.src = '/assets/images/memory/clgold.png';
+    coinSprite.src = '/assets/images/memory/optimized/clgold-256.webp';
     const prototype = window.CanvasRenderingContext2D.prototype;
     const originalFillText = prototype.fillText;
 
@@ -86,14 +86,14 @@
   if (!document.querySelector('link[data-premium-game-effects]')) {
     const gameStyles = document.createElement('link');
     gameStyles.rel = 'stylesheet';
-    gameStyles.href = '/games/premium-game-effects.css?v=1';
+    gameStyles.href = '/games/premium-game-effects.css?v=20260808';
     gameStyles.dataset.premiumGameEffects = 'true';
     document.head.append(gameStyles);
   }
 
   if (!document.querySelector('script[data-premium-game-effects]')) {
     const gameScript = document.createElement('script');
-    gameScript.src = '/games/premium-game-effects.js?v=1';
+    gameScript.src = '/games/premium-game-effects.js?v=20260808';
     gameScript.dataset.premiumGameEffects = 'true';
     document.head.append(gameScript);
   }
@@ -106,7 +106,7 @@
   if (!document.querySelector('link[data-global-header]')) {
     const headerStyles = document.createElement('link');
     headerStyles.rel = 'stylesheet';
-    headerStyles.href = '/global-header.css?v=3';
+    headerStyles.href = '/global-header.css?v=20260808';
     headerStyles.dataset.globalHeader = 'true';
     document.head.append(headerStyles);
   }
@@ -182,6 +182,7 @@ revealItems.forEach((element, index) => {
 if (reducedMotion || !('IntersectionObserver' in window)) {
   revealItems.forEach((element) => element.classList.add('visible'));
 } else {
+  revealItems.forEach((element) => element.classList.add('is-reveal-pending'));
   const observer = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
       if (entry.isIntersecting) {

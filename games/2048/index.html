@@ -5,12 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Play 2048 in the CloudLab Arcade.">
   <meta name="theme-color" content="#061117">
+  <meta name="author" content="Danny4686"><meta name="application-name" content="CloudLab"><meta name="apple-mobile-web-app-title" content="CloudLab">
+  <link rel="canonical" href="https://danny4686.com/games/2048/">
+  <meta property="og:site_name" content="CloudLab"><meta property="og:title" content="2048 | CloudLab Arcade"><meta property="og:description" content="Play 2048 in the CloudLab Arcade."><meta property="og:type" content="website"><meta property="og:url" content="https://danny4686.com/games/2048/"><meta property="og:image" content="https://danny4686.com/assets/images/cloudlab-logo.png"><meta property="og:image:alt" content="CloudLab Earth logo">
+  <meta name="twitter:card" content="summary"><meta name="twitter:title" content="2048 | CloudLab Arcade"><meta name="twitter:description" content="Play 2048 in the CloudLab Arcade."><meta name="twitter:image" content="https://danny4686.com/assets/images/cloudlab-logo.png">
   <title>2048 | CloudLab Arcade</title>
   <link rel="icon" href="../../assets/images/cloudlab-logo.png" type="image/png">
+  <link rel="apple-touch-icon" href="/assets/images/cloudlab-logo.png"><link rel="manifest" href="/site.webmanifest"><link rel="stylesheet" href="/site-loader.css?v=20260808"><script src="/site-loader.js?v=20260808"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../hub.css">
+  <link rel="stylesheet" href="/site-quality.css?v=20260808">
   <link rel="stylesheet" href="game.css?v=3">
   <link rel="stylesheet" href="../game-overlay-controls.css?v=1">
 </head>
@@ -21,9 +27,11 @@
       <span><strong>Danny4686</strong><small>CloudLab Studio</small></span>
     </a>
     <nav class="hub-nav" aria-label="Site navigation">
-      <a class="active" href="/games/">Games</a>
+      <a href="/#about">About</a>
+      <a href="/#projects">Projects</a>
+      <a class="active" href="/games/" aria-current="page">Games</a>
       <a href="/journal/">Journal</a>
-      <a href="/">Home</a>
+      <a href="/#connect">Connect</a>
     </nav>
     <a class="header-action" href="/games/">All Games</a>
   </header>
@@ -37,7 +45,7 @@
         <h1>2048</h1>
         <p>Slide matching tiles together, combine their values, and keep building toward 2048 and beyond.</p>
       </div>
-      <div class="score-row" aria-label="Game scores">
+      <div class="score-row" role="group" aria-label="Game scores">
         <div class="score-chip"><small>SCORE</small><strong id="score" aria-live="polite">0</strong></div>
         <div class="score-chip"><small>BEST</small><strong id="bestScore">0</strong></div>
       </div>
@@ -63,7 +71,7 @@
         <button class="game-button" id="undoButton" type="button">Undo</button>
       </div>
 
-      <div class="direction-pad" aria-label="Directional controls">
+      <div class="direction-pad" role="group" aria-label="Directional controls">
         <button class="touch-button" type="button" data-direction="up" aria-label="Move up">↑</button>
         <button class="touch-button" type="button" data-direction="left" aria-label="Move left">←</button>
         <button class="touch-button" type="button" data-direction="down" aria-label="Move down">↓</button>
@@ -79,7 +87,7 @@
     <p>© <span id="year"></span> Danny4686.</p>
   </footer>
 
-  <script src="../../hub.js"></script>
+  <script src="../../hub.js?v=20260808"></script>
   <script src="game.js?v=3"></script>
 </body>
 </html>

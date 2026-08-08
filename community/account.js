@@ -6,8 +6,10 @@
   let csrfToken = '';
   const turnstileWidgets = { login: null, signup: null };
   const turnstileTokens = { login: '', signup: '' };
+  const turnstileSetupPromises = { login: null, signup: null };
   let turnstileConfigPromise = null;
   let turnstileScriptPromise = null;
+  let usernameRequest = 0;
 
   async function api(path, options = {}) {
     const headers = new Headers(options.headers || {});
@@ -112,21 +114,29 @@
   async function setupTurnstile(mode) {
     const slot = getTurnstileSlot(mode);
     if (!slot || turnstileWidgets[mode] !== null) return;
-    try {
-      const config = await getTurnstileConfig();
-      if (!config.turnstileEnabled || !config.turnstileSiteKey) return;
-      await loadTurnstileScript();
-      turnstileWidgets[mode] = window.turnstile.render(slot, {
-        sitekey: config.turnstileSiteKey,
-        theme: 'dark',
-        action: mode,
-        callback: (token) => { turnstileTokens[mode] = token; },
-        'expired-callback': () => { turnstileTokens[mode] = ''; },
-        'error-callback': () => { turnstileTokens[mode] = ''; }
-      });
-    } catch (_) {
-      slot.replaceChildren();
-    }
+    if (turnstileSetupPromises[mode]) return turnstileSetupPromises[mode];
+    turnstileSetupPromises[mode] = (async () => {
+      try {
+        const config = await getTurnstileConfig();
+        if (!config.turnstileEnabled || !config.turnstileSiteKey) return;
+        await loadTurnstileScript();
+        if (turnstileWidgets[mode] !== null || !slot.isConnected) return;
+        turnstileWidgets[mode] = window.turnstile.render(slot, {
+          sitekey: config.turnstileSiteKey,
+          theme: 'dark',
+          size: 'flexible',
+          action: mode,
+          callback: (token) => { turnstileTokens[mode] = token; },
+          'expired-callback': () => { turnstileTokens[mode] = ''; },
+          'error-callback': () => { turnstileTokens[mode] = ''; }
+        });
+      } catch (_) {
+        slot.replaceChildren();
+      } finally {
+        turnstileSetupPromises[mode] = null;
+      }
+    })();
+    return turnstileSetupPromises[mode];
   }
 
   function resetTurnstile(mode) {
@@ -138,6 +148,7 @@
   async function checkUsername(name) {
     const hint = document.getElementById('usernameHint');
     if (!hint) return;
+    const request = ++usernameRequest;
     if (name.length < 3) {
       hint.textContent = '3–20 characters using letters, numbers, or underscores.';
       hint.className = 'field-hint';
@@ -145,9 +156,11 @@
     }
     try {
       const data = await api(`/username?name=${encodeURIComponent(name)}`);
+      if (request !== usernameRequest) return;
       hint.textContent = data.available ? `${data.username} is available.` : (data.error || 'That username is already taken.');
       hint.className = `field-hint ${data.available ? 'good' : 'bad'}`;
     } catch (error) {
+      if (request !== usernameRequest) return;
       hint.textContent = error.message;
       hint.className = 'field-hint bad';
     }
@@ -166,7 +179,9 @@
   async function existingSessionRedirect() {
     if (!isAuthPage) return null;
     try {
-      const session = await api('/session');
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), 5000);
+      const session = await api('/session', { signal: controller.signal }).finally(() => window.clearTimeout(timeout));
       if (session.authenticated) {
         location.replace(safeNext());
         return true;
@@ -176,7 +191,7 @@
   }
 
   function updateAuthMetadata(mode) {
-    const title = mode === 'signup' ? 'Join CloudLab | Danny4686' : 'Sign In | Danny4686';
+    const title = mode === 'signup' ? 'Join CloudLab | CloudLab' : 'Sign In | CloudLab';
     const description = mode === 'signup'
       ? 'Create your Danny4686.com CloudLab account.'
       : 'Sign in to your Danny4686.com CloudLab account.';
@@ -332,6 +347,8 @@
         return;
       }
       csrfToken = session.csrfToken;
+      const logoutButton = document.getElementById('logoutButton');
+      if (logoutButton) logoutButton.disabled = false;
       const username = session.user.username;
       document.getElementById('profileUsername').textContent = username;
       document.getElementById('profileAvatar').textContent = username.slice(0, 1).toUpperCase();
@@ -365,9 +382,17 @@
     button.addEventListener('click', async () => {
       try {
         setBusy(button, true, 'Signing out…');
+        if (!csrfToken) {
+          const session = await api('/session');
+          csrfToken = session.csrfToken || '';
+        }
+        if (!csrfToken) throw new Error('Your session could not be verified. Refresh the page and try again.');
         await api('/logout', { method: 'POST', body: '{}' });
-      } catch (_) {}
-      location.replace('/');
+        location.replace('/');
+      } catch (error) {
+        setFeedback(error.message, 'error');
+        setBusy(button, false);
+      }
     });
   }
 
@@ -377,11 +402,11 @@
     setupLogout();
 
     if (isAuthPage) {
-      const redirected = await existingSessionRedirect();
-      if (redirected) return;
       setupAuthSwitcher();
       setupAuthForms();
       setupTurnstile(authMode);
+      const redirected = await existingSessionRedirect();
+      if (redirected) return;
     } else if (initialPage === 'account') {
       loadAccount();
     }

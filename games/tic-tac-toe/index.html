@@ -5,12 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Play Tic-Tac-Toe in the CloudLab Arcade.">
   <meta name="theme-color" content="#061117">
+  <meta name="author" content="Danny4686"><meta name="application-name" content="CloudLab"><meta name="apple-mobile-web-app-title" content="CloudLab">
+  <link rel="canonical" href="https://danny4686.com/games/tic-tac-toe/">
+  <meta property="og:site_name" content="CloudLab"><meta property="og:title" content="Tic-Tac-Toe | CloudLab Arcade"><meta property="og:description" content="Play Tic-Tac-Toe in the CloudLab Arcade."><meta property="og:type" content="website"><meta property="og:url" content="https://danny4686.com/games/tic-tac-toe/"><meta property="og:image" content="https://danny4686.com/assets/images/cloudlab-logo.png"><meta property="og:image:alt" content="CloudLab Earth logo">
+  <meta name="twitter:card" content="summary"><meta name="twitter:title" content="Tic-Tac-Toe | CloudLab Arcade"><meta name="twitter:description" content="Play Tic-Tac-Toe in the CloudLab Arcade."><meta name="twitter:image" content="https://danny4686.com/assets/images/cloudlab-logo.png">
   <title>Tic-Tac-Toe | CloudLab Arcade</title>
   <link rel="icon" href="../../assets/images/cloudlab-logo.png" type="image/png">
+  <link rel="apple-touch-icon" href="/assets/images/cloudlab-logo.png"><link rel="manifest" href="/site.webmanifest"><link rel="stylesheet" href="/site-loader.css?v=20260808"><script src="/site-loader.js?v=20260808"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../hub.css">
+  <link rel="stylesheet" href="/site-quality.css?v=20260808">
   <link rel="stylesheet" href="game.css">
 </head>
 <body>
@@ -20,9 +26,11 @@
       <span><strong>Danny4686</strong><small>CloudLab Studio</small></span>
     </a>
     <nav class="hub-nav" aria-label="Site navigation">
-      <a class="active" href="/games/">Games</a>
+      <a href="/#about">About</a>
+      <a href="/#projects">Projects</a>
+      <a class="active" href="/games/" aria-current="page">Games</a>
       <a href="/journal/">Journal</a>
-      <a href="/">Home</a>
+      <a href="/#connect">Connect</a>
     </nav>
     <a class="header-action" href="/games/">All Games</a>
   </header>
@@ -36,7 +44,7 @@
         <h1>Tic-Tac-Toe</h1>
         <p>Build a row of three before your opponent. Play against the computer or share the board with a friend.</p>
       </div>
-      <div class="score-row" aria-label="Tic-Tac-Toe statistics">
+      <div class="score-row" role="group" aria-label="Tic-Tac-Toe statistics">
         <div class="score-chip"><small>X WINS</small><strong id="xWins">0</strong></div>
         <div class="score-chip"><small>O WINS</small><strong id="oWins">0</strong></div>
         <div class="score-chip"><small>DRAWS</small><strong id="draws">0</strong></div>
@@ -78,7 +86,7 @@
     <p>© <span id="year"></span> Danny4686.</p>
   </footer>
 
-  <script src="../../hub.js"></script>
+  <script src="../../hub.js?v=20260808"></script>
   <script src="game.js"></script>
 </body>
 </html>

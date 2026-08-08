@@ -7,7 +7,7 @@ const GAME_RULES = Object.freeze({
   minesweeper: { label: 'Minesweeper', direction: 'asc', unit: 'seconds', min: 1, max: 86400 },
   breakout: { label: 'Breakout', direction: 'desc', unit: 'points', min: 0, max: 1000000000 },
   'connect-four': { label: 'Connect Four', direction: 'desc', unit: 'wins', min: 0, max: 1000000 },
-  'cloud-hopper': { label: 'Cloud Hopper', direction: 'desc', unit: 'height', min: 0, max: 1000000000 },
+  'cloud-hopper': { label: 'Cloud Hopper', direction: 'desc', unit: 'points', min: 0, max: 1000000000 },
   'tower-stacker': { label: 'Tower Stacker', direction: 'desc', unit: 'height', min: 0, max: 1000000 }
 });
 
@@ -28,7 +28,10 @@ const BLOCKED_CONTAINS = [
   'heilhitler', 'killall', 'rapist', 'childporn', 'pedophile', 'paedophile'
 ];
 
-const PBKDF2_ITERATIONS = 240000;
+// Existing production accounts were created with 100,000 iterations. New hashes
+// include their work factor so a future upgrade does not invalidate old logins.
+const PBKDF2_ITERATIONS = 100000;
+const LEGACY_PBKDF2_ITERATIONS = 100000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const FIRST_USERNAME_LOCK_MS = 7 * DAY_MS;
 const USERNAME_CHANGE_COOLDOWN_MS = 30 * DAY_MS;
@@ -130,21 +133,34 @@ function validateAvatarData(value) {
   }
 }
 
-async function hashPassword(password, saltBytes = crypto.getRandomValues(new Uint8Array(16))) {
+async function derivePasswordHash(password, saltBytes, iterations) {
   const key = await crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, ['deriveBits']);
   const bits = await crypto.subtle.deriveBits(
-    { name: 'PBKDF2', hash: 'SHA-256', salt: saltBytes, iterations: PBKDF2_ITERATIONS },
+    { name: 'PBKDF2', hash: 'SHA-256', salt: saltBytes, iterations },
     key,
     256
   );
-  return { salt: toBase64(saltBytes), hash: toBase64(new Uint8Array(bits)) };
+  return toBase64(new Uint8Array(bits));
+}
+
+async function hashPassword(password, saltBytes = crypto.getRandomValues(new Uint8Array(16))) {
+  const digest = await derivePasswordHash(password, saltBytes, PBKDF2_ITERATIONS);
+  return {
+    salt: toBase64(saltBytes),
+    hash: `pbkdf2-sha256$${PBKDF2_ITERATIONS}$${digest}`
+  };
 }
 
 async function verifyPassword(password, salt, expectedHash) {
   try {
-    const value = await hashPassword(password, fromBase64(salt));
-    const first = fromBase64(value.hash);
-    const second = fromBase64(expectedHash);
+    const encoded = String(expectedHash || '');
+    const versioned = encoded.match(/^pbkdf2-sha256\$(\d+)\$(.+)$/);
+    const iterations = versioned ? Number(versioned[1]) : LEGACY_PBKDF2_ITERATIONS;
+    if (!Number.isSafeInteger(iterations) || iterations < 10000 || iterations > 1000000) return false;
+    const expectedDigest = versioned ? versioned[2] : encoded;
+    const actualDigest = await derivePasswordHash(password, fromBase64(salt), iterations);
+    const first = fromBase64(actualDigest);
+    const second = fromBase64(expectedDigest);
     if (first.length !== second.length) return false;
     let difference = 0;
     for (let index = 0; index < first.length; index += 1) difference |= first[index] ^ second[index];
@@ -689,4 +705,4 @@ export class CommunityStore {
   }
 }
 
-export { GAME_RULES };
+export { GAME_RULES, hashPassword, verifyPassword };

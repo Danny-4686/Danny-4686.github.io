@@ -5,12 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Play Breakout in the CloudLab Arcade.">
   <meta name="theme-color" content="#061117">
+  <meta name="author" content="Danny4686"><meta name="application-name" content="CloudLab"><meta name="apple-mobile-web-app-title" content="CloudLab">
+  <link rel="canonical" href="https://danny4686.com/games/breakout/">
+  <meta property="og:site_name" content="CloudLab"><meta property="og:title" content="Breakout | CloudLab Arcade"><meta property="og:description" content="Play Breakout in the CloudLab Arcade."><meta property="og:type" content="website"><meta property="og:url" content="https://danny4686.com/games/breakout/"><meta property="og:image" content="https://danny4686.com/assets/images/cloudlab-logo.png"><meta property="og:image:alt" content="CloudLab Earth logo">
+  <meta name="twitter:card" content="summary"><meta name="twitter:title" content="Breakout | CloudLab Arcade"><meta name="twitter:description" content="Play Breakout in the CloudLab Arcade."><meta name="twitter:image" content="https://danny4686.com/assets/images/cloudlab-logo.png">
   <title>Breakout | CloudLab Arcade</title>
   <link rel="icon" href="../../assets/images/cloudlab-logo.png" type="image/png">
+  <link rel="apple-touch-icon" href="/assets/images/cloudlab-logo.png"><link rel="manifest" href="/site.webmanifest"><link rel="stylesheet" href="/site-loader.css?v=20260808"><script src="/site-loader.js?v=20260808"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../hub.css">
+  <link rel="stylesheet" href="/site-quality.css?v=20260808">
   <style>
     .breakout-stage{position:relative;width:min(860px,100%);margin:0 auto;overflow:hidden;border:1px solid var(--line);border-radius:20px;background:#06141b;box-shadow:inset 0 0 0 1px rgba(255,255,255,.025),0 20px 50px rgba(0,0,0,.24)}
     #breakoutCanvas{display:block;width:100%;height:auto;aspect-ratio:21/13;touch-action:none}
@@ -22,7 +28,7 @@
 <body>
   <header class="hub-header">
     <a class="hub-brand" href="/" aria-label="Return to Danny4686.com"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>Danny4686</strong><small>CloudLab Studio</small></span></a>
-    <nav class="hub-nav" aria-label="Site navigation"><a class="active" href="/games/">Games</a><a href="/journal/">Journal</a><a href="/">Home</a></nav>
+    <nav class="hub-nav" aria-label="Site navigation"><a href="/#about">About</a><a href="/#projects">Projects</a><a class="active" href="/games/" aria-current="page">Games</a><a href="/journal/">Journal</a><a href="/#connect">Connect</a></nav>
     <a class="header-action" href="/games/">All Games</a>
   </header>
 
@@ -30,12 +36,12 @@
     <a class="back-link reveal" href="/games/">← Back to Browser Games</a>
     <div class="game-heading reveal">
       <div><p class="eyebrow">CLOUDLAB ARCADE</p><h1>Breakout</h1><p>Keep the ball alive, clear every glowing brick, and build the highest score you can.</p></div>
-      <div class="score-row" aria-label="Breakout scores"><div class="score-chip"><small>SCORE</small><strong id="score">0</strong></div><div class="score-chip"><small>LIVES</small><strong id="lives">3</strong></div><div class="score-chip"><small>BEST</small><strong id="best">0</strong></div></div>
+      <div class="score-row" role="group" aria-label="Breakout scores"><div class="score-chip"><small>SCORE</small><strong id="score">0</strong></div><div class="score-chip"><small>LIVES</small><strong id="lives">3</strong></div><div class="score-chip"><small>BEST</small><strong id="best">0</strong></div></div>
     </div>
 
     <section class="game-panel reveal" aria-label="Breakout game">
       <div class="breakout-stage">
-        <canvas id="breakoutCanvas" width="840" height="520" aria-label="Breakout board"></canvas>
+        <canvas id="breakoutCanvas" width="840" height="520" role="img" aria-label="Breakout board"></canvas>
         <div class="game-message" id="gameMessage"><div><h2 id="messageTitle">Ready?</h2><p id="messageText">Press Start, then move with A/D, the arrow keys, or drag on the board.</p></div></div>
       </div>
       <div class="game-toolbar">
@@ -44,13 +50,13 @@
         <button class="game-button" id="restartButton" type="button">Restart</button>
         <select class="difficulty-select" id="difficulty" aria-label="Difficulty"><option value="easy">Easy</option><option value="normal" selected>Normal</option><option value="hard">Hard</option></select>
       </div>
-      <div class="breakout-touch" aria-label="Touch paddle controls"><button class="touch-button" type="button" data-move="left" aria-label="Move left">←</button><button class="touch-button" type="button" data-move="right" aria-label="Move right">→</button></div>
+      <div class="breakout-touch" role="group" aria-label="Touch paddle controls"><button class="touch-button" type="button" data-move="left" aria-label="Move left">←</button><button class="touch-button" type="button" data-move="right" aria-label="Move right">→</button></div>
       <p class="control-note"><span class="desktop-only">Use A/D or the arrow keys.</span> Drag across the board or use the buttons on mobile.</p>
     </section>
   </main>
 
   <footer class="site-footer"><a class="footer-brand" href="/"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>Breakout</small></span></a><p>© <span id="year"></span> Danny4686.</p></footer>
-  <script src="../../hub.js"></script>
+  <script src="../../hub.js?v=20260808"></script>
   <script>
   (() => {
     const canvas = document.getElementById('breakoutCanvas');
@@ -74,7 +80,11 @@
     let started = false;
     let score = 0;
     let lives = 3;
-    let best = Number(localStorage.getItem('cloudlab-breakout-best') || 0);
+    let best = 0;
+    try {
+      const savedBest = Number(localStorage.getItem('cloudlab-breakout-best') || 0);
+      best = Number.isFinite(savedBest) && savedBest >= 0 ? savedBest : 0;
+    } catch (_) {}
     let last = 0;
     let bricks = [];
     let paddle;
@@ -176,7 +186,7 @@
         started = false;
         if (score > best) {
           best = score;
-          localStorage.setItem('cloudlab-breakout-best', String(best));
+          try { localStorage.setItem('cloudlab-breakout-best', String(best)); } catch (_) {}
           updateStats();
         }
         startButton.textContent = 'Play Again';
@@ -197,7 +207,7 @@
       score += bonus;
       if (score > best) {
         best = score;
-        localStorage.setItem('cloudlab-breakout-best', String(best));
+        try { localStorage.setItem('cloudlab-breakout-best', String(best)); } catch (_) {}
       }
       updateStats();
       startButton.textContent = 'Play Again';

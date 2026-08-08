@@ -26,25 +26,29 @@
   <link rel="shortcut icon" href="/assets/images/cloudlab-logo.png" type="image/png">
   <link rel="apple-touch-icon" href="/assets/images/cloudlab-logo.png">
   <link rel="manifest" href="/site.webmanifest">
-  <link rel="preload" as="image" href="../assets/images/cloudlab-logo.png">
+  <link rel="preload" as="image" href="../assets/images/optimized/cloudlab-logo-256.webp" type="image/webp">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/site-loader.css?v=1">
-  <script src="/site-loader.js?v=2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/site-loader.css?v=20260808">
+  <script src="/site-loader.js?v=20260808"></script>
   <link rel="stylesheet" href="../hub.css">
   <link rel="stylesheet" href="journal-polish.css?v=1">
   <link rel="stylesheet" href="journal-loading.css?v=1">
+  <link rel="stylesheet" href="/site-quality.css?v=20260808">
 </head>
 <body>
   <header class="hub-header">
     <a class="hub-brand" href="/" aria-label="Return to Danny4686.com">
-      <img src="../assets/images/cloudlab-logo.png" alt="CloudLab logo">
+      <img src="../assets/images/optimized/cloudlab-logo-256.webp" width="256" height="256" alt="CloudLab logo">
       <span><strong>Danny4686</strong><small>CloudLab Studio</small></span>
     </a>
     <nav class="hub-nav" aria-label="Journal navigation">
-      <a class="active" href="/journal/">Journal</a>
-      <a href="/">Home</a>
+      <a href="/#about">About</a>
+      <a href="/#projects">Projects</a>
+      <a href="/games/">Games</a>
+      <a class="active" href="/journal/" aria-current="page">Journal</a>
+      <a href="/#connect">Connect</a>
     </nav>
     <a class="header-action" href="#posts">Latest Posts</a>
   </header>
@@ -65,14 +69,14 @@
         <input class="search-box" id="journalSearch" type="search" placeholder="Search posts" aria-label="Search journal posts">
       </div>
 
-      <div class="filters reveal" id="journalFilters" aria-label="Filter journal posts">
-        <button class="filter-button active" type="button" data-tag="all">All</button>
+      <div class="filters reveal" id="journalFilters" role="group" aria-label="Filter journal posts">
+        <button class="filter-button active" type="button" data-tag="all" aria-pressed="true">All</button>
       </div>
 
       <div class="journal-grid" id="journalGrid" aria-live="polite">
         <div class="journal-initial-loader">
           <div class="journal-earth-loader">
-            <img src="../assets/images/cloudlab-logo.png" alt="" aria-hidden="true">
+            <img src="../assets/images/optimized/cloudlab-logo-256.webp" width="256" height="256" alt="" aria-hidden="true">
             <span>Loading journal posts</span>
           </div>
         </div>
@@ -81,11 +85,11 @@
   </main>
 
   <footer class="site-footer">
-    <a class="footer-brand" href="/"><img src="../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>Journal</small></span></a>
+    <a class="footer-brand" href="/"><img src="../assets/images/optimized/cloudlab-logo-256.webp" width="256" height="256" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>Journal</small></span></a>
     <p>© <span id="year"></span> Danny4686.</p>
   </footer>
 
-  <script src="journal.js?v=4"></script>
-  <script src="../hub.js"></script>
+  <script src="journal.js?v=20260808"></script>
+  <script src="../hub.js?v=20260808"></script>
 </body>
 </html>

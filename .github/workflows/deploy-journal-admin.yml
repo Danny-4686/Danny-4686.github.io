@@ -13,26 +13,26 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: cloudflare-admin
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: 24
           package-manager-cache: false
-      - run: npm install
-      - name: Prepare Cloudflare-compatible password hashing
-        run: npm run prepare:worker
+      - run: npm ci
+      - run: npm test
       - id: cloudflare_deploy
         continue-on-error: true
-        uses: cloudflare/wrangler-action@v4
+        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -49,7 +49,8 @@ jobs:
           CHECK_NAME="DeployCheck${GITHUB_RUN_NUMBER}"
           CHECK_NAME="${CHECK_NAME:0:20}"
           USERNAME_CODE="$(curl -sS --retry 3 --retry-delay 2 --retry-all-errors --max-time 25 -o /tmp/community-username.json -w '%{http_code}' "https://api.danny4686.com/v1/username?name=${CHECK_NAME}" || printf '000')"
-          export HEALTH_CODE USERNAME_CODE CHECK_NAME
+          ADMIN_CODE="$(curl -sS --retry 3 --retry-delay 2 --retry-all-errors --max-time 25 -o /tmp/admin-root.html -w '%{http_code}' 'https://admin.danny4686.com/' || printf '000')"
+          export HEALTH_CODE USERNAME_CODE ADMIN_CODE CHECK_NAME
           python - <<'PY'
           import json, os
           from pathlib import Path
@@ -66,12 +67,15 @@ jobs:
 
           health = read_json("/tmp/community-health.json")
           username = read_json("/tmp/community-username.json")
+          admin_html = Path("/tmp/admin-root.html").read_text(encoding="utf-8", errors="replace") if Path("/tmp/admin-root.html").exists() else ""
           result = {
               "healthHttpStatus": os.environ.get("HEALTH_CODE", "000"),
               "health": health,
               "usernameHttpStatus": os.environ.get("USERNAME_CODE", "000"),
               "usernameCheck": username,
-              "usernameChecked": os.environ.get("CHECK_NAME", "")
+              "usernameChecked": os.environ.get("CHECK_NAME", ""),
+              "adminHttpStatus": os.environ.get("ADMIN_CODE", "000"),
+              "adminLoginVisible": "Sign in with GitHub" in admin_html
           }
           Path("/tmp/community-smoke.json").write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
 
@@ -79,54 +83,15 @@ jobs:
               os.environ.get("HEALTH_CODE") == "200"
               and health.get("ok") is True
               and health.get("storageReady") is True
-              and health.get("signupReady") is True
+              and health.get("accountFeaturesConfigured") is True
               and os.environ.get("USERNAME_CODE") == "200"
               and isinstance(username.get("available"), bool)
+              and os.environ.get("ADMIN_CODE") == "200"
+              and "Sign in with GitHub" in admin_html
           )
           if not healthy:
               raise SystemExit(1)
           PY
-      - name: Publish safe deployment status
-        if: always()
-        working-directory: .
-        env:
-          DEPLOY_OUTCOME: ${{ steps.cloudflare_deploy.outcome }}
-          SMOKE_OUTCOME: ${{ steps.community_smoke.outcome }}
-        run: |
-          git restore cloudflare-admin/src/community-store.js
-          git fetch origin main
-          git rebase origin/main
-          mkdir -p .deployment-status
-          python - <<'PY'
-          import json, os
-          from datetime import datetime, timezone
-          from pathlib import Path
-
-          smoke = {}
-          smoke_path = Path("/tmp/community-smoke.json")
-          if smoke_path.exists():
-              try:
-                  smoke = json.loads(smoke_path.read_text(encoding="utf-8"))
-              except Exception as exc:
-                  smoke = {"parseError": str(exc)}
-
-          status = {
-              "workflow": "Deploy Journal Admin",
-              "commit": os.environ.get("GITHUB_SHA", ""),
-              "outcome": os.environ.get("DEPLOY_OUTCOME", "unknown"),
-              "smokeOutcome": os.environ.get("SMOKE_OUTCOME", "unknown"),
-              "completedAt": datetime.now(timezone.utc).isoformat(),
-              "communityApi": smoke
-          }
-          with open(".deployment-status/journal-admin.json", "w", encoding="utf-8") as handle:
-              json.dump(status, handle, indent=2)
-              handle.write("\n")
-          PY
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .deployment-status/journal-admin.json
-          git diff --cached --quiet || git commit -m "Record Journal Admin deployment status [skip ci]"
-          git push origin HEAD:main
       - name: Fail workflow when deployment or live verification failed
         if: steps.cloudflare_deploy.outcome != 'success' || steps.community_smoke.outcome != 'success'
         run: exit 1

@@ -1,5 +1,6 @@
 const API_PREFIX = '/v1';
-const COOKIE_NAME = 'cl_community_session';
+const COOKIE_NAME = 'cl_community_session_v2';
+const LEGACY_COOKIE_NAME = 'cl_community_session';
 const SESSION_TTL = 60 * 60 * 24 * 30;
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
@@ -31,16 +32,20 @@ function parseCookies(header) {
   return output;
 }
 
-function cookie(value, maxAge = SESSION_TTL) {
+function cookie(value, maxAge = SESSION_TTL, name = COOKIE_NAME, domain = '') {
   return [
-    `${COOKIE_NAME}=${value}`,
+    `${name}=${value}`,
     'Path=/',
-    'Domain=.danny4686.com',
+    domain,
     'HttpOnly',
     'Secure',
     'SameSite=Lax',
     `Max-Age=${maxAge}`
-  ].join('; ');
+  ].filter(Boolean).join('; ');
+}
+
+function clearLegacyCookie() {
+  return cookie('', 0, LEGACY_COOKIE_NAME, 'Domain=.danny4686.com');
 }
 
 function allowedOrigins(env) {
@@ -76,7 +81,9 @@ function corsHeaders(request, env) {
 function json(request, env, data, status = 200, extraHeaders = {}) {
   const headers = corsHeaders(request, env);
   headers.set('Content-Type', 'application/json; charset=utf-8');
-  Object.entries(extraHeaders).forEach(([key, value]) => headers.append(key, value));
+  Object.entries(extraHeaders).forEach(([key, value]) => {
+    (Array.isArray(value) ? value : [value]).forEach((item) => headers.append(key, item));
+  });
   return new Response(JSON.stringify(data), { status, headers });
 }
 
@@ -132,7 +139,8 @@ function userForApi(user, request) {
 async function currentSession(request, env, verifyUser = true) {
   const secret = sessionSecret(env);
   if (!secret) return null;
-  const token = parseCookies(request.headers.get('Cookie'))[COOKIE_NAME];
+  const cookies = parseCookies(request.headers.get('Cookie'));
+  const token = cookies[COOKIE_NAME] || cookies[LEGACY_COOKIE_NAME];
   const session = await verifySessionToken(token, secret);
   if (!session || !verifyUser) return session;
 
@@ -140,7 +148,7 @@ async function currentSession(request, env, verifyUser = true) {
   const data = await response.json().catch(() => ({}));
   if (!response.ok || !data.user) return null;
   const user = userForApi(data.user, request);
-  return { ...session, username: user.username, createdAt: user.createdAt, user };
+  return { ...session, username: user.username, createdAt: user.createdAt, user, sessionToken: token, usedLegacyCookie: !cookies[COOKIE_NAME] && Boolean(cookies[LEGACY_COOKIE_NAME]) };
 }
 
 function validCsrf(request, session) {
@@ -178,13 +186,18 @@ async function verifyTurnstile(request, env, token, action) {
   form.set('remoteip', request.headers.get('CF-Connecting-IP') || '');
   form.set('idempotency_key', crypto.randomUUID());
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
   const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
     method: 'POST',
-    body: form
-  });
+    body: form,
+    signal: controller.signal
+  }).finally(() => clearTimeout(timeout));
   const result = await response.json().catch(() => ({}));
   if (!response.ok || !result.success) return { success: false };
-  if (result.action && result.action !== action) return { success: false };
+  if (result.action !== action) return { success: false };
+  const allowedHostnames = new Set(String(env.TURNSTILE_ALLOWED_HOSTNAMES || 'danny4686.com,www.danny4686.com').split(',').map((item) => item.trim()).filter(Boolean));
+  if (!allowedHostnames.has(String(result.hostname || '').toLowerCase())) return { success: false };
   return { success: true };
 }
 
@@ -201,7 +214,7 @@ async function createLoginResponse(request, env, user, status = 200) {
     exp: now + SESSION_TTL
   }, secret);
   return json(request, env, { ok: true, user: userForApi(user, request), csrfToken: csrf }, status, {
-    'Set-Cookie': cookie(token)
+    'Set-Cookie': [cookie(token), clearLegacyCookie()]
   });
 }
 
@@ -296,17 +309,21 @@ export async function handleCommunityApi(request, env) {
     if (path === '/logout' && request.method === 'POST') {
       const session = await currentSession(request, env, false);
       if (session && !validCsrf(request, session)) return json(request, env, { error: 'Security token expired. Refresh and try again.' }, 403);
-      return json(request, env, { ok: true }, 200, { 'Set-Cookie': cookie('', 0) });
+      return json(request, env, { ok: true }, 200, { 'Set-Cookie': [cookie('', 0), clearLegacyCookie()] });
     }
 
     if (path === '/session' && request.method === 'GET') {
       const session = await currentSession(request, env);
-      return json(request, env, session ? {
+      const sessionPayload = session ? {
         authenticated: true,
         user: session.user,
         csrfToken: session.csrf,
         expiresAt: session.exp * 1000
-      } : { authenticated: false, user: null, csrfToken: '' });
+      } : { authenticated: false, user: null, csrfToken: '' };
+      const replacementCookies = session?.usedLegacyCookie
+        ? [cookie(session.sessionToken), clearLegacyCookie()]
+        : [clearLegacyCookie()];
+      return json(request, env, sessionPayload, 200, { 'Set-Cookie': replacementCookies });
     }
 
     if (path === '/profile/avatar' && request.method === 'POST') {
@@ -394,3 +411,5 @@ export async function handleCommunityApi(request, env) {
     return json(request, env, { error: 'The community service is temporarily unavailable.' }, 500);
   }
 }
+
+export { clearLegacyCookie, cookie };

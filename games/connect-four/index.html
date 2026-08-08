@@ -5,12 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Play Connect Four in the CloudLab Arcade.">
   <meta name="theme-color" content="#061117">
+  <meta name="author" content="Danny4686"><meta name="application-name" content="CloudLab"><meta name="apple-mobile-web-app-title" content="CloudLab">
+  <link rel="canonical" href="https://danny4686.com/games/connect-four/">
+  <meta property="og:site_name" content="CloudLab"><meta property="og:title" content="Connect Four | CloudLab Arcade"><meta property="og:description" content="Play Connect Four in the CloudLab Arcade."><meta property="og:type" content="website"><meta property="og:url" content="https://danny4686.com/games/connect-four/"><meta property="og:image" content="https://danny4686.com/assets/images/cloudlab-logo.png"><meta property="og:image:alt" content="CloudLab Earth logo">
+  <meta name="twitter:card" content="summary"><meta name="twitter:title" content="Connect Four | CloudLab Arcade"><meta name="twitter:description" content="Play Connect Four in the CloudLab Arcade."><meta name="twitter:image" content="https://danny4686.com/assets/images/cloudlab-logo.png">
   <title>Connect Four | CloudLab Arcade</title>
   <link rel="icon" href="../../assets/images/cloudlab-logo.png" type="image/png">
+  <link rel="apple-touch-icon" href="/assets/images/cloudlab-logo.png"><link rel="manifest" href="/site.webmanifest"><link rel="stylesheet" href="/site-loader.css?v=20260808"><script src="/site-loader.js?v=20260808"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../hub.css">
+  <link rel="stylesheet" href="/site-quality.css?v=20260808">
   <style>
     .connect-shell{width:min(760px,100%);margin:0 auto}.turn-banner{display:flex;align-items:center;justify-content:center;gap:9px;margin:0 auto 14px;color:var(--muted);font-weight:800}.turn-dot{width:14px;height:14px;border-radius:50%;background:var(--cyan);box-shadow:0 0 16px rgba(104,208,223,.55)}
     .connect-board{position:relative;display:grid;grid-template-columns:repeat(7,1fr);gap:clamp(5px,1vw,10px);padding:clamp(10px,2vw,18px);border:1px solid var(--line-strong);border-radius:24px;background:linear-gradient(145deg,#123746,#09212b);box-shadow:inset 0 1px rgba(255,255,255,.08),0 24px 60px rgba(0,0,0,.28)}
@@ -21,14 +27,14 @@
   </style>
 </head>
 <body>
-  <header class="hub-header"><a class="hub-brand" href="/" aria-label="Return to Danny4686.com"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>Danny4686</strong><small>CloudLab Studio</small></span></a><nav class="hub-nav" aria-label="Site navigation"><a class="active" href="/games/">Games</a><a href="/journal/">Journal</a><a href="/">Home</a></nav><a class="header-action" href="/games/">All Games</a></header>
+  <header class="hub-header"><a class="hub-brand" href="/" aria-label="Return to Danny4686.com"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>Danny4686</strong><small>CloudLab Studio</small></span></a><nav class="hub-nav" aria-label="Site navigation"><a href="/#about">About</a><a href="/#projects">Projects</a><a class="active" href="/games/" aria-current="page">Games</a><a href="/journal/">Journal</a><a href="/#connect">Connect</a></nav><a class="header-action" href="/games/">All Games</a></header>
   <main class="page-shell game-page">
     <a class="back-link reveal" href="/games/">← Back to Browser Games</a>
     <div class="game-heading reveal"><div><p class="eyebrow">CLOUDLAB ARCADE</p><h1>Connect Four</h1><p>Drop discs into the grid and connect four in any direction before your opponent does.</p></div><div class="score-row"><div class="score-chip"><small>CYAN WINS</small><strong id="cyanWins">0</strong></div><div class="score-chip"><small>GOLD WINS</small><strong id="goldWins">0</strong></div><div class="score-chip"><small>DRAWS</small><strong id="draws">0</strong></div></div></div>
     <section class="game-panel reveal" aria-label="Connect Four game">
       <div class="connect-shell">
         <div class="turn-banner"><span class="turn-dot" id="turnDot"></span><span id="turnText">Cyan moves first</span></div>
-        <div class="column-buttons" id="columnButtons" aria-label="Choose a column"></div>
+        <div class="column-buttons" id="columnButtons" role="group" aria-label="Choose a column"></div>
         <div class="connect-board" id="board" role="grid" aria-label="Connect Four board"></div>
       </div>
       <div class="game-toolbar"><button class="game-button primary" id="newRound" type="button">New Round</button><button class="game-button" id="resetScores" type="button">Reset Scores</button><select class="difficulty-select" id="mode" aria-label="Game mode"><option value="cpu">Vs CPU</option><option value="two">Two Players</option></select><select class="difficulty-select" id="difficulty" aria-label="CPU difficulty"><option value="easy">Easy CPU</option><option value="normal" selected>Normal CPU</option><option value="hard">Hard CPU</option></select></div>
@@ -36,7 +42,7 @@
     </section>
   </main>
   <footer class="site-footer"><a class="footer-brand" href="/"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>Connect Four</small></span></a><p>© <span id="year"></span> Danny4686.</p></footer>
-  <script src="../../hub.js"></script>
+  <script src="../../hub.js?v=20260808"></script>
   <script>
   (() => {
     const ROWS = 6;
@@ -54,10 +60,25 @@
     let turn = 1;
     let locked = false;
     let finished = false;
-    let scores = JSON.parse(localStorage.getItem('cloudlab-connect-four-scores') || '{"cyan":0,"gold":0,"draws":0}');
+    let cpuTimer = null;
+    let roundId = 0;
+
+    function loadScores() {
+      try {
+        const saved = JSON.parse(localStorage.getItem('cloudlab-connect-four-scores') || '{}');
+        return Object.fromEntries(['cyan', 'gold', 'draws'].map((key) => {
+          const value = Number(saved[key]);
+          return [key, Number.isSafeInteger(value) && value >= 0 ? value : 0];
+        }));
+      } catch (_) {
+        return { cyan: 0, gold: 0, draws: 0 };
+      }
+    }
+
+    let scores = loadScores();
 
     function saveScores() {
-      localStorage.setItem('cloudlab-connect-four-scores', JSON.stringify(scores));
+      try { localStorage.setItem('cloudlab-connect-four-scores', JSON.stringify(scores)); } catch (_) {}
       cyanWinsEl.textContent = scores.cyan;
       goldWinsEl.textContent = scores.gold;
       drawsEl.textContent = scores.draws;
@@ -253,7 +274,10 @@
       if (mode.value === 'cpu' && turn === 2) {
         locked = true;
         render();
-        setTimeout(() => {
+        const scheduledRound = roundId;
+        window.clearTimeout(cpuTimer);
+        cpuTimer = window.setTimeout(() => {
+          if (scheduledRound !== roundId || mode.value !== 'cpu' || turn !== 2 || finished) return;
           const cpuCol = chooseCpuColumn();
           if (cpuCol >= 0) drop(cpuCol, 2);
           locked = false;
@@ -266,6 +290,9 @@
     }
 
     function newRound() {
+      window.clearTimeout(cpuTimer);
+      cpuTimer = null;
+      roundId += 1;
       board = Array(ROWS * COLS).fill(0);
       turn = 1;
       locked = false;

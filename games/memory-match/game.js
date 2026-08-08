@@ -12,16 +12,16 @@
   const peekButton = document.getElementById('peekButton');
 
   const images = [
-    { key: 'blue', label: 'Blue globe', src: '../../assets/images/memory/blue.png' },
-    { key: 'diamond', label: 'Diamond CloudLab globe', src: '../../assets/images/memory/cldiamond.png' },
-    { key: 'gold', label: 'Gold CloudLab globe', src: '../../assets/images/memory/clgold.png' },
-    { key: 'green', label: 'Green globe', src: '../../assets/images/memory/green.png' },
-    { key: 'grey', label: 'Gray globe', src: '../../assets/images/memory/grey.png' },
-    { key: 'light-blue', label: 'Light blue globe', src: '../../assets/images/memory/light_blue.png' },
-    { key: 'mint-green', label: 'Mint green globe', src: '../../assets/images/memory/mint_gream.png' },
-    { key: 'purple', label: 'Purple globe', src: '../../assets/images/memory/purple.png' },
-    { key: 'red', label: 'Red globe', src: '../../assets/images/memory/red.png' },
-    { key: 'yellow', label: 'Yellow globe', src: '../../assets/images/memory/yellow.png' }
+    { key: 'blue', label: 'Blue globe', src: '../../assets/images/memory/optimized/blue-256.webp' },
+    { key: 'diamond', label: 'Diamond CloudLab globe', src: '../../assets/images/memory/optimized/cldiamond-256.webp' },
+    { key: 'gold', label: 'Gold CloudLab globe', src: '../../assets/images/memory/optimized/clgold-256.webp' },
+    { key: 'green', label: 'Green globe', src: '../../assets/images/memory/optimized/green-256.webp' },
+    { key: 'grey', label: 'Gray globe', src: '../../assets/images/memory/optimized/grey-256.webp' },
+    { key: 'light-blue', label: 'Light blue globe', src: '../../assets/images/memory/optimized/light_blue-256.webp' },
+    { key: 'mint-green', label: 'Mint green globe', src: '../../assets/images/memory/optimized/mint_gream-256.webp' },
+    { key: 'purple', label: 'Purple globe', src: '../../assets/images/memory/optimized/purple-256.webp' },
+    { key: 'red', label: 'Red globe', src: '../../assets/images/memory/optimized/red-256.webp' },
+    { key: 'yellow', label: 'Yellow globe', src: '../../assets/images/memory/optimized/yellow-256.webp' }
   ];
 
   const bestKey = 'cloudlab-memory-image-best';

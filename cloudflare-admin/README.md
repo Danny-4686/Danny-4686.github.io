@@ -37,7 +37,7 @@ Never put this token in a source file.
 From the `cloudflare-admin` folder:
 
 ```bash
-npm install
+npm ci
 npx wrangler login
 npx wrangler secret put GITHUB_CLIENT_ID
 npx wrangler secret put GITHUB_CLIENT_SECRET
@@ -67,7 +67,7 @@ Add these repository secrets:
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_ACCOUNT_ID`
 
-The API token needs Workers Scripts and Workers Routes edit access for the `danny4686.com` zone. After the secrets are configured, set the repository variable `ENABLE_ADMIN_DEPLOY` to `true`, or run the workflow manually.
+The API token needs Workers Scripts and Workers Routes edit access for the `danny4686.com` zone. After the secrets are configured, pushes that change `cloudflare-admin/` deploy automatically; the workflow can also be run manually.
 
 ## Publishing behavior
 

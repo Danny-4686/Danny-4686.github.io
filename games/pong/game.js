@@ -15,7 +15,11 @@
   const difficulty = document.getElementById('difficulty');
 
   const storageKey = 'cloudlab-pong-best-rally';
-  let bestRally = Number.parseInt(localStorage.getItem(storageKey) || '0', 10);
+  let bestRally = 0;
+  try {
+    const savedBest = Number.parseInt(localStorage.getItem(storageKey) || '0', 10);
+    bestRally = Number.isSafeInteger(savedBest) && savedBest >= 0 ? savedBest : 0;
+  } catch (_) {}
   let state = 'idle';
   let lastTime = performance.now();
   let keys = new Set();
@@ -231,6 +235,7 @@
       togglePause();
       return;
     }
+    if (!['arrowup', 'arrowdown', 'w', 's'].includes(key)) return;
     keys.add(key);
     if (state === 'idle' || state === 'over') startMatch();
   });

@@ -12,8 +12,8 @@
   const size = 9;
   const mineTotal = 10;
   const storageKey = 'cloudlab-minesweeper-best';
-  const flagImageSource = '../../assets/images/memory/flag.png';
-  const bombImageSource = '../../assets/images/memory/bomb.png';
+  const flagImageSource = '../../assets/images/memory/optimized/flag-160.webp';
+  const bombImageSource = '../../assets/images/memory/optimized/bomb-160.webp';
 
   let cells = [];
   let started = false;
@@ -21,7 +21,11 @@
   let flagMode = false;
   let seconds = 0;
   let timer = null;
-  let best = Number.parseInt(localStorage.getItem(storageKey) || '0', 10);
+  let best = 0;
+  try {
+    const savedBest = Number.parseInt(localStorage.getItem(storageKey) || '0', 10);
+    best = Number.isSafeInteger(savedBest) && savedBest > 0 ? savedBest : 0;
+  } catch (_) {}
 
   bestElement.textContent = best ? `${best}s` : '--';
 

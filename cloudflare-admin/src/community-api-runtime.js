@@ -107,7 +107,7 @@ export async function handleCommunityApi(request, env) {
     const deep = url.searchParams.get('deep') === '1';
 
     try {
-      const storageResponse = await storeFetch(env, deep ? '/health?deep=1' : '/health');
+      const storageResponse = await storeFetch(env, '/health');
       const storageData = await storageResponse.json().catch(() => ({}));
       const storageReady = Boolean(storageResponse.ok && storageData.ok);
       return json(request, env, {
@@ -117,8 +117,7 @@ export async function handleCommunityApi(request, env) {
         storageReady,
         storageBackend: storageReady ? (storageData.storage || 'sqlite') : 'unavailable',
         storageResponseStatus: storageResponse.status,
-        signupReady: deep ? Boolean(storageData.signupReady) : undefined,
-        signupStage: deep ? (storageData.stage || '') : undefined,
+        accountFeaturesConfigured: Boolean(baseData.sessionsConfigured),
         storageResponse: storageReady ? undefined : storageData
       }, storageReady ? 200 : 503);
     } catch (error) {
@@ -129,7 +128,7 @@ export async function handleCommunityApi(request, env) {
         deepCheck: deep,
         storageReady: false,
         storageBackend: 'unavailable',
-        storageError: String(error?.message || error || 'Unknown storage error').slice(0, 240)
+        storageError: 'Storage check failed.'
       }, 503);
     }
   }

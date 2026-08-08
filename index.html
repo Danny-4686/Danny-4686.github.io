@@ -27,14 +27,17 @@
   <link rel="shortcut icon" href="/assets/images/cloudlab-logo.png" type="image/png">
   <link rel="apple-touch-icon" href="/assets/images/cloudlab-logo.png">
   <link rel="manifest" href="/site.webmanifest">
-  <link rel="preload" as="image" href="/assets/images/cloudlab-logo.png">
+  <link rel="preload" as="image" href="/assets/images/optimized/cloudlab-logo-256.webp" type="image/webp">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/site-loader.css?v=1">
-  <script src="/site-loader.js?v=2"></script>
-  <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="home-additions.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/site-loader.css?v=20260808">
+  <script src="/site-loader.js?v=20260808"></script>
+  <link rel="stylesheet" href="/styles.css?v=20260808">
+  <link rel="stylesheet" href="/home-additions.css?v=20260808">
+  <link rel="stylesheet" href="/community/community.css?v=20260808">
+  <link rel="stylesheet" href="/home-mobile-nav.css?v=20260808">
+  <link rel="stylesheet" href="/site-quality.css?v=20260808">
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"CloudLab","alternateName":"Danny4686","url":"https://danny4686.com/","description":"Games, projects, journal updates, and community experiences from Danny4686 and CloudLab."}</script>
 </head>
 <body id="top">
@@ -45,7 +48,7 @@
 
   <header class="site-header">
     <a class="brand" href="#top" aria-label="Danny4686 home">
-      <img class="brand-logo" src="assets/images/cloudlab-logo.png" alt="CloudLab logo">
+      <img class="brand-logo" src="assets/images/optimized/cloudlab-logo-256.webp" width="256" height="256" alt="CloudLab logo">
       <span class="brand-copy">
         <strong>Danny4686</strong>
         <small>CloudLab Studio</small>
@@ -60,7 +63,7 @@
       <a href="#connect">Connect</a>
     </nav>
 
-    <a class="header-cta" href="https://discord.com/invite/CloudLab" target="_blank" rel="noopener noreferrer">Join CloudLab</a>
+    <a class="header-cta community-account-action" href="/login/?next=%2F" aria-label="Sign in or create a CloudLab account"><span class="community-account-dot" aria-hidden="true"></span><span>Sign in / Sign up</span></a>
   </header>
 
   <main>
@@ -73,16 +76,16 @@
           <a class="button primary" href="#projects">Explore my projects</a>
           <a class="button secondary" href="https://www.roblox.com/users/178415120/profile" target="_blank" rel="noopener noreferrer">View Roblox profile</a>
         </div>
-        <div class="hero-links" aria-label="Profile links">
-          <a href="https://www.roblox.com/users/178415120/profile" target="_blank" rel="noopener noreferrer"><img src="assets/images/roblox-gloss.png" alt=""><span>Roblox</span></a>
-          <a href="https://www.tiktok.com/@danny4686" target="_blank" rel="noopener noreferrer"><img src="assets/images/tiktok-gloss.webp" alt=""><span>TikTok</span></a>
-          <a href="https://github.com/Danny-4686" target="_blank" rel="noopener noreferrer"><img src="assets/images/github-gloss.webp" alt=""><span>GitHub</span></a>
-        </div>
+        <nav class="hero-links" aria-label="Profile links">
+          <a href="https://www.roblox.com/users/178415120/profile" target="_blank" rel="noopener noreferrer"><img src="assets/images/optimized/roblox-160.webp" width="160" height="160" alt=""><span>Roblox</span></a>
+          <a href="https://www.tiktok.com/@danny4686" target="_blank" rel="noopener noreferrer"><img src="assets/images/optimized/tiktok-160.webp" width="160" height="160" alt=""><span>TikTok</span></a>
+          <a href="https://github.com/Danny-4686" target="_blank" rel="noopener noreferrer"><img src="assets/images/optimized/github-160.webp" width="160" height="160" alt=""><span>GitHub</span></a>
+        </nav>
       </div>
 
       <aside class="hero-portrait reveal" aria-label="Danny4686 profile artwork">
         <div class="portrait-ring" aria-hidden="true"></div>
-        <img class="hero-profile" src="assets/images/profile-gloss.webp" alt="Danny4686 profile character">
+        <img class="hero-profile" src="assets/images/optimized/profile-600.webp" width="600" height="900" alt="Danny4686 profile character">
         <div class="profile-label">
           <span class="status-dot" aria-hidden="true"></span>
           <div>
@@ -95,7 +98,7 @@
 
     <section class="studio-strip reveal" aria-label="CloudLab Studio overview">
       <div class="studio-strip-inner">
-        <div class="studio-mark"><img src="assets/images/cloudlab-logo.png" alt="CloudLab logo"></div>
+        <div class="studio-mark"><img src="assets/images/optimized/cloudlab-logo-256.webp" width="256" height="256" alt="CloudLab logo"></div>
         <div>
           <p class="eyebrow">CLOUDLAB STUDIO</p>
           <h2>Games, tools, and communities built to keep growing.</h2>
@@ -150,19 +153,19 @@
 
       <div class="about-grid">
         <article class="gloss-card reveal">
-          <div class="card-icon"><img src="assets/images/tools-gloss.webp" alt="Development tools"></div>
+          <div class="card-icon"><img src="assets/images/optimized/tools-192.webp" width="192" height="192" alt="Development tools"></div>
           <h3>Build and improve</h3>
           <p>I design systems, interfaces, and tools with care, refining each one thoughtfully until every part feels intentional.</p>
         </article>
 
         <article class="gloss-card reveal">
-          <div class="card-icon cloud-icon"><img src="assets/images/cloudlab-logo.png" alt="CloudLab logo"></div>
+          <div class="card-icon cloud-icon"><img src="assets/images/optimized/cloudlab-logo-256.webp" width="256" height="256" alt="CloudLab logo"></div>
           <h3>CloudLab Studio</h3>
           <p>My home for games, community projects, experiments, and the ideas I want to develop over the long term.</p>
         </article>
 
         <article class="gloss-card reveal">
-          <div class="card-icon"><img src="assets/images/discord-gloss.png" alt="Discord"></div>
+          <div class="card-icon"><img src="assets/images/optimized/discord-160.webp" width="160" height="160" alt="Discord"></div>
           <h3>Community</h3>
           <p>Every space I create, I build like I'm inviting someone into my own home, welcoming, easy to understand, and worth staying for.</p>
         </article>
@@ -180,7 +183,7 @@
         <article class="project-card cloud-project reveal">
           <div class="project-art cloudlab-art">
             <div class="art-orbit" aria-hidden="true"></div>
-            <img src="assets/images/cloudlab-logo.png" alt="CloudLab logo">
+            <img src="assets/images/optimized/cloudlab-logo-256.webp" width="256" height="256" alt="CloudLab logo">
           </div>
           <div class="project-content">
             <p class="project-kicker">COMMUNITY</p>
@@ -192,8 +195,7 @@
 
         <article class="project-card rocket-project reveal">
           <a class="rocket-banner" href="https://www.roblox.com/games/846133735/Rocket-Tycoon" target="_blank" rel="noopener noreferrer" aria-label="Play Rocket Tycoon on Roblox">
-            <img src="assets/images/rocket-tycoon-banner.png" alt="Rocket Tycoon banner">
-            <span class="banner-shade" aria-hidden="true"></span>
+            <img src="assets/images/optimized/rocket-tycoon-banner.webp" width="767" height="432" alt="Rocket Tycoon banner">
           </a>
           <div class="project-content">
             <p class="project-kicker rocket-kicker">ROBLOX GAME</p>
@@ -208,7 +210,7 @@
       <div class="connect-card reveal">
         <div class="connect-copy">
           <div class="connect-identity">
-            <img src="assets/images/profile-gloss.webp" alt="Danny4686 profile character">
+            <img src="assets/images/optimized/profile-600.webp" width="600" height="900" loading="lazy" decoding="async" alt="Danny4686 profile character">
             <div>
               <p class="eyebrow">FIND ME AROUND THE WEB</p>
               <h2>Stay connected.</h2>
@@ -218,10 +220,10 @@
         </div>
 
         <div class="social-grid">
-          <a href="https://discord.com/invite/CloudLab" target="_blank" rel="noopener noreferrer"><img src="assets/images/discord-gloss.png" alt="Discord"><span><strong>Discord</strong><small>CloudLab community</small></span></a>
-          <a href="https://www.roblox.com/users/178415120/profile" target="_blank" rel="noopener noreferrer"><img src="assets/images/roblox-gloss.png" alt="Roblox"><span><strong>Roblox</strong><small>Danny4686 profile</small></span></a>
-          <a href="https://www.tiktok.com/@danny4686" target="_blank" rel="noopener noreferrer"><img src="assets/images/tiktok-gloss.webp" alt="TikTok"><span><strong>TikTok</strong><small>@danny4686</small></span></a>
-          <a href="https://github.com/Danny-4686" target="_blank" rel="noopener noreferrer"><img src="assets/images/github-gloss.webp" alt="GitHub"><span><strong>GitHub</strong><small>Danny-4686</small></span></a>
+          <a href="https://discord.com/invite/CloudLab" target="_blank" rel="noopener noreferrer"><img src="assets/images/optimized/discord-160.webp" width="160" height="160" loading="lazy" decoding="async" alt="Discord"><span><strong>Discord</strong><small>CloudLab community</small></span></a>
+          <a href="https://www.roblox.com/users/178415120/profile" target="_blank" rel="noopener noreferrer"><img src="assets/images/optimized/roblox-160.webp" width="160" height="160" loading="lazy" decoding="async" alt="Roblox"><span><strong>Roblox</strong><small>Danny4686 profile</small></span></a>
+          <a href="https://www.tiktok.com/@danny4686" target="_blank" rel="noopener noreferrer"><img src="assets/images/optimized/tiktok-160.webp" width="160" height="160" loading="lazy" decoding="async" alt="TikTok"><span><strong>TikTok</strong><small>@danny4686</small></span></a>
+          <a href="https://github.com/Danny-4686" target="_blank" rel="noopener noreferrer"><img src="assets/images/optimized/github-160.webp" width="160" height="160" loading="lazy" decoding="async" alt="GitHub"><span><strong>GitHub</strong><small>Danny-4686</small></span></a>
         </div>
       </div>
     </section>
@@ -229,12 +231,13 @@
 
   <footer>
     <div class="footer-brand">
-      <img src="assets/images/cloudlab-logo.png" alt="CloudLab logo">
+      <img src="assets/images/optimized/cloudlab-logo-256.webp" width="256" height="256" loading="lazy" decoding="async" alt="CloudLab logo">
       <div><strong>Danny4686</strong><span>CloudLab Studio</span></div>
     </div>
     <p>© <span id="year"></span> Danny4686.</p>
   </footer>
 
-  <script src="script.js"></script>
+  <script src="/script.js?v=20260808"></script>
+  <script src="/community/home-client.js?v=20260808"></script>
 </body>
 </html>

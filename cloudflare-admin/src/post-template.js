@@ -4,7 +4,8 @@ function mediaBlock(item) {
   if (item.type === 'video' || mediaType(item.path) === 'video') {
     return `<figure class="media-item"><video src="${escapeAttr(item.path)}" controls playsinline preload="metadata" aria-label="${escapeAttr(item.alt || 'Journal video')}"></video></figure>`;
   }
-  return `<figure class="media-item"><img data-zoom src="${escapeAttr(item.path)}" alt="${escapeAttr(item.alt || 'Journal image')}"></figure>`;
+  const alt = escapeAttr(item.alt || 'Journal image');
+  return `<figure class="media-item"><button class="media-zoom-button" type="button" aria-label="Expand ${alt}"><img data-zoom src="${escapeAttr(item.path)}" alt="${alt}"></button></figure>`;
 }
 
 function heroBlock(post) {
@@ -71,13 +72,16 @@ export function buildPostHtml(post) {
   <link rel="manifest" href="/site.webmanifest">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/site-loader.css?v=20260808">
+  <script src="/site-loader.js?v=20260808"></script>
   <link rel="stylesheet" href="/hub.css">
   <link rel="stylesheet" href="/journal/post-layout.css?v=1">
+  <link rel="stylesheet" href="/site-quality.css?v=20260808">
 </head>
 <body>
   <header class="hub-header">
-    <a class="hub-brand" href="/" aria-label="Danny4686 home"><img src="/assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>Danny4686</strong><small>CloudLab Studio</small></span></a>
+    <a class="hub-brand" href="/" aria-label="Danny4686 home"><img src="/assets/images/optimized/cloudlab-logo-256.webp" width="256" height="256" alt="CloudLab logo"><span><strong>Danny4686</strong><small>CloudLab Studio</small></span></a>
     <nav class="hub-nav" aria-label="Journal navigation"><a class="active" href="/journal/">Journal</a><a href="/">Home</a></nav>
     <a class="header-action" href="/journal/">All Posts</a>
   </header>
@@ -100,8 +104,8 @@ export function buildPostHtml(post) {
     <article class="post-content">${sections || '<section class="post-panel reveal"><p>More details will be added soon.</p></section>'}</article>
   </main>
 
-  <footer class="site-footer"><a class="footer-brand" href="/"><img src="/assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>Journal</small></span></a><p>© <span id="year"></span> Danny4686.</p></footer>
-  <script src="/hub.js"></script>
+  <footer class="site-footer"><a class="footer-brand" href="/"><img src="/assets/images/optimized/cloudlab-logo-256.webp" width="256" height="256" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>Journal</small></span></a><p>© <span id="year"></span> Danny4686.</p></footer>
+  <script src="/hub.js?v=20260808"></script>
 </body>
 </html>
 `;

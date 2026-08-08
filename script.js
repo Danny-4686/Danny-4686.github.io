@@ -1,28 +1,3 @@
-(() => {
-  if (!document.querySelector('link[data-community-home]')) {
-    const styles = document.createElement('link');
-    styles.rel = 'stylesheet';
-    styles.href = '/community/community.css?v=3';
-    styles.dataset.communityHome = 'true';
-    document.head.append(styles);
-  }
-
-  if (!document.querySelector('link[data-home-mobile-nav]')) {
-    const navigationStyles = document.createElement('link');
-    navigationStyles.rel = 'stylesheet';
-    navigationStyles.href = '/home-mobile-nav.css?v=2';
-    navigationStyles.dataset.homeMobileNav = 'true';
-    document.head.append(navigationStyles);
-  }
-
-  if (!document.querySelector('script[data-community-home]')) {
-    const script = document.createElement('script');
-    script.src = '/community/home-client.js?v=2';
-    script.dataset.communityHome = 'true';
-    document.head.append(script);
-  }
-})();
-
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const revealItems = [...document.querySelectorAll('.reveal')];
 
@@ -33,6 +8,7 @@ revealItems.forEach((element, index) => {
 if (reducedMotion || !('IntersectionObserver' in window)) {
   revealItems.forEach((element) => element.classList.add('visible'));
 } else {
+  revealItems.forEach((element) => element.classList.add('is-reveal-pending'));
   const revealObserver = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
       if (entry.isIntersecting) {
