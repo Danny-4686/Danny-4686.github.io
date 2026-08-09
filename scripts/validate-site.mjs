@@ -64,6 +64,20 @@ for (const page of filesUnder(root, '.html')) {
   }
 }
 
+for (const entry of readdirSync(root)) {
+  const path = join(root, entry);
+  if (statSync(path).isFile() && /\.(?:css|js)$/i.test(entry)) {
+    fail(path, 'shared CSS and JavaScript must live under assets/css or assets/js');
+  }
+}
+
+const deprecatedSharedReference = /["'](?:\/(?:global-header|home-additions|home-mobile-nav|hub|site-loader|site-quality|styles)\.css|\/(?:hub|script|site-loader)\.js|(?:\.\.\/){1,2}hub\.(?:css|js))/;
+for (const sourcePath of filesUnder(root).filter((path) => /\.(?:html|js|mjs)$/.test(path))) {
+  if (deprecatedSharedReference.test(readFileSync(sourcePath, 'utf8'))) {
+    fail(sourcePath, 'uses a deprecated root-level shared asset path');
+  }
+}
+
 const manifestPath = join(root, 'site.webmanifest');
 try {
   const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
@@ -87,6 +101,18 @@ for (const template of [
   }
 }
 
+const postTemplatePath = join(root, 'cloudflare-admin', 'src', 'post-template.js');
+const postTemplateSource = readFileSync(postTemplatePath, 'utf8');
+for (const token of [
+  '/assets/css/site-loader.css',
+  '/assets/js/site-loader.js',
+  '/assets/css/hub.css',
+  '/assets/css/site-quality.css',
+  '/assets/js/hub.js'
+]) {
+  if (!postTemplateSource.includes(token)) fail(postTemplatePath, `generated journal posts are missing ${token}`);
+}
+
 for (const page of filesUnder(join(root, 'games'), '.html').filter((path) => dirname(path) !== join(root, 'games'))) {
   const html = readFileSync(page, 'utf8');
   const slug = relative(join(root, 'games'), dirname(page)).replaceAll('\\', '/');
@@ -95,7 +121,7 @@ for (const page of filesUnder(join(root, 'games'), '.html').filter((path) => dir
     `rel="canonical" href="${canonical}"`,
     'property="og:title"', 'property="og:description"', `property="og:url" content="${canonical}"`,
     'property="og:image"', 'name="twitter:card"', 'name="twitter:title"',
-    'rel="manifest"', '/site-loader.js?v=', '/site-quality.css?v='
+    'rel="manifest"', '/assets/js/site-loader.js?v=', '/assets/css/site-quality.css?v='
   ];
   required.forEach((token) => { if (!html.includes(token)) fail(page, `missing metadata token ${token}`); });
 }
@@ -119,4 +145,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log('Site validation passed: favicons, metadata, local references, password forms, IDs, manifest, and JavaScript syntax.');
+console.log('Site validation passed: repository layout, favicons, metadata, local references, password forms, IDs, manifest, and JavaScript syntax.');

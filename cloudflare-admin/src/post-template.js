@@ -74,11 +74,11 @@ export function buildPostHtml(post) {
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/site-loader.css?v=20260808">
-  <script src="/site-loader.js?v=20260808"></script>
-  <link rel="stylesheet" href="/hub.css">
+  <link rel="stylesheet" href="/assets/css/site-loader.css?v=20260808">
+  <script src="/assets/js/site-loader.js?v=20260808"></script>
+  <link rel="stylesheet" href="/assets/css/hub.css">
   <link rel="stylesheet" href="/journal/post-layout.css?v=1">
-  <link rel="stylesheet" href="/site-quality.css?v=20260808">
+  <link rel="stylesheet" href="/assets/css/site-quality.css?v=20260808">
 </head>
 <body>
   <header class="hub-header">
@@ -106,7 +106,7 @@ export function buildPostHtml(post) {
   </main>
 
   <footer class="site-footer"><a class="footer-brand" href="/"><img src="/assets/images/optimized/cloudlab-logo-256.webp" width="256" height="256" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>Journal</small></span></a><p>© <span id="year"></span> Danny4686.</p></footer>
-  <script src="/hub.js?v=20260808"></script>
+  <script src="/assets/js/hub.js?v=20260808"></script>
 </body>
 </html>
 `;

@@ -1,3 +1,19 @@
-cloudflare-admin/node_modules/
-cloudflare-admin/.wrangler/
+# Dependencies and build output
+node_modules/
+.wrangler/
+coverage/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+
+# Logs, editors, and operating systems
 *.log
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

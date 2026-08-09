@@ -106,7 +106,7 @@
   if (!document.querySelector('link[data-global-header]')) {
     const headerStyles = document.createElement('link');
     headerStyles.rel = 'stylesheet';
-    headerStyles.href = '/global-header.css?v=20260808';
+    headerStyles.href = '/assets/css/global-header.css?v=20260808';
     headerStyles.dataset.globalHeader = 'true';
     document.head.append(headerStyles);
   }
