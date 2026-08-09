@@ -3,7 +3,7 @@ import { escapeHtml } from './utils.js';
 const LOGIN_CSS = `:root{color-scheme:dark;--text:#f4fafb;--muted:#98adb5;--line:rgba(137,190,201,.2);--cyan:#68d0df}*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;color:var(--text);font-family:Inter,system-ui,sans-serif;background:radial-gradient(circle at 15% 0,rgba(104,208,223,.14),transparent 31%),linear-gradient(180deg,#061117,#03090d)}main{width:min(460px,100%);padding:38px;border:1px solid var(--line);border-radius:28px;background:rgba(8,22,29,.95);box-shadow:0 24px 65px rgba(0,0,0,.38);text-align:center}img{width:82px;height:82px;object-fit:contain;margin-bottom:18px}.eyebrow{margin:0 0 8px;color:var(--cyan);font-size:.7rem;font-weight:800;letter-spacing:.14em}h1{margin:0 0 12px;font-size:2.4rem;letter-spacing:-.05em}p,small{color:var(--muted);line-height:1.65}a{display:inline-flex;align-items:center;justify-content:center;min-height:46px;margin-top:12px;padding:11px 17px;border-radius:13px;color:#061117;background:var(--cyan);font-weight:850;text-decoration:none}small{display:block;margin-top:18px}`;
 
 export function loginPage(message = '') {
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow,noarchive"><title>CloudLab Journal Admin</title><style>${LOGIN_CSS}</style></head><body><main><img src="https://danny4686.com/assets/images/cloudlab-logo.png" alt="CloudLab logo"><p class="eyebrow">PRIVATE CLOUDLAB TOOL</p><h1>Journal Admin</h1><p>${escapeHtml(message || 'This dashboard is restricted to the authorized GitHub account.')}</p><a href="/auth/login">Sign in with GitHub</a><small>The dashboard is not linked from the public website.</small></main></body></html>`;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow,noarchive"><title>CloudLab Journal Admin</title><link rel="icon" href="https://danny4686.com/favicon.ico" sizes="16x16 32x32 48x48"><link rel="icon" href="https://danny4686.com/assets/icons/favicon-48x48.png" type="image/png" sizes="48x48"><link rel="apple-touch-icon" href="https://danny4686.com/assets/icons/apple-touch-icon.png" sizes="180x180"><style>${LOGIN_CSS}</style></head><body><main><img src="https://danny4686.com/assets/images/cloudlab-logo.png" alt="CloudLab logo"><p class="eyebrow">PRIVATE CLOUDLAB TOOL</p><h1>Journal Admin</h1><p>${escapeHtml(message || 'This dashboard is restricted to the authorized GitHub account.')}</p><a href="/auth/login">Sign in with GitHub</a><small>The dashboard is not linked from the public website.</small></main></body></html>`;
 }
 
 export function dashboardPage(login) {
@@ -14,6 +14,9 @@ export function dashboardPage(login) {
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow,noarchive">
   <title>CloudLab Journal Admin</title>
+  <link rel="icon" href="https://danny4686.com/favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="icon" href="https://danny4686.com/assets/icons/favicon-48x48.png" type="image/png" sizes="48x48">
+  <link rel="apple-touch-icon" href="https://danny4686.com/assets/icons/apple-touch-icon.png" sizes="180x180">
   <link rel="stylesheet" href="/admin.css">
 </head>
 <body>
