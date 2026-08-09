@@ -15,6 +15,9 @@ export function loginPage(message = '') {
   <meta name="robots" content="noindex,nofollow,noarchive">
   <meta name="theme-color" content="#061117">
   <title>CloudLab Admin | Danny4686</title>
+  <link rel="icon" href="https://danny4686.com/favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="icon" href="https://danny4686.com/assets/icons/favicon-48x48.png" type="image/png" sizes="48x48">
+  <link rel="apple-touch-icon" href="https://danny4686.com/assets/icons/apple-touch-icon.png" sizes="180x180">
   <style>${LOGIN_CSS}</style>
 </head>
 <body>

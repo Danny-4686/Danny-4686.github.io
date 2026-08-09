@@ -70,6 +70,9 @@ function buildDisabledPage() {
   <meta name="referrer" content="no-referrer">
   <meta name="theme-color" content="#000000">
   <title></title>
+  <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="icon" href="/assets/icons/favicon-48x48.png" type="image/png" sizes="48x48">
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" sizes="180x180">
   <style>*{box-sizing:border-box}html,body{width:100%;min-height:100%;margin:0;background:#000}body{min-height:100svh}</style>
 </head>
 <body aria-hidden="true"></body>
@@ -96,6 +99,9 @@ function buildEnabledPage(media, mediaType) {
   <meta name="theme-color" content="#020507">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self' https: data:; media-src 'self' https: blob:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
   <title>Fresh Abyss</title>
+  <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="icon" href="/assets/icons/favicon-48x48.png" type="image/png" sizes="48x48">
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" sizes="180x180">
   <style>
     :root{color-scheme:dark;--edge:rgba(255,255,255,.13);--glow:rgba(91,175,210,.12)}
     *{box-sizing:border-box}

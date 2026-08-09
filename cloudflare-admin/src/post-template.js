@@ -66,9 +66,10 @@ export function buildPostHtml(post) {
   <meta name="twitter:description" content="${escapeAttr(post.description)}">
   <meta name="twitter:image" content="${escapeAttr(shareImage)}">
   <title>${escapeHtml(post.title)} | CloudLab Journal</title>
-  <link rel="icon" href="/assets/images/cloudlab-logo.png" type="image/png">
-  <link rel="shortcut icon" href="/assets/images/cloudlab-logo.png" type="image/png">
-  <link rel="apple-touch-icon" href="/assets/images/cloudlab-logo.png">
+  <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="icon" href="/assets/icons/favicon-48x48.png" type="image/png" sizes="48x48">
+  <link rel="icon" href="/assets/icons/favicon-32x32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" sizes="180x180">
   <link rel="manifest" href="/site.webmanifest">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

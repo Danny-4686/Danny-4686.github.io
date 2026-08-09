@@ -33,6 +33,17 @@ function localTarget(page, value) {
 
 for (const page of filesUnder(root, '.html')) {
   const html = readFileSync(page, 'utf8');
+  const requiredIconTokens = [
+    'href="/favicon.ico"',
+    'href="/assets/icons/favicon-48x48.png"',
+    'href="/assets/icons/favicon-32x32.png"',
+    'href="/assets/icons/apple-touch-icon.png"',
+    'rel="manifest"'
+  ];
+  requiredIconTokens.forEach((token) => {
+    if (!html.includes(token)) fail(page, `missing favicon token ${token}`);
+  });
+
   const ids = [...html.matchAll(/\sid=["']([^"']+)["']/gi)].map((match) => match[1]);
   const duplicates = [...new Set(ids.filter((id, index) => ids.indexOf(id) !== index))];
   if (duplicates.length) fail(page, `duplicate IDs: ${duplicates.join(', ')}`);
@@ -50,6 +61,29 @@ for (const page of filesUnder(root, '.html')) {
     if (/type=["']password["']/i.test(contents) && !/\smethod=["']post["']/i.test(opening)) {
       fail(page, 'password form must explicitly use POST');
     }
+  }
+}
+
+const manifestPath = join(root, 'site.webmanifest');
+try {
+  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+  for (const icon of manifest.icons || []) {
+    const target = localTarget(manifestPath, icon.src || '');
+    if (target && !existsSync(target)) fail(manifestPath, `missing manifest icon ${icon.src}`);
+  }
+} catch (error) {
+  fail(manifestPath, `invalid manifest JSON: ${error.message}`);
+}
+
+for (const template of [
+  join(root, 'cloudflare-admin', 'src', 'admin-login-page.js'),
+  join(root, 'cloudflare-admin', 'src', 'pages.js'),
+  join(root, 'cloudflare-admin', 'src', 'post-template.js'),
+  join(root, 'cloudflare-admin', 'src', 'fresh-abyss.js')
+]) {
+  const source = readFileSync(template, 'utf8');
+  for (const token of ['favicon.ico', 'favicon-48x48.png', 'apple-touch-icon.png']) {
+    if (!source.includes(token)) fail(template, `generated pages are missing ${token}`);
   }
 }
 
@@ -85,4 +119,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log('Site validation passed: metadata, local references, password forms, IDs, and JavaScript syntax.');
+console.log('Site validation passed: favicons, metadata, local references, password forms, IDs, manifest, and JavaScript syntax.');
