@@ -67,11 +67,7 @@
       fragment.appendChild(clone);
     });
     featuredGrid.replaceChildren(fragment);
-    if (featuredStatus) {
-      featuredStatus.textContent = isLive
-        ? `${featured.length} ADMIN PICKS`
-        : `${featured.length} CLOUDLAB PICKS`;
-    }
+    if (featuredStatus) featuredStatus.textContent = 'TOP GAMES';
   }
 
   async function loadFeatured() {

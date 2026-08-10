@@ -32,7 +32,7 @@
   <link rel="stylesheet" href="/assets/css/site-loader.css?v=20260808">
   <script src="/assets/js/site-loader.js?v=20260808"></script>
   <link rel="stylesheet" href="/assets/css/hub.css">
-  <link rel="stylesheet" href="game.css?v=2">
+  <link rel="stylesheet" href="game.css?v=3">
   <link rel="stylesheet" href="/assets/css/site-quality.css?v=20260808">
 </head>
 <body class="premium-game">
@@ -67,6 +67,8 @@
         <div class="launch-actions"><button class="game-button primary launch-button" id="launchButton" type="button">Hold to Charge</button><button class="game-button" id="boostButton" type="button" disabled>Use Boost</button><button class="game-button" id="endRunButton" type="button">Reset Run</button></div>
       </div>
 
+      <div class="launcher-save-bar" data-state="checking"><span class="launcher-save-dot" aria-hidden="true"></span><span id="launcherSaveStatus" role="status">Checking CloudLab account…</span><a id="launcherSaveLink" href="/login/?next=%2Fgames%2Flauncher%2F" hidden>Sign in to sync</a></div>
+
       <section class="launcher-upgrades" aria-labelledby="launcherUpgradeTitle"><div class="upgrade-heading"><div><p class="eyebrow">LAUNCH LAB</p><h2 id="launcherUpgradeTitle">Upgrade the next flight.</h2><p>Credits are earned from distance, bounces, and every sky ring collected.</p></div><span id="upgradeSummary">0 upgrades installed</span></div><div id="launcherUpgradeGrid" class="launcher-upgrade-grid"></div></section>
       <div class="flight-report" id="flightReport"><span>LAST FLIGHT</span><p>Launch the Earth to create your first flight report.</p></div>
       <p class="control-note"><span class="desktop-only">Hold Space to charge and release to launch.</span> During flight, tap the stage or press Space to use a boost.</p>
@@ -76,7 +78,7 @@
   </main>
 
   <footer class="site-footer"><a class="footer-brand" href="/"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>Launcher</small></span></a><p>© <span id="year"></span> Danny4686.</p></footer>
-  <script src="/assets/js/hub.js?v=20260808"></script>
-  <script src="game.js?v=2"></script>
+  <script src="/assets/js/hub.js?v=20260810"></script>
+  <script src="game.js?v=3"></script>
 </body>
 </html>

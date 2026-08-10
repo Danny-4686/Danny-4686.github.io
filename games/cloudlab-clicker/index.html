@@ -32,7 +32,7 @@
   <link rel="stylesheet" href="/assets/css/site-loader.css?v=20260808">
   <script src="/assets/js/site-loader.js?v=20260808"></script>
   <link rel="stylesheet" href="/assets/css/hub.css">
-  <link rel="stylesheet" href="game.css?v=2">
+  <link rel="stylesheet" href="game.css?v=3">
   <link rel="stylesheet" href="/assets/css/site-quality.css?v=20260808">
 </head>
 <body class="premium-game">
@@ -53,9 +53,14 @@
       </div>
     </div>
 
-    <section class="game-panel clicker-panel reveal" aria-label="CloudLab Clicker game">
+    <section class="game-panel clicker-panel reveal" aria-label="CloudLab Clicker game" data-active-view="core">
+      <nav class="clicker-tabs" id="clickerTabs" aria-label="Clicker sections" role="tablist">
+        <button id="coreTab" class="clicker-tab is-active" type="button" role="tab" aria-selected="true" aria-controls="corePanel" data-clicker-tab="core"><span aria-hidden="true">◉</span> Core</button>
+        <button id="labTab" class="clicker-tab" type="button" role="tab" aria-selected="false" aria-controls="labPanel" data-clicker-tab="lab"><span aria-hidden="true">⌁</span> Upgrade Lab</button>
+        <button id="networkTab" class="clicker-tab" type="button" role="tab" aria-selected="false" aria-controls="networkPanel" data-clicker-tab="network"><span aria-hidden="true">▦</span> Network</button>
+      </nav>
       <div class="clicker-layout">
-        <section class="core-panel" aria-labelledby="coreTitle">
+        <section class="core-panel" id="corePanel" aria-labelledby="coreTitle" data-clicker-view="core" role="tabpanel" tabindex="0">
           <div class="core-status"><span class="active-dot"></span><span id="productionStatus">ACTIVE TAB PRODUCTION</span></div>
           <div class="core-copy"><p class="eyebrow">POWER SOURCE</p><h2 id="coreTitle">CloudLab Core</h2><p>Every press creates Clouds. Keep a rhythm to raise your combo and trigger critical surges.</p></div>
           <div class="core-wrap">
@@ -72,31 +77,32 @@
           <div class="active-note"><span>◎</span><p><strong>No offline grinding.</strong> Automatic production pauses whenever this tab is hidden or closed.</p></div>
         </section>
 
-        <section class="shop-panel" aria-labelledby="shopTitle">
+        <section class="shop-panel" id="labPanel" aria-labelledby="shopTitle" data-clicker-view="lab" role="tabpanel" tabindex="0">
           <div class="shop-head"><div><p class="eyebrow">UPGRADE LAB</p><h2 id="shopTitle">Build the network.</h2></div><div class="buy-modes" id="buyModes" role="group" aria-label="Purchase amount"><button type="button" class="active" data-buy="1" aria-pressed="true">×1</button><button type="button" data-buy="10" aria-pressed="false">×10</button><button type="button" data-buy="max" aria-pressed="false">MAX</button></div></div>
           <div id="buildingList" class="upgrade-list" role="group" aria-label="Production buildings"></div>
           <div class="boost-heading"><div><p class="eyebrow">PERMANENT BOOSTS</p><h3>Core research</h3></div><span id="boostCount">0 / 6</span></div>
           <div id="boostList" class="boost-list" role="group" aria-label="Permanent boosts"></div>
         </section>
-      </div>
+        <div class="operations-panel" id="networkPanel" data-clicker-view="network" role="tabpanel" tabindex="0" aria-labelledby="networkTitle">
+          <section class="network-panel" aria-labelledby="networkTitle">
+            <div class="network-heading">
+              <div><p class="eyebrow">LIVE PRODUCTION FLOOR</p><h2 id="networkTitle">Your Cloud Network</h2><p>Every building you own appears here and visibly works while this tab is active.</p></div>
+              <div class="milestone-meter"><div><span>NEXT RECORD</span><strong id="nextMilestone">100 Clouds</strong></div><div class="milestone-track"><span id="nextMilestoneFill"></span></div></div>
+            </div>
+            <ul id="productionNetwork" class="production-network"></ul>
+          </section>
 
-      <section class="network-panel" aria-labelledby="networkTitle">
-        <div class="network-heading">
-          <div><p class="eyebrow">LIVE PRODUCTION FLOOR</p><h2 id="networkTitle">Your Cloud Network</h2><p>Every building you own appears here and visibly works while this tab is active.</p></div>
-          <div class="milestone-meter"><div><span>NEXT RECORD</span><strong id="nextMilestone">100 Clouds</strong></div><div class="milestone-track"><span id="nextMilestoneFill"></span></div></div>
+          <section class="achievement-strip" aria-labelledby="achievementTitle"><div class="achievement-copy"><p class="eyebrow">MILESTONES</p><h2 id="achievementTitle">Cloud records</h2><p>Major production goals light up permanently.</p></div><div id="achievementList" class="achievement-list"></div></section>
         </div>
-        <ul id="productionNetwork" class="production-network"></ul>
-      </section>
-
-      <section class="achievement-strip" aria-labelledby="achievementTitle"><div class="achievement-copy"><p class="eyebrow">MILESTONES</p><h2 id="achievementTitle">Cloud records</h2><p>Major production goals light up permanently.</p></div><div id="achievementList" class="achievement-list"></div></section>
-      <div class="clicker-actions"><span id="saveStatus">Progress saves automatically on this device.</span><button id="saveButton" class="game-button" type="button">Save Now</button><button id="resetButton" class="game-button danger-button" type="button">Reset Progress</button></div>
+      </div>
+      <div class="clicker-actions"><span class="save-copy"><span class="save-indicator" aria-hidden="true"></span><span id="saveStatus" role="status">Progress saves automatically on this device.</span><a id="cloudSignIn" href="/login/?next=%2Fgames%2Fcloudlab-clicker%2F" hidden>Sign in to sync</a></span><button id="saveButton" class="game-button" type="button">Save Now</button><button id="resetButton" class="game-button danger-button" type="button">Reset Progress</button></div>
       <p class="sr-only" id="clickerAnnouncement" aria-live="polite"></p>
       <div id="clickerToastLayer" class="clicker-toast-layer" aria-live="polite" aria-atomic="true"></div>
     </section>
   </main>
 
   <footer class="site-footer"><a class="footer-brand" href="/"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>CloudLab Clicker</small></span></a><p>© <span id="year"></span> Danny4686.</p></footer>
-  <script src="/assets/js/hub.js?v=20260808"></script>
-  <script src="game.js?v=2"></script>
+  <script src="/assets/js/hub.js?v=20260810"></script>
+  <script src="game.js?v=3"></script>
 </body>
 </html>

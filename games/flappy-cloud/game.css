@@ -67,12 +67,21 @@
 .game-message > div { max-width: 340px; }
 .game-message .eyebrow { margin-bottom: 7px; }
 .game-message h2 { font-size: clamp(2rem, 7vw, 3.35rem); }
+.flappy-save-status { width:min(620px,100%); min-height:42px; margin:12px auto 0; padding:9px 12px; display:flex; align-items:center; gap:9px; border:1px solid rgba(104,208,223,.16); border-radius:13px; color:var(--muted); background:rgba(3,14,19,.52); font-size:.67rem; font-weight:750; }
+.flappy-save-status > span { width:8px; height:8px; flex:0 0 auto; border-radius:50%; background:var(--cyan); box-shadow:0 0 0 4px rgba(104,208,223,.08),0 0 14px rgba(104,208,223,.38); }
+.flappy-save-status[data-state="saved"] > span { background:var(--mint); box-shadow:0 0 0 4px rgba(139,207,155,.08),0 0 14px rgba(139,207,155,.32); }
+.flappy-save-status[data-state="local"] > span { background:var(--gold); box-shadow:0 0 0 4px rgba(242,199,92,.08),0 0 14px rgba(242,199,92,.28); }
+.flappy-save-status[data-state="error"] > span { background:var(--danger,#ef7b76); box-shadow:0 0 0 4px rgba(239,123,118,.08); }
+.flappy-save-status p { margin:0; }
+.flappy-save-status a { margin-left:auto; padding:5px 8px; border:1px solid rgba(104,208,223,.22); border-radius:999px; color:var(--cyan); font-size:.62rem; font-weight:900; white-space:nowrap; }
 
 @media (max-width: 620px) {
   .flappy-stage { border-radius: 19px; }
   .flight-status { top: 9px; left: 9px; right: 9px; }
   .flight-status span { padding: 5px 7px; font-size: .52rem; }
   .game-message > div { width: calc(100% - 34px); padding: 16px; }
+  .flappy-save-status { align-items:flex-start; flex-wrap:wrap; }
+  .flappy-save-status a { margin-left:17px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

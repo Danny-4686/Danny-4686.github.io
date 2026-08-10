@@ -8,8 +8,20 @@ const GAME_RULES = Object.freeze({
   breakout: { label: 'Breakout', direction: 'desc', unit: 'points', min: 0, max: 1000000000 },
   'connect-four': { label: 'Connect Four', direction: 'desc', unit: 'wins', min: 0, max: 1000000 },
   'cloud-hopper': { label: 'Cloud Hopper', direction: 'desc', unit: 'points', min: 0, max: 1000000000 },
-  'tower-stacker': { label: 'Tower Stacker', direction: 'desc', unit: 'height', min: 0, max: 1000000 }
+  'tower-stacker': { label: 'Tower Stacker', direction: 'desc', unit: 'height', min: 0, max: 1000000 },
+  'flappy-cloud': { label: 'Flappy Cloud', direction: 'desc', unit: 'points', min: 0, max: 1000000 },
+  'cloudlab-clicker': { label: 'CloudLab Clicker', direction: 'desc', unit: 'clouds', min: 0, max: Number.MAX_SAFE_INTEGER },
+  launcher: { label: 'Launcher', direction: 'desc', unit: 'distance', min: 0, max: 1000000000 }
 });
+
+const GAME_SAVE_SCHEMA_VERSION = 1;
+const GAME_SAVE_IDS = Object.freeze(['flappy-cloud', 'cloudlab-clicker', 'launcher']);
+const GAME_SAVE_ID_SET = new Set(GAME_SAVE_IDS);
+const CLICKER_BUILDING_IDS = Object.freeze(['drone', 'farm', 'station', 'factory', 'bank', 'portal', 'foundry']);
+const CLICKER_BOOST_IDS = Object.freeze(['tap-array', 'static-charge', 'drone-sync', 'weather-ai', 'golden-core', 'quantum-network']);
+const CLICKER_ACHIEVEMENT_IDS = Object.freeze(['first-front', 'sky-builder', 'cloud-city', 'weather-legend']);
+const LAUNCHER_LEVEL_LIMITS = Object.freeze({ power: 10, bounce: 10, aero: 10, boost: 8, magnet: 10 });
+const MAX_GAME_SAVE_NUMBER = Number.MAX_SAFE_INTEGER;
 
 const RESERVED_NAMES = new Set([
   'admin', 'administrator', 'cloudlab', 'cloudlabstudio', 'danny', 'danny4686', 'daniel',
@@ -188,6 +200,111 @@ function cleanSlug(value) {
   return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) && slug.length <= 90 ? slug : '';
 }
 
+function isRecord(value) {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function hasExactKeys(value, keys) {
+  if (!isRecord(value)) return false;
+  const actual = Object.keys(value).sort();
+  const expected = [...keys].sort();
+  return actual.length === expected.length && actual.every((key, index) => key === expected[index]);
+}
+
+function cleanGameNumber(value, { integer = false, max = MAX_GAME_SAVE_NUMBER } = {}) {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > max) return null;
+  if (integer && !Number.isSafeInteger(value)) return null;
+  // Fractional Clicker production is kept without allowing ever-growing JSON precision.
+  return integer ? value : Math.round(value * 1000000) / 1000000;
+}
+
+function cleanKnownIdList(value, allowedIds) {
+  if (!Array.isArray(value) || value.length > allowedIds.length) return null;
+  const allowed = new Set(allowedIds);
+  const output = [];
+  for (const item of value) {
+    if (typeof item !== 'string' || !allowed.has(item) || output.includes(item)) return null;
+    output.push(item);
+  }
+  return output;
+}
+
+function validateClickerSave(value) {
+  if (!hasExactKeys(value, ['clouds', 'total', 'clicks', 'counts', 'boosts', 'achievements'])) {
+    return { error: 'CloudLab Clicker save data has an invalid shape.' };
+  }
+  if (!hasExactKeys(value.counts, CLICKER_BUILDING_IDS)) {
+    return { error: 'CloudLab Clicker building data is invalid.' };
+  }
+
+  const clouds = cleanGameNumber(value.clouds);
+  const total = cleanGameNumber(value.total);
+  const clicks = cleanGameNumber(value.clicks, { integer: true, max: 1000000000000 });
+  if (clouds === null || total === null || clicks === null || clouds > total) {
+    return { error: 'CloudLab Clicker progress contains an invalid number.' };
+  }
+
+  const counts = {};
+  for (const id of CLICKER_BUILDING_IDS) {
+    const count = cleanGameNumber(value.counts[id], { integer: true, max: 1000000000 });
+    if (count === null) return { error: 'CloudLab Clicker building data contains an invalid number.' };
+    counts[id] = count;
+  }
+
+  const boosts = cleanKnownIdList(value.boosts, CLICKER_BOOST_IDS);
+  const achievements = cleanKnownIdList(value.achievements, CLICKER_ACHIEVEMENT_IDS);
+  if (!boosts || !achievements) return { error: 'CloudLab Clicker unlock data is invalid.' };
+  return { state: { clouds, total, clicks, counts, boosts, achievements } };
+}
+
+function validateLauncherSave(value) {
+  if (!hasExactKeys(value, ['credits', 'best', 'levels']) || !hasExactKeys(value.levels, Object.keys(LAUNCHER_LEVEL_LIMITS))) {
+    return { error: 'Launcher save data has an invalid shape.' };
+  }
+
+  const credits = cleanGameNumber(value.credits, { integer: true });
+  const best = cleanGameNumber(value.best, { integer: true, max: GAME_RULES.launcher.max });
+  if (credits === null || best === null) return { error: 'Launcher progress contains an invalid number.' };
+
+  const levels = {};
+  for (const [id, max] of Object.entries(LAUNCHER_LEVEL_LIMITS)) {
+    const level = cleanGameNumber(value.levels[id], { integer: true, max });
+    if (level === null) return { error: 'Launcher upgrade data contains an invalid level.' };
+    levels[id] = level;
+  }
+  return { state: { credits, best, levels } };
+}
+
+function validateFlappyCloudSave(value) {
+  if (!hasExactKeys(value, ['best'])) return { error: 'Flappy Cloud save data has an invalid shape.' };
+  const best = cleanGameNumber(value.best, { integer: true, max: GAME_RULES['flappy-cloud'].max });
+  if (best === null) return { error: 'Flappy Cloud progress contains an invalid number.' };
+  return { state: { best } };
+}
+
+function validateGameSaveState(gameIdValue, value) {
+  const gameId = String(gameIdValue || '').trim().toLowerCase();
+  if (!GAME_SAVE_ID_SET.has(gameId)) return { error: 'This game does not support account saves.' };
+  if (gameId === 'cloudlab-clicker') return validateClickerSave(value);
+  if (gameId === 'launcher') return validateLauncherSave(value);
+  return validateFlappyCloudSave(value);
+}
+
+function isBlankGameSave(gameId, state) {
+  if (gameId === 'cloudlab-clicker') {
+    return state.clouds === 0
+      && state.total === 0
+      && state.clicks === 0
+      && Object.values(state.counts).every((count) => count === 0)
+      && state.boosts.length === 0
+      && state.achievements.length === 0;
+  }
+  if (gameId === 'flappy-cloud') return state.best === 0;
+  return state.credits === 0
+    && state.best === 0
+    && Object.values(state.levels).every((level) => level === 0);
+}
+
 function publicUser(row) {
   if (!row) return null;
   const createdAt = Number(row.created_at || 0);
@@ -236,6 +353,18 @@ export class CommunityStore {
           FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         );
         CREATE INDEX IF NOT EXISTS idx_scores_game_value ON scores(game_id, value, secondary_value, updated_at);
+        CREATE TABLE IF NOT EXISTS game_saves (
+          user_id TEXT NOT NULL,
+          game_id TEXT NOT NULL,
+          state_json TEXT NOT NULL,
+          schema_version INTEGER NOT NULL,
+          version INTEGER NOT NULL,
+          reset_marker INTEGER NOT NULL DEFAULT 0,
+          updated_at INTEGER NOT NULL,
+          PRIMARY KEY (user_id, game_id),
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+        CREATE INDEX IF NOT EXISTS idx_game_saves_updated ON game_saves(user_id, updated_at);
         CREATE TABLE IF NOT EXISTS likes (
           user_id TEXT NOT NULL,
           post_slug TEXT NOT NULL,
@@ -280,6 +409,10 @@ export class CommunityStore {
       if (url.pathname === '/avatar' && method === 'POST') return this.saveAvatar(body);
       if (url.pathname === '/username-change' && method === 'POST') return this.changeUsername(body);
       if (url.pathname === '/records' && method === 'GET') return this.records(url.searchParams.get('userId'));
+      if (url.pathname === '/game-save' && method === 'GET') {
+        return this.gameSave(url.searchParams.get('userId'), url.searchParams.get('gameId'));
+      }
+      if (url.pathname === '/game-save' && method === 'POST') return this.saveGame(body);
       if (url.pathname === '/score' && method === 'POST') return this.saveScore(body);
       if (url.pathname === '/leaderboard' && method === 'GET') {
         return this.leaderboard(url.searchParams.get('gameId'), url.searchParams.get('limit'));
@@ -573,6 +706,119 @@ export class CommunityStore {
     });
   }
 
+  gameSave(userIdValue, gameIdValue) {
+    const userId = String(userIdValue || '').slice(0, 80);
+    const gameId = String(gameIdValue || '').trim().toLowerCase();
+    if (!userId || !GAME_SAVE_ID_SET.has(gameId)) {
+      return json({ error: 'This game does not support account saves.' }, 400);
+    }
+
+    const user = this.sql.exec('SELECT id FROM users WHERE id = ? AND status = ?', userId, 'active').toArray()[0];
+    if (!user) return json({ error: 'Account not found.' }, 404);
+    const row = this.sql.exec(
+      'SELECT state_json, schema_version, version, reset_marker, updated_at FROM game_saves WHERE user_id = ? AND game_id = ?',
+      userId,
+      gameId
+    ).toArray()[0];
+    if (!row) return json({ gameId, save: null, schemaVersion: GAME_SAVE_SCHEMA_VERSION });
+
+    let parsed;
+    try { parsed = JSON.parse(row.state_json); } catch { return json({ error: 'Saved game data could not be read.' }, 500); }
+    const checked = validateGameSaveState(gameId, parsed);
+    if (checked.error || Number(row.schema_version) !== GAME_SAVE_SCHEMA_VERSION) {
+      return json({ error: 'Saved game data uses an unsupported format.' }, 500);
+    }
+    return json({
+      gameId,
+      save: {
+        state: checked.state,
+        schemaVersion: GAME_SAVE_SCHEMA_VERSION,
+        version: Number(row.version),
+        reset: Number(row.reset_marker) === 1,
+        updatedAt: Number(row.updated_at)
+      }
+    });
+  }
+
+  async saveGame(body) {
+    const userId = String(body.userId || '').slice(0, 80);
+    const gameId = String(body.gameId || '').trim().toLowerCase();
+    if (!userId || !GAME_SAVE_ID_SET.has(gameId)) {
+      return json({ error: 'This game does not support account saves.' }, 400);
+    }
+    if (body.schemaVersion !== GAME_SAVE_SCHEMA_VERSION) {
+      return json({ error: 'This saved game version is not supported.' }, 400);
+    }
+    const clientVersion = body.version;
+    if (typeof clientVersion !== 'number' || !Number.isSafeInteger(clientVersion) || clientVersion < 0) {
+      return json({ error: 'The saved game version is invalid.' }, 400);
+    }
+    if (body.reset !== undefined && typeof body.reset !== 'boolean') {
+      return json({ error: 'The saved game reset flag is invalid.' }, 400);
+    }
+    const checked = validateGameSaveState(gameId, body.state);
+    if (checked.error) return json({ error: checked.error }, 400);
+    const reset = body.reset === true;
+    if (reset && !isBlankGameSave(gameId, checked.state)) {
+      return json({ error: 'A reset must contain the default game state.' }, 400);
+    }
+
+    const user = this.sql.exec('SELECT id FROM users WHERE id = ? AND status = ?', userId, 'active').toArray()[0];
+    if (!user) return json({ error: 'Account not found.' }, 404);
+    if (!this.consumeRateLimit(`game-save:${userId}:${gameId}`, 4000, 3600)) {
+      return json({ error: 'Game progress is syncing too often. Please wait a moment and try again.' }, 429);
+    }
+
+    const previous = this.sql.exec(
+      'SELECT version FROM game_saves WHERE user_id = ? AND game_id = ?',
+      userId,
+      gameId
+    ).toArray()[0];
+    const currentVersion = previous ? Number(previous.version) : 0;
+    if (!reset && clientVersion !== currentVersion) {
+      const current = this.gameSave(userId, gameId);
+      const data = await current.json();
+      return json({
+        error: 'Newer game progress is already saved. Merge it before trying again.',
+        ...data
+      }, 409);
+    }
+
+    const version = currentVersion + 1;
+    const updatedAt = Date.now();
+    this.sql.exec(
+      `INSERT INTO game_saves(user_id, game_id, state_json, schema_version, version, reset_marker, updated_at)
+       VALUES(?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(user_id, game_id) DO UPDATE SET
+         state_json = excluded.state_json,
+         schema_version = excluded.schema_version,
+         version = excluded.version,
+         reset_marker = excluded.reset_marker,
+         updated_at = excluded.updated_at`,
+      userId,
+      gameId,
+      JSON.stringify(checked.state),
+      GAME_SAVE_SCHEMA_VERSION,
+      version,
+      reset ? 1 : 0,
+      updatedAt
+    );
+
+    const recordValue = gameId === 'cloudlab-clicker' ? Math.floor(checked.state.total) : checked.state.best;
+    let leaderboardImproved = false;
+    if (recordValue > 0) {
+      const scoreResponse = this.saveScore({ userId, gameId, value: recordValue });
+      const scoreResult = await scoreResponse.json();
+      leaderboardImproved = scoreResult.improved === true;
+    }
+    return json({
+      ok: true,
+      gameId,
+      leaderboardImproved,
+      save: { state: checked.state, schemaVersion: GAME_SAVE_SCHEMA_VERSION, version, reset, updatedAt }
+    });
+  }
+
   saveScore(body) {
     const userId = String(body.userId || '').slice(0, 80);
     const gameId = String(body.gameId || '').trim().toLowerCase();
@@ -705,4 +951,11 @@ export class CommunityStore {
   }
 }
 
-export { GAME_RULES, hashPassword, verifyPassword };
+export {
+  GAME_RULES,
+  GAME_SAVE_IDS,
+  GAME_SAVE_SCHEMA_VERSION,
+  hashPassword,
+  validateGameSaveState,
+  verifyPassword
+};

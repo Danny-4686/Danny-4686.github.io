@@ -1,7 +1,7 @@
 import { handleCommunityApi as handleBaseCommunityApi } from './community-api.js';
 
 const API_PREFIX = '/v1';
-const COMMUNITY_BUILD = '2026-08-06.2';
+const COMMUNITY_BUILD = '2026-08-10.1';
 
 function allowedOrigins(env) {
   const configured = String(env.COMMUNITY_ALLOWED_ORIGINS || '')

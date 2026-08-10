@@ -18,14 +18,21 @@
   const pauseButton = document.getElementById('pauseButton');
   const restartButton = document.getElementById('restartButton');
   const stage = document.getElementById('flappyStage');
+  const accountSave = document.querySelector('.flappy-save-status');
+  const accountSaveStatus = document.getElementById('flappySaveStatus');
+  const accountSaveLink = document.getElementById('flappySaveLink');
   const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   const STORAGE_KEY = 'cloudlab-flappy-cloud-best-v1';
 
-  let best = 0;
-  try {
-    const saved = Number(localStorage.getItem(STORAGE_KEY) || 0);
-    best = Number.isFinite(saved) && saved >= 0 ? Math.floor(saved) : 0;
-  } catch (_) {}
+  function readLocalBest(key) {
+    try {
+      const saved = Number(localStorage.getItem(key) || 0);
+      return Number.isFinite(saved) && saved >= 0 ? Math.floor(saved) : 0;
+    } catch (_) { return 0; }
+  }
+
+  let activeStorageKey = STORAGE_KEY;
+  let best = readLocalBest(activeStorageKey);
 
   let player;
   let gates = [];
@@ -43,6 +50,137 @@
   let raf = 0;
   let skyOffset = 0;
   let flash = 0;
+  let cloudCommunity = null;
+  let cloudConnected = false;
+  let cloudVersion = 0;
+  let cloudSaveInFlight = false;
+  let cloudSaveQueued = false;
+  let cloudResetTombstone = false;
+
+  function selectAccountStorage(userId) {
+    const cleanUserId = String(userId || '').replace(/[^A-Za-z0-9-]/g, '').slice(0, 80);
+    if (!cleanUserId) throw new Error('CloudLab account identity is unavailable.');
+    const accountKey = `${STORAGE_KEY}:user:${cleanUserId}`;
+    best = Math.max(best, readLocalBest(accountKey));
+    activeStorageKey = accountKey;
+    try {
+      localStorage.setItem(activeStorageKey, String(best));
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (_) {}
+  }
+
+  function setAccountSaveStatus(text, stateName = 'checking', showLink = false) {
+    if (accountSaveStatus) accountSaveStatus.textContent = text;
+    if (accountSave) accountSave.dataset.state = stateName;
+    if (accountSaveLink) accountSaveLink.hidden = !showLink;
+  }
+
+  function waitForCommunity(timeout = 6000) {
+    if (window.CloudLabCommunity?.loadGameSave && window.CloudLabCommunity?.saveGameState) {
+      return Promise.resolve(window.CloudLabCommunity);
+    }
+    return new Promise((resolve) => {
+      let settled = false;
+      const finish = (value) => {
+        if (settled) return;
+        settled = true;
+        window.removeEventListener('cloudlab:community-ready', ready);
+        resolve(value);
+      };
+      const ready = (event) => {
+        const community = event.detail || window.CloudLabCommunity;
+        if (community?.loadGameSave && community?.saveGameState) finish(community);
+      };
+      window.addEventListener('cloudlab:community-ready', ready);
+      window.setTimeout(() => finish(null), timeout);
+    });
+  }
+
+  async function syncBestToAccount(force = false) {
+    if (!cloudConnected || !cloudCommunity) return;
+    if (cloudResetTombstone && best === 0) {
+      setAccountSaveStatus('Account progress is reset · your next flight starts fresh.', 'saved');
+      return;
+    }
+    if (cloudSaveInFlight) {
+      cloudSaveQueued = true;
+      return;
+    }
+    cloudSaveInFlight = true;
+    if (force) setAccountSaveStatus('Syncing your flight record…', 'checking');
+    try {
+      const result = await cloudCommunity.saveGameState('flappy-cloud', { best }, { version: cloudVersion });
+      if (result.accountChanged) {
+        cloudConnected = false;
+        setAccountSaveStatus('Account changed · loading the correct save…', 'checking');
+        window.setTimeout(() => location.reload(), 250);
+        return;
+      }
+      if (result.signedOut || !result.authenticated) {
+        cloudConnected = false;
+        setAccountSaveStatus('Signed out · switching to device-only progress…', 'checking');
+        window.setTimeout(() => location.reload(), 250);
+        return;
+      }
+      if (result.conflict && result.save) {
+        cloudVersion = Number(result.save.version || cloudVersion);
+        cloudResetTombstone = result.save.reset === true;
+        const remoteBest = Math.floor(Number(result.save.state?.best) || 0);
+        const localBest = best;
+        best = cloudResetTombstone ? 0 : Math.max(localBest, remoteBest);
+        try { localStorage.setItem(activeStorageKey, String(best)); } catch (_) {}
+        updateHud();
+        if (cloudResetTombstone) setAccountSaveStatus('A newer account reset was applied on this device.', 'saved');
+        else if (best > remoteBest) cloudSaveQueued = true;
+        else setAccountSaveStatus('Loaded newer progress from your CloudLab account.', 'saved');
+      } else {
+        cloudVersion = Number(result.save?.version || result.version || cloudVersion);
+        cloudResetTombstone = result.save?.reset === true;
+        setAccountSaveStatus(`Best score saved to ${result.user?.username || 'your CloudLab account'}.`, 'saved');
+      }
+    } catch (error) {
+      setAccountSaveStatus('Your local best is safe. Account sync will retry.', 'error');
+      window.setTimeout(() => syncBestToAccount(true), error?.status === 429 ? 30000 : 5000);
+    } finally {
+      cloudSaveInFlight = false;
+      if (cloudSaveQueued) {
+        cloudSaveQueued = false;
+        window.setTimeout(() => syncBestToAccount(true), 180);
+      }
+    }
+  }
+
+  async function initializeCloudSave() {
+    cloudCommunity = await waitForCommunity();
+    if (!cloudCommunity) {
+      setAccountSaveStatus('Best score is saved on this device.', 'local');
+      return;
+    }
+    try {
+      const payload = await cloudCommunity.loadGameSave('flappy-cloud');
+      if (payload.accountChanged) {
+        setAccountSaveStatus('Account changed · loading the correct save…', 'checking');
+        window.setTimeout(() => location.reload(), 250);
+        return;
+      }
+      if (!payload.authenticated) {
+        setAccountSaveStatus('Best score saved here. Sign in to play anywhere.', 'local', true);
+        return;
+      }
+      selectAccountStorage(payload.user?.id);
+      cloudConnected = true;
+      cloudVersion = Number(payload.save?.version || payload.version || 0);
+      cloudResetTombstone = payload.save?.reset === true;
+      best = cloudResetTombstone ? 0 : Math.max(best, Math.floor(Number(payload.save?.state?.best) || 0));
+      try { localStorage.setItem(activeStorageKey, String(best)); } catch (_) {}
+      updateHud();
+      if (cloudResetTombstone) setAccountSaveStatus('Account progress is reset · your next flight starts fresh.', 'saved');
+      else await syncBestToAccount(true);
+    } catch (_) {
+      setAccountSaveStatus('Your local best is safe. Account sync will retry.', 'error');
+      window.setTimeout(initializeCloudSave, 5000);
+    }
+  }
 
   function showMessage(title, text) {
     messageTitle.textContent = title;
@@ -62,7 +200,8 @@
 
   function updateHud() {
     scoreEl.textContent = String(score);
-    bestEl.textContent = String(Math.max(best, score));
+    const bestText = String(Math.max(best, score));
+    if (bestEl.textContent !== bestText) bestEl.textContent = bestText;
     streakEl.textContent = String(streak);
     const speed = currentSpeed();
     speedLabel.textContent = speed < 285 ? 'CALM SKIES' : speed < 345 ? 'RISING WIND' : 'JET STREAM';
@@ -206,7 +345,8 @@
     started = false;
     gameOver = true;
     best = Math.max(best, score);
-    try { localStorage.setItem(STORAGE_KEY, String(best)); } catch (_) {}
+    try { localStorage.setItem(activeStorageKey, String(best)); } catch (_) {}
+    syncBestToAccount();
     updateHud();
     startButton.textContent = 'Fly Again';
     pauseButton.textContent = 'Pause';
@@ -465,4 +605,5 @@
 
   bestEl.textContent = String(best);
   resetGame();
+  initializeCloudSave();
 })();

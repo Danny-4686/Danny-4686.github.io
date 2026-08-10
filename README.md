@@ -4,7 +4,7 @@
 
 # Danny4686.com
 
-The official home of Danny4686 and CloudLab Studio: projects, browser games, journal updates, and community features.
+The official home of Danny4686 and CloudLab Studio: projects, browser games, cross-device CloudLab saves, leaderboards, journal updates, and community features.
 
 [Visit the website](https://danny4686.com) · [Open the arcade](https://danny4686.com/games/) · [Read the journal](https://danny4686.com/journal/)
 
