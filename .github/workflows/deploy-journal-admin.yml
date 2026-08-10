@@ -49,8 +49,9 @@ jobs:
           CHECK_NAME="DeployCheck${GITHUB_RUN_NUMBER}"
           CHECK_NAME="${CHECK_NAME:0:20}"
           USERNAME_CODE="$(curl -sS --retry 3 --retry-delay 2 --retry-all-errors --max-time 25 -o /tmp/community-username.json -w '%{http_code}' "https://api.danny4686.com/v1/username?name=${CHECK_NAME}" || printf '000')"
+          SESSION_CODE="$(curl -sS --retry 3 --retry-delay 2 --retry-all-errors --max-time 25 -o /tmp/community-session.json -w '%{http_code}' 'https://api.danny4686.com/v1/session' || printf '000')"
           ADMIN_CODE="$(curl -sS --retry 3 --retry-delay 2 --retry-all-errors --max-time 25 -o /tmp/admin-root.html -w '%{http_code}' 'https://admin.danny4686.com/' || printf '000')"
-          export HEALTH_CODE USERNAME_CODE ADMIN_CODE CHECK_NAME
+          export HEALTH_CODE USERNAME_CODE SESSION_CODE ADMIN_CODE CHECK_NAME
           python - <<'PY'
           import json, os
           from pathlib import Path
@@ -67,6 +68,7 @@ jobs:
 
           health = read_json("/tmp/community-health.json")
           username = read_json("/tmp/community-username.json")
+          session = read_json("/tmp/community-session.json")
           admin_html = Path("/tmp/admin-root.html").read_text(encoding="utf-8", errors="replace") if Path("/tmp/admin-root.html").exists() else ""
           admin_login_visible = 'href="/auth/login"' in admin_html
           result = {
@@ -75,6 +77,8 @@ jobs:
               "usernameHttpStatus": os.environ.get("USERNAME_CODE", "000"),
               "usernameCheck": username,
               "usernameChecked": os.environ.get("CHECK_NAME", ""),
+              "sessionHttpStatus": os.environ.get("SESSION_CODE", "000"),
+              "anonymousSession": session,
               "adminHttpStatus": os.environ.get("ADMIN_CODE", "000"),
               "adminLoginVisible": admin_login_visible
           }
@@ -83,10 +87,13 @@ jobs:
           healthy = (
               os.environ.get("HEALTH_CODE") == "200"
               and health.get("ok") is True
+              and health.get("build") == "2026-08-10.2"
               and health.get("storageReady") is True
               and health.get("accountFeaturesConfigured") is True
               and os.environ.get("USERNAME_CODE") == "200"
               and isinstance(username.get("available"), bool)
+              and os.environ.get("SESSION_CODE") == "200"
+              and session.get("authenticated") is False
               and os.environ.get("ADMIN_CODE") == "200"
               and admin_login_visible
           )

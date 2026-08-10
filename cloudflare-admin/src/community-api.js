@@ -148,7 +148,8 @@ async function currentSession(request, env, verifyUser = true) {
 
   const response = await storeFetch(env, `/user?id=${encodeURIComponent(session.uid)}`);
   const data = await response.json().catch(() => ({}));
-  if (!response.ok || !data.user) return null;
+  if (!response.ok) throw new Error('Community account storage is unavailable.');
+  if (!data.user) return null;
   const user = userForApi(data.user, request);
   return { ...session, username: user.username, createdAt: user.createdAt, user, sessionToken: token, usedLegacyCookie: !cookies[COOKIE_NAME] && Boolean(cookies[LEGACY_COOKIE_NAME]) };
 }

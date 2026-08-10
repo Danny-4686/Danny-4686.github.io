@@ -56,6 +56,7 @@
   let cloudSaveInFlight = false;
   let cloudSaveQueued = false;
   let cloudResetTombstone = false;
+  let lastCloudBest = null;
 
   function selectAccountStorage(userId) {
     const cleanUserId = String(userId || '').replace(/[^A-Za-z0-9-]/g, '').slice(0, 80);
@@ -102,14 +103,16 @@
       setAccountSaveStatus('Account progress is reset · your next flight starts fresh.', 'saved');
       return;
     }
+    if (!force && lastCloudBest === best) return;
     if (cloudSaveInFlight) {
       cloudSaveQueued = true;
       return;
     }
+    const snapshotBest = best;
     cloudSaveInFlight = true;
     if (force) setAccountSaveStatus('Syncing your flight record…', 'checking');
     try {
-      const result = await cloudCommunity.saveGameState('flappy-cloud', { best }, { version: cloudVersion });
+      const result = await cloudCommunity.saveGameState('flappy-cloud', { best: snapshotBest }, { version: cloudVersion });
       if (result.accountChanged) {
         cloudConnected = false;
         setAccountSaveStatus('Account changed · loading the correct save…', 'checking');
@@ -128,6 +131,7 @@
         const remoteBest = Math.floor(Number(result.save.state?.best) || 0);
         const localBest = best;
         best = cloudResetTombstone ? 0 : Math.max(localBest, remoteBest);
+        lastCloudBest = remoteBest;
         try { localStorage.setItem(activeStorageKey, String(best)); } catch (_) {}
         updateHud();
         if (cloudResetTombstone) setAccountSaveStatus('A newer account reset was applied on this device.', 'saved');
@@ -136,6 +140,7 @@
       } else {
         cloudVersion = Number(result.save?.version || result.version || cloudVersion);
         cloudResetTombstone = result.save?.reset === true;
+        lastCloudBest = snapshotBest;
         setAccountSaveStatus(`Best score saved to ${result.user?.username || 'your CloudLab account'}.`, 'saved');
       }
     } catch (error) {
@@ -171,11 +176,14 @@
       cloudConnected = true;
       cloudVersion = Number(payload.save?.version || payload.version || 0);
       cloudResetTombstone = payload.save?.reset === true;
-      best = cloudResetTombstone ? 0 : Math.max(best, Math.floor(Number(payload.save?.state?.best) || 0));
+      const remoteBest = Math.floor(Number(payload.save?.state?.best) || 0);
+      lastCloudBest = remoteBest;
+      best = cloudResetTombstone ? 0 : Math.max(best, remoteBest);
       try { localStorage.setItem(activeStorageKey, String(best)); } catch (_) {}
       updateHud();
       if (cloudResetTombstone) setAccountSaveStatus('Account progress is reset · your next flight starts fresh.', 'saved');
-      else await syncBestToAccount(true);
+      else if (best > remoteBest) await syncBestToAccount();
+      else setAccountSaveStatus(`Best score loaded for ${payload.user?.username || 'your CloudLab account'} · only new records sync.`, 'saved');
     } catch (_) {
       setAccountSaveStatus('Your local best is safe. Account sync will retry.', 'error');
       window.setTimeout(initializeCloudSave, 5000);

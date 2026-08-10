@@ -1,7 +1,7 @@
 import { handleCommunityApi as handleBaseCommunityApi } from './community-api.js';
 
 const API_PREFIX = '/v1';
-const COMMUNITY_BUILD = '2026-08-10.1';
+const COMMUNITY_BUILD = '2026-08-10.2';
 
 function allowedOrigins(env) {
   const configured = String(env.COMMUNITY_ALLOWED_ORIGINS || '')
@@ -85,7 +85,11 @@ async function readCurrentSession(request, env) {
     method: 'GET',
     headers
   }), env);
-  return sessionResponse.json().catch(() => ({ authenticated: false, user: null, csrfToken: '' }));
+  const session = await sessionResponse.json().catch(() => ({}));
+  if (!sessionResponse.ok) {
+    return { authenticated: false, user: null, csrfToken: '', serviceUnavailable: true };
+  }
+  return session;
 }
 
 async function publicProfile(request, env, userId) {
@@ -140,6 +144,9 @@ export async function handleCommunityApi(request, env) {
 
   if (path === '/profile' && request.method === 'GET') {
     const session = await readCurrentSession(request, env);
+    if (session.serviceUnavailable) {
+      return json(request, env, { error: 'The community service is temporarily unavailable.' }, 503);
+    }
     if (!session.authenticated || !session.user?.id) {
       return json(request, env, { error: 'Sign in to view your profile settings.' }, 401);
     }
@@ -148,6 +155,9 @@ export async function handleCommunityApi(request, env) {
 
   if (path === '/profile' && request.method === 'POST') {
     const session = await readCurrentSession(request, env);
+    if (session.serviceUnavailable) {
+      return json(request, env, { error: 'The community service is temporarily unavailable.' }, 503);
+    }
     if (!session.authenticated || !session.user?.id) {
       return json(request, env, { error: 'Sign in to update your profile.' }, 401);
     }

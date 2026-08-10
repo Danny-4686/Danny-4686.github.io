@@ -206,7 +206,7 @@ test('a blank first save does not add a zero-score leaderboard entry', async () 
   assert.equal(leaderboard.body.entries.length, 0);
 });
 
-function mockCommunityEnvironment() {
+function mockCommunityEnvironment(options = {}) {
   const calls = [];
   const user = {
     id: 'user-1',
@@ -222,7 +222,12 @@ function mockCommunityEnvironment() {
       const url = new URL(input);
       calls.push({ path: `${url.pathname}${url.search}`, init });
       if (url.pathname === '/login') return Response.json({ ok: true, user });
-      if (url.pathname === '/user') return Response.json({ user });
+      if (url.pathname === '/user') {
+        if (options.userStatus && options.userStatus !== 200) {
+          return Response.json({ error: 'storage unavailable' }, { status: options.userStatus });
+        }
+        return Response.json({ user });
+      }
       if (url.pathname === '/game-save' && (init.method || 'GET') === 'GET') {
         return Response.json({ gameId: 'launcher', save: null, schemaVersion: 1 });
       }
@@ -301,6 +306,20 @@ test('public game-save API requires authentication and CSRF, then forwards only 
   const forwarded = calls.filter((call) => call.path === '/game-save' && call.init.method === 'POST');
   assert.equal(forwarded.length, 1);
   assert.equal(JSON.parse(forwarded[0].init.body).userId, 'user-1');
+});
+
+test('session checks report storage failures instead of falsely signing the user out', async (context) => {
+  context.mock.method(console, 'error', () => {});
+  const { env } = mockCommunityEnvironment({ userStatus: 503 });
+  const loginSession = await login(env);
+  const response = await handleCommunityApi(new Request('https://api.danny4686.com/v1/session', {
+    headers: { Origin: 'https://danny4686.com', Cookie: loginSession.cookie }
+  }), env);
+  const data = await response.json();
+
+  assert.equal(response.status, 500);
+  assert.match(data.error, /temporarily unavailable/i);
+  assert.notEqual(data.authenticated, false);
 });
 
 test('game-save API rejects unknown fields and oversized bodies before durable storage', async () => {
