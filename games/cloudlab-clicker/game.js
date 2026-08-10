@@ -29,6 +29,7 @@
   const clickerTabs = document.getElementById('clickerTabs');
   const compactLayout = window.matchMedia?.('(max-width: 1179px)');
   const coreInputLimiter = window.CloudLabClickRateLimiter?.createRollingLimiter({ limit: 10, windowMs: 1000 });
+  const savePolicy = window.CloudLabClickerSavePolicy;
 
   if (!cloudCore || !buildingList || !boostList || !productionNetwork || !activeResearch) return;
 
@@ -142,14 +143,20 @@
   let cloudCommunity = null;
   let cloudConnected = false;
   let cloudVersion = 0;
-  let cloudSaveTimer = 0;
   let cloudSaveInFlight = false;
   let cloudSaveQueued = false;
+  let cloudSaveQueuedOptions = { force: false, keepalive: false, notify: false };
   let lastCloudSignature = '';
+  let cloudSaveHadError = false;
   let cloudResetPending = false;
   let cloudResetTombstone = false;
   let cloudUsername = '';
   let cloudResetIntentKey = '';
+  const cloudSaveQueue = savePolicy?.createCloudSaveQueue({
+    minIntervalMs: savePolicy.CLOUD_SAVE_INTERVAL_MS,
+    debounceMs: savePolicy.CLOUD_SAVE_DEBOUNCE_MS,
+    onFlush: (options) => syncCloudSave(options)
+  });
 
   function persistResetIntent(pending) {
     cloudResetPending = pending;
@@ -240,6 +247,16 @@
     if (cloudSignIn) cloudSignIn.hidden = !showSignIn;
   }
 
+  function setAccountSaveState(stateName) {
+    if (clickerPanel) clickerPanel.dataset.saveState = stateName;
+  }
+
+  function markCloudSaveComplete() {
+    cloudSaveQueue?.markSaved();
+    saveStatus.dataset.lastSavedAt = new Date().toISOString();
+    saveStatus.title = `Last cloud save: ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+  }
+
   function waitForCommunity(timeout = 6000) {
     if (window.CloudLabCommunity?.loadGameSave && window.CloudLabCommunity?.saveGameState) {
       return Promise.resolve(window.CloudLabCommunity);
@@ -277,35 +294,51 @@
     } catch (_) {
       if (showMessage) setAccountSaveStatus('This browser could not save progress.', 'error');
     }
-    if (options.cloud !== false) scheduleCloudSave(Boolean(options.immediate || showMessage), Boolean(options.keepalive));
+    if (options.cloud !== false) {
+      scheduleCloudSave({
+        immediate: Boolean(options.immediate || showMessage),
+        keepalive: Boolean(options.keepalive),
+        notify: Boolean(options.notify || showMessage),
+        force: Boolean(options.force)
+      });
+    }
   }
 
-  function scheduleCloudSave(immediate = false, keepalive = false) {
+  function scheduleCloudSave(options = {}) {
     if (!cloudConnected) return;
-    window.clearTimeout(cloudSaveTimer);
-    if (immediate) {
-      syncCloudSave({ force: true, keepalive });
+    if (cloudSaveQueue) {
+      cloudSaveQueue.schedule(options);
       return;
     }
-    cloudSaveTimer = window.setTimeout(() => syncCloudSave(), 650);
+    if (options.immediate) syncCloudSave(options);
   }
 
   async function syncCloudSave(options = {}) {
     if (!cloudConnected || !cloudCommunity) return;
     if (cloudSaveInFlight) {
       cloudSaveQueued = true;
+      cloudSaveQueuedOptions.force ||= options.force === true;
+      cloudSaveQueuedOptions.keepalive ||= options.keepalive === true;
+      cloudSaveQueuedOptions.notify ||= options.notify === true;
       return;
     }
+    const notify = options.notify === true;
     const reset = options.reset === true || cloudResetPending;
     const snapshot = reset ? blankState() : sanitizeState(state);
     if (!reset && cloudResetTombstone && isBlankState(snapshot)) {
-      setAccountSaveStatus('Account progress is reset · new play will start a fresh save.', 'synced');
+      setAccountSaveState('synced');
+      if (notify) setAccountSaveStatus('Account progress is reset · new play will start a fresh save.', 'synced');
       return;
     }
     const signature = JSON.stringify(snapshot);
-    if (!reset && !options.force && signature === lastCloudSignature) return;
+    if (!reset && !options.force && signature === lastCloudSignature) {
+      setAccountSaveState('synced');
+      if (notify) setAccountSaveStatus('Everything is already saved to your CloudLab account.', 'synced');
+      return;
+    }
     cloudSaveInFlight = true;
-    setAccountSaveStatus(reset ? 'Resetting account progress…' : 'Syncing progress to your account…', 'syncing');
+    if (reset || notify) setAccountSaveStatus(reset ? 'Resetting account progress…' : 'Syncing progress to your account…', 'syncing');
+    else setAccountSaveState('syncing');
     try {
       const result = await cloudCommunity.saveGameState('cloudlab-clicker', snapshot, {
         version: cloudVersion,
@@ -354,18 +387,28 @@
         if (reset) persistResetIntent(false);
         cloudResetTombstone = result.save?.reset === true;
         lastCloudSignature = signature;
-        setAccountSaveStatus(`Saved to ${cloudUsername || result.user?.username || 'your CloudLab account'} · ready on any device.`, 'synced');
+        markCloudSaveComplete();
+        if (notify || reset || cloudSaveHadError) {
+          const accountName = cloudUsername || result.user?.username || 'your CloudLab account';
+          setAccountSaveStatus(`Saved to ${accountName} · cloud autosave runs every minute.`, 'synced');
+        } else {
+          setAccountSaveState('synced');
+        }
+        cloudSaveHadError = false;
         if (reset && !isBlankState(state)) cloudSaveQueued = true;
       }
     } catch (error) {
       if (reset) persistResetIntent(true);
+      cloudSaveHadError = true;
       setAccountSaveStatus('Local progress is safe. Account sync will retry.', 'error');
-      window.setTimeout(() => scheduleCloudSave(true, true), error?.status === 429 ? 30000 : 5000);
+      window.setTimeout(() => scheduleCloudSave({ immediate: true, keepalive: true }), error?.status === 429 ? 30000 : 5000);
     } finally {
       cloudSaveInFlight = false;
       if (cloudSaveQueued) {
         cloudSaveQueued = false;
-        window.setTimeout(() => syncCloudSave({ force: true }), 180);
+        const queuedOptions = cloudSaveQueuedOptions;
+        cloudSaveQueuedOptions = { force: false, keepalive: false, notify: false };
+        window.setTimeout(() => syncCloudSave({ ...queuedOptions, force: true }), 180);
       }
     }
   }
@@ -376,7 +419,7 @@
     if (cloudResetPending) {
       save(false, { cloud: false });
       setAccountSaveStatus('Finishing your account reset…', 'syncing');
-      syncCloudSave({ force: true, reset: true, keepalive: true });
+      syncCloudSave({ force: true, reset: true, keepalive: true, notify: true });
       return;
     }
     cloudResetTombstone = payload.save?.reset === true;
@@ -392,12 +435,14 @@
     refreshNetwork();
     if (cloudResetTombstone && isBlankState(state)) {
       lastCloudSignature = JSON.stringify(state);
+      markCloudSaveComplete();
       setAccountSaveStatus('Account progress is reset · new play will start a fresh save.', 'synced');
     } else if (!remoteState || JSON.stringify(state) !== JSON.stringify(remoteState)) {
-      syncCloudSave({ force: true });
+      syncCloudSave({ force: true, notify: true });
     } else {
       lastCloudSignature = JSON.stringify(remoteState);
-      setAccountSaveStatus(`Loaded progress for ${cloudUsername || 'your CloudLab account'}.`, 'synced');
+      markCloudSaveComplete();
+      setAccountSaveStatus(`Loaded progress for ${cloudUsername || 'your CloudLab account'} · cloud autosave runs every minute.`, 'synced');
     }
   }
 
@@ -1009,7 +1054,7 @@
     renderActiveResearch();
     if (cloudConnected) {
       persistResetIntent(true);
-      syncCloudSave({ force: true, reset: true, keepalive: true });
+      syncCloudSave({ force: true, reset: true, keepalive: true, notify: true });
     } else {
       setAccountSaveStatus('Progress reset on this device.', 'local', true);
     }
@@ -1021,7 +1066,8 @@
     save(false, { immediate: document.hidden, keepalive: document.hidden });
   });
   window.addEventListener('pagehide', () => save(false, { immediate: true, keepalive: true }));
-  window.setInterval(() => save(false), 15000);
+  window.setInterval(() => save(false, { cloud: false }), savePolicy?.LOCAL_SAVE_INTERVAL_MS || 15000);
+  window.setInterval(() => scheduleCloudSave(), savePolicy?.CLOUD_SAVE_INTERVAL_MS || 60000);
 
   renderBuildings();
   renderBoosts();
