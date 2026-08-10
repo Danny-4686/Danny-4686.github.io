@@ -9,6 +9,7 @@
   const particleLayer = document.getElementById('particleLayer');
   const comboValue = document.getElementById('comboValue');
   const comboFill = document.getElementById('comboFill');
+  const clickRateStatus = document.getElementById('clickRateStatus');
   const buildingList = document.getElementById('buildingList');
   const boostList = document.getElementById('boostList');
   const boostCount = document.getElementById('boostCount');
@@ -27,6 +28,7 @@
   const cloudSignIn = document.getElementById('cloudSignIn');
   const clickerTabs = document.getElementById('clickerTabs');
   const compactLayout = window.matchMedia?.('(max-width: 1179px)');
+  const coreInputLimiter = window.CloudLabClickRateLimiter?.createRollingLimiter({ limit: 10, windowMs: 1000 });
 
   if (!cloudCore || !buildingList || !boostList || !productionNetwork || !activeResearch) return;
 
@@ -135,6 +137,8 @@
   let saveTimer = 0;
   let activeView = 'core';
   let lastComboBurstLevel = 0;
+  let inputCapActive = false;
+  let inputCapTimer = 0;
   let cloudCommunity = null;
   let cloudConnected = false;
   let cloudVersion = 0;
@@ -612,8 +616,42 @@
     window.setTimeout(() => cloud.remove(), 2600);
   }
 
+  function showInputCap(scriptGenerated = false, retryAfterMs = 0) {
+    const label = scriptGenerated ? 'AUTOMATED INPUT BLOCKED' : '10 CPS CAP ACTIVE';
+    if (clickRateStatus) {
+      clickRateStatus.textContent = label;
+      clickRateStatus.classList.add('is-capped');
+    }
+    corePanel?.classList.add('input-capped');
+    if (!inputCapActive) {
+      inputCapActive = true;
+      const detail = scriptGenerated
+        ? 'Only real mouse, touch, and keyboard presses can power the Core.'
+        : 'The Core accepts a maximum of 10 presses in any one-second window.';
+      announce(scriptGenerated ? 'Automated Core input blocked.' : 'Core input capped at 10 clicks per second.');
+      showToast('Core input protected', detail, 'gold');
+    }
+    window.clearTimeout(inputCapTimer);
+    inputCapTimer = window.setTimeout(() => {
+      inputCapActive = false;
+      clickRateStatus?.classList.remove('is-capped');
+      if (clickRateStatus) clickRateStatus.textContent = '10 CPS MAX';
+      corePanel?.classList.remove('input-capped');
+    }, Math.max(700, Math.ceil(retryAfterMs) + 120));
+  }
+
   function pressCore(event) {
     const now = performance.now();
+    if (event?.isTrusted === false) {
+      showInputCap(true);
+      return;
+    }
+    const inputAttempt = coreInputLimiter?.attempt(now);
+    if (inputAttempt && !inputAttempt.allowed) {
+      event?.preventDefault();
+      showInputCap(false, inputAttempt.retryAfterMs);
+      return;
+    }
     combo = now - lastClickAt < 1100 ? Math.min(50, combo + 1) : 1;
     if (combo < 10) lastComboBurstLevel = 0;
     lastClickAt = now;
@@ -962,6 +1000,7 @@
     state = blankState();
     combo = 0;
     lastClickAt = 0;
+    coreInputLimiter?.reset();
     save(false, { cloud: false });
     renderAchievements();
     renderStats();
