@@ -2,6 +2,8 @@ const API_PREFIX = '/v1';
 const COOKIE_NAME = 'cl_community_session_v2';
 const LEGACY_COOKIE_NAME = 'cl_community_session';
 const SESSION_TTL = 60 * 60 * 24 * 30;
+const GAME_SAVE_MAX_BODY_BYTES = 16384;
+const GAME_SAVE_IDS = new Set(['flappy-cloud', 'cloudlab-clicker', 'launcher']);
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
@@ -173,6 +175,35 @@ async function readBody(request) {
   const contentLength = Number(request.headers.get('Content-Length') || 0);
   if (contentLength > 300000) throw new Error('Request too large.');
   return request.json().catch(() => ({}));
+}
+
+async function readGameSaveBody(request) {
+  const contentType = String(request.headers.get('Content-Type') || '').split(';')[0].trim().toLowerCase();
+  if (contentType !== 'application/json') {
+    return { error: 'Game progress must be sent as JSON.', status: 415 };
+  }
+  const contentLength = Number(request.headers.get('Content-Length') || 0);
+  if (Number.isFinite(contentLength) && contentLength > GAME_SAVE_MAX_BODY_BYTES) {
+    return { error: 'Game progress is too large.', status: 413 };
+  }
+
+  const text = await request.text();
+  if (encoder.encode(text).byteLength > GAME_SAVE_MAX_BODY_BYTES) {
+    return { error: 'Game progress is too large.', status: 413 };
+  }
+
+  let body;
+  try { body = JSON.parse(text); } catch { return { error: 'Game progress is not valid JSON.', status: 400 }; }
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return { error: 'Game progress has an invalid shape.', status: 400 };
+  }
+  const keys = Object.keys(body).sort();
+  const allowed = new Set(['reset', 'schemaVersion', 'state', 'version']);
+  const required = ['schemaVersion', 'state', 'version'];
+  if (keys.some((key) => !allowed.has(key)) || required.some((key) => !keys.includes(key))) {
+    return { error: 'Game progress has an invalid shape.', status: 400 };
+  }
+  return { body };
 }
 
 async function verifyTurnstile(request, env, token, action) {
@@ -366,6 +397,44 @@ export async function handleCommunityApi(request, env) {
       if (!session) return json(request, env, { error: 'Sign in to view saved records.' }, 401);
       const response = await storeFetch(env, `/records?userId=${encodeURIComponent(session.uid)}`);
       return json(request, env, await response.json(), response.status);
+    }
+
+    const gameSaveMatch = path.match(/^\/game-saves\/([a-z0-9-]+)$/);
+    if (gameSaveMatch && request.method === 'GET') {
+      const gameId = gameSaveMatch[1];
+      if (!GAME_SAVE_IDS.has(gameId)) return json(request, env, { error: 'This game does not support account saves.' }, 404);
+      const session = await currentSession(request, env);
+      if (!session) return json(request, env, { error: 'Sign in to load game progress.' }, 401);
+      const response = await storeFetch(
+        env,
+        `/game-save?userId=${encodeURIComponent(session.uid)}&gameId=${encodeURIComponent(gameId)}`
+      );
+      const data = await response.json();
+      return json(request, env, { ...data, accountUserId: session.uid }, response.status);
+    }
+
+    if (gameSaveMatch && request.method === 'POST') {
+      const gameId = gameSaveMatch[1];
+      if (!GAME_SAVE_IDS.has(gameId)) return json(request, env, { error: 'This game does not support account saves.' }, 404);
+      const session = await currentSession(request, env);
+      if (!session) return json(request, env, { error: 'Sign in to save game progress.' }, 401);
+      if (!validCsrf(request, session)) return json(request, env, { error: 'Security token expired. Refresh and try again.' }, 403);
+      const parsed = await readGameSaveBody(request);
+      if (parsed.error) return json(request, env, { error: parsed.error }, parsed.status);
+      const response = await storeFetch(env, '/game-save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: session.uid,
+          gameId,
+          state: parsed.body.state,
+          schemaVersion: parsed.body.schemaVersion,
+          version: parsed.body.version,
+          reset: parsed.body.reset
+        })
+      });
+      const data = await response.json();
+      return json(request, env, { ...data, accountUserId: session.uid }, response.status);
     }
 
     if (path === '/scores' && request.method === 'POST') {

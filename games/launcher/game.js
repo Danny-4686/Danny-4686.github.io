@@ -39,6 +39,9 @@
   const announcement = document.getElementById('launcherAnnouncement');
   const stage = document.getElementById('launcherStage');
   const toastLayer = document.getElementById('launcherToastLayer');
+  const saveBar = document.querySelector('.launcher-save-bar');
+  const saveStatus = document.getElementById('launcherSaveStatus');
+  const saveLink = document.getElementById('launcherSaveLink');
 
   const upgradeDefinitions = [
     { id: 'power', icon: '➤', name: 'Launch Power', baseCost: 120, max: 10, description: 'Adds 7.5% launch velocity per level.' },
@@ -54,30 +57,68 @@
     levels: Object.fromEntries(upgradeDefinitions.map((upgrade) => [upgrade.id, 0]))
   });
 
+  function isBlankState(value) {
+    return value.credits === 0
+      && value.best === 0
+      && Object.values(value.levels).every((levelValue) => levelValue === 0);
+  }
+
   function finite(value, fallback = 0) {
     const number = Number(value);
     return Number.isFinite(number) && number >= 0 ? number : fallback;
   }
 
-  function loadState() {
+  function sanitizeState(raw) {
     const next = blankState();
-    try {
-      const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-      if (!raw || typeof raw !== 'object') return next;
-      next.credits = Math.floor(finite(raw.credits));
-      next.best = Math.floor(finite(raw.best));
-      upgradeDefinitions.forEach((upgrade) => {
-        next.levels[upgrade.id] = Math.min(upgrade.max, Math.floor(finite(raw.levels?.[upgrade.id])));
-      });
-    } catch (_) {}
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return next;
+    next.credits = Math.floor(finite(raw.credits));
+    next.best = Math.floor(finite(raw.best));
+    upgradeDefinitions.forEach((upgrade) => {
+      next.levels[upgrade.id] = Math.min(upgrade.max, Math.floor(finite(raw.levels?.[upgrade.id])));
+    });
     return next;
+  }
+
+  function loadStateFromKey(key) {
+    try { return sanitizeState(JSON.parse(localStorage.getItem(key) || 'null')); }
+    catch (_) { return blankState(); }
+  }
+
+  function installedValue(candidate) {
+    return upgradeDefinitions.reduce((total, upgrade) => {
+      let spent = 0;
+      for (let index = 0; index < candidate.levels[upgrade.id]; index += 1) {
+        spent += Math.floor(upgrade.baseCost * Math.pow(1.72, index));
+      }
+      return total + spent;
+    }, 0);
+  }
+
+  function progressValue(candidate) { return candidate.credits + installedValue(candidate); }
+
+  function mergeStates(localValue, remoteValue) {
+    const local = sanitizeState(localValue);
+    const remote = sanitizeState(remoteValue);
+    const localProgress = progressValue(local);
+    const remoteProgress = progressValue(remote);
+    const localInstalled = installedValue(local);
+    const remoteInstalled = installedValue(remote);
+    const richer = localProgress !== remoteProgress
+      ? (localProgress > remoteProgress ? local : remote)
+      : localInstalled !== remoteInstalled
+        ? (localInstalled > remoteInstalled ? local : remote)
+        : local.best > remote.best ? local : remote;
+    const merged = sanitizeState(richer);
+    merged.best = Math.max(local.best, remote.best);
+    return merged;
   }
 
   const earthImage = new Image();
   earthImage.decoding = 'async';
   earthImage.src = '/assets/images/memory/Earth.png';
 
-  let save = loadState();
+  let activeStorageKey = STORAGE_KEY;
+  let save = loadStateFromKey(activeStorageKey);
   let earth;
   let rings = [];
   let particles = [];
@@ -89,7 +130,6 @@
   let angle = 35;
   let power = .25;
   let chargeStartedAt = 0;
-  let flightStartedAt = 0;
   let last = performance.now();
   let bounces = 0;
   let ringHits = 0;
@@ -104,6 +144,27 @@
   let cameraShake = 0;
   let muzzleFlashUntil = 0;
   let perfectLaunch = false;
+  let cloudCommunity = null;
+  let cloudConnected = false;
+  let cloudVersion = 0;
+  let cloudSaveTimer = 0;
+  let cloudSaveInFlight = false;
+  let cloudSaveQueued = false;
+  let lastCloudSignature = '';
+  let pendingCloudPayload = null;
+  let cloudResetTombstone = false;
+
+  function selectAccountStorage(userId) {
+    const cleanUserId = String(userId || '').replace(/[^A-Za-z0-9-]/g, '').slice(0, 80);
+    if (!cleanUserId) throw new Error('CloudLab account identity is unavailable.');
+    const accountKey = `${STORAGE_KEY}:user:${cleanUserId}`;
+    save = mergeStates(save, loadStateFromKey(accountKey));
+    activeStorageKey = accountKey;
+    try {
+      localStorage.setItem(activeStorageKey, JSON.stringify(save));
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (_) {}
+  }
 
   function level(id) { return save.levels[id] || 0; }
   function upgradeCost(upgrade) { return Math.floor(upgrade.baseCost * Math.pow(1.72, level(upgrade.id))); }
@@ -119,8 +180,176 @@
 
   function format(value) { return Math.max(0, Math.floor(value || 0)).toLocaleString('en-US'); }
 
-  function saveState() {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(save)); } catch (_) {}
+  function saveState(options = {}) {
+    try { localStorage.setItem(activeStorageKey, JSON.stringify(save)); } catch (_) {}
+    if (options.cloud !== false) scheduleCloudSave(Boolean(options.immediate), Boolean(options.keepalive));
+  }
+
+  function setSaveStatus(text, stateName = 'checking', showLink = false) {
+    if (saveStatus) saveStatus.textContent = text;
+    if (saveBar) saveBar.dataset.state = stateName;
+    if (saveLink) saveLink.hidden = !showLink;
+  }
+
+  function waitForCommunity(timeout = 6000) {
+    if (window.CloudLabCommunity?.loadGameSave && window.CloudLabCommunity?.saveGameState) {
+      return Promise.resolve(window.CloudLabCommunity);
+    }
+    return new Promise((resolve) => {
+      let settled = false;
+      const finish = (value) => {
+        if (settled) return;
+        settled = true;
+        window.removeEventListener('cloudlab:community-ready', ready);
+        resolve(value);
+      };
+      const ready = (event) => {
+        const community = event.detail || window.CloudLabCommunity;
+        if (community?.loadGameSave && community?.saveGameState) finish(community);
+      };
+      window.addEventListener('cloudlab:community-ready', ready);
+      window.setTimeout(() => finish(null), timeout);
+    });
+  }
+
+  function scheduleCloudSave(immediate = false, keepalive = false) {
+    if (!cloudConnected) return;
+    window.clearTimeout(cloudSaveTimer);
+    if (immediate) {
+      syncCloudSave({ force: true, keepalive });
+      return;
+    }
+    cloudSaveTimer = window.setTimeout(() => syncCloudSave(), 700);
+  }
+
+  async function syncCloudSave(options = {}) {
+    if (!cloudConnected || !cloudCommunity) return;
+    if (cloudSaveInFlight) {
+      cloudSaveQueued = true;
+      return;
+    }
+    const snapshot = sanitizeState(save);
+    if (cloudResetTombstone && isBlankState(snapshot)) {
+      setSaveStatus('Account progress is reset · your next flight starts fresh.', 'saved');
+      return;
+    }
+    const signature = JSON.stringify(snapshot);
+    if (!options.force && signature === lastCloudSignature) return;
+    cloudSaveInFlight = true;
+    setSaveStatus('Syncing this flight lab to your account…', 'checking');
+    try {
+      const result = await cloudCommunity.saveGameState('launcher', snapshot, {
+        version: cloudVersion,
+        keepalive: Boolean(options.keepalive)
+      });
+      if (result.accountChanged) {
+        cloudConnected = false;
+        setSaveStatus('Account changed · loading the correct save…', 'checking');
+        window.setTimeout(() => location.reload(), 250);
+        return;
+      }
+      if (result.signedOut || !result.authenticated) {
+        cloudConnected = false;
+        setSaveStatus('Signed out · switching to device-only progress…', 'checking');
+        window.setTimeout(() => location.reload(), 250);
+        return;
+      }
+      if (result.conflict && result.save) {
+        cloudVersion = Number(result.save.version || cloudVersion);
+        cloudResetTombstone = result.save.reset === true;
+        const remoteState = sanitizeState(result.save.state);
+        save = cloudResetTombstone ? blankState() : mergeStates(save, remoteState);
+        const mergedSignature = JSON.stringify(save);
+        const remoteSignature = JSON.stringify(remoteState);
+        saveState({ cloud: false });
+        updateHud();
+        refreshUpgrades();
+        if (cloudResetTombstone) {
+          lastCloudSignature = mergedSignature;
+          setSaveStatus('A newer account reset was applied on this device.', 'saved');
+        } else if (mergedSignature === remoteSignature) {
+          lastCloudSignature = remoteSignature;
+          setSaveStatus('Loaded newer progress from your CloudLab account.', 'saved');
+        } else {
+          lastCloudSignature = '';
+          cloudSaveQueued = true;
+        }
+      } else {
+        cloudVersion = Number(result.save?.version || result.version || cloudVersion);
+        cloudResetTombstone = result.save?.reset === true;
+        lastCloudSignature = signature;
+        setSaveStatus(`Saved to ${result.user?.username || 'your CloudLab account'} · ready on any device.`, 'saved');
+      }
+    } catch (error) {
+      setSaveStatus('Local progress is safe. Account sync will retry.', 'error');
+      window.setTimeout(() => scheduleCloudSave(true), error?.status === 429 ? 30000 : 5000);
+    } finally {
+      cloudSaveInFlight = false;
+      if (cloudSaveQueued) {
+        cloudSaveQueued = false;
+        window.setTimeout(() => syncCloudSave({ force: true }), 180);
+      }
+    }
+  }
+
+  function applyCloudPayload(payload) {
+    if (!payload) return;
+    cloudVersion = Number(payload.save?.version || payload.version || 0);
+    cloudResetTombstone = payload.save?.reset === true;
+    const remoteState = payload.save?.state ? sanitizeState(payload.save.state) : null;
+    if (cloudResetTombstone) save = blankState();
+    else if (remoteState) save = mergeStates(save, remoteState);
+    saveState({ cloud: false });
+    updateHud();
+    refreshUpgrades();
+    if (cloudResetTombstone && isBlankState(save)) {
+      lastCloudSignature = JSON.stringify(save);
+      setSaveStatus('Account progress is reset · your next flight starts fresh.', 'saved');
+    } else if (!remoteState || JSON.stringify(save) !== JSON.stringify(remoteState)) {
+      syncCloudSave({ force: true });
+    } else {
+      lastCloudSignature = JSON.stringify(remoteState);
+      setSaveStatus('Loaded progress from your CloudLab account.', 'saved');
+    }
+  }
+
+  function applyPendingCloudPayload() {
+    if (!pendingCloudPayload || status === 'flying' || status === 'charging') return;
+    const payload = pendingCloudPayload;
+    pendingCloudPayload = null;
+    applyCloudPayload(payload);
+  }
+
+  async function initializeCloudSave() {
+    setSaveStatus('Checking CloudLab account…', 'checking');
+    cloudCommunity = await waitForCommunity();
+    if (!cloudCommunity) {
+      setSaveStatus('Saved on this device. Account sync is temporarily unavailable.', 'local');
+      return;
+    }
+    try {
+      const payload = await cloudCommunity.loadGameSave('launcher');
+      if (payload.accountChanged) {
+        setSaveStatus('Account changed · loading the correct save…', 'checking');
+        window.setTimeout(() => location.reload(), 250);
+        return;
+      }
+      if (!payload.authenticated) {
+        setSaveStatus('Saved on this device. Sign in to play anywhere.', 'local', true);
+        return;
+      }
+      selectAccountStorage(payload.user?.id);
+      cloudConnected = true;
+      if (status === 'flying' || status === 'charging') {
+        pendingCloudPayload = payload;
+        setSaveStatus('Account save ready · it will merge after this flight.', 'checking');
+      } else {
+        applyCloudPayload(payload);
+      }
+    } catch (_) {
+      setSaveStatus('Saved on this device. Account sync will retry.', 'error');
+      window.setTimeout(initializeCloudSave, 5000);
+    }
   }
 
   function announce(text) {
@@ -189,7 +418,8 @@
 
   function updateHud() {
     distanceEl.textContent = `${format(distanceMeters())} m`;
-    bestEl.textContent = `${format(Math.max(save.best, distanceMeters()))} m`;
+    const bestText = `${format(Math.max(save.best, distanceMeters()))} m`;
+    if (bestEl.textContent !== bestText) bestEl.textContent = bestText;
     creditsEl.textContent = format(save.credits);
     bounceEl.textContent = String(bounces);
     const velocity = earth ? (earth.grounded ? Math.abs(earth.vx) : Math.hypot(earth.vx, earth.vy)) / 3 : 0;
@@ -231,6 +461,7 @@
     updatePowerUi();
     updateHud();
     refreshUpgrades();
+    applyPendingCloudPayload();
   }
 
   function startCharge() {
@@ -269,7 +500,6 @@
     earth.rotation = 0;
     earth.grounded = false;
     status = 'flying';
-    flightStartedAt = performance.now();
     launchButton.textContent = 'In Flight';
     launchButton.classList.remove('is-charging');
     boostsRemaining = boostCharges();
@@ -318,6 +548,7 @@
     const newBest = distance > save.best;
     save.best = Math.max(save.best, distance);
     saveState();
+    applyPendingCloudPayload();
     launchButton.textContent = 'New Flight';
     angleButtons.querySelectorAll('button').forEach((button) => { button.disabled = false; });
     showMessage(newBest ? 'New distance record!' : endedEarly ? 'Run ended' : 'Flight complete', `${format(distance)} m · ${bounces} ${bounces === 1 ? 'bounce' : 'bounces'} · ${ringHits} ${ringHits === 1 ? 'ring' : 'rings'} · +${format(reward)} credits`);
@@ -495,7 +726,6 @@
 
     const targetCamera = Math.max(0, earth.x - W * .28);
     cameraX += (targetCamera - cameraX) * Math.min(1, dt * 4.2);
-    if (now - flightStartedAt > 90000) finishFlight(false);
     updateHud();
   }
 
@@ -945,9 +1175,10 @@
     }
     updateHud();
   });
-  window.addEventListener('pagehide', saveState);
+  window.addEventListener('pagehide', () => saveState({ immediate: true, keepalive: true }));
 
   renderUpgrades();
   resetFlight();
+  initializeCloudSave();
   requestAnimationFrame(loop);
 })();

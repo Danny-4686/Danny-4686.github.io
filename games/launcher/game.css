@@ -35,6 +35,14 @@
 .launch-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:8px; }
 .launch-button { min-width:150px; touch-action:none; user-select:none; }
 .launch-button.is-charging { color:#2b2108; border-color:rgba(242,199,92,.6); background:var(--gold); box-shadow:0 0 28px rgba(242,199,92,.18); animation:chargePulse .72s ease-in-out infinite; }
+.launcher-save-bar { min-height:42px; margin:10px 2px 0; padding:9px 12px; display:flex; align-items:center; gap:9px; border:1px solid rgba(104,208,223,.16); border-radius:13px; color:var(--muted); background:rgba(3,14,19,.52); font-size:.67rem; font-weight:750; }
+.launcher-save-dot { width:8px; height:8px; flex:0 0 auto; border-radius:50%; background:var(--cyan); box-shadow:0 0 0 4px rgba(104,208,223,.08),0 0 14px rgba(104,208,223,.38); animation:saveDotPulse 1.4s ease-in-out infinite; }
+.launcher-save-bar[data-state="saved"] { border-color:rgba(139,207,155,.18); }
+.launcher-save-bar[data-state="saved"] .launcher-save-dot { background:var(--mint); box-shadow:0 0 0 4px rgba(139,207,155,.08),0 0 14px rgba(139,207,155,.32); animation:none; }
+.launcher-save-bar[data-state="local"] .launcher-save-dot { background:var(--gold); box-shadow:0 0 0 4px rgba(242,199,92,.08),0 0 14px rgba(242,199,92,.28); animation:none; }
+.launcher-save-bar[data-state="error"] .launcher-save-dot { background:var(--danger,#ef7b76); box-shadow:0 0 0 4px rgba(239,123,118,.08); animation:none; }
+.launcher-save-bar a { margin-left:auto; padding:5px 8px; border:1px solid rgba(104,208,223,.22); border-radius:999px; color:var(--cyan); font-size:.62rem; font-weight:900; white-space:nowrap; }
+.launcher-save-bar a:hover { border-color:rgba(104,208,223,.48); background:rgba(104,208,223,.055); }
 
 .launcher-upgrades { margin-top:18px; padding:20px; border:1px solid var(--line); border-radius:21px; background:linear-gradient(180deg,rgba(255,255,255,.025),transparent 28%),rgba(5,19,25,.72); }
 .upgrade-heading { display:flex; align-items:flex-end; justify-content:space-between; gap:20px; margin-bottom:15px; }
@@ -76,6 +84,7 @@
 @keyframes boostFlash { 0% { opacity:0; transform:translateX(-35%); } 35% { opacity:1; } 100% { opacity:0; transform:translateX(35%); } }
 @keyframes chargePulse { 50% { transform:translateY(-1px); box-shadow:0 0 38px rgba(242,199,92,.32); } }
 @keyframes upgradeInstall { 0% { transform:scale(.93); } 45% { transform:scale(1.025); border-color:rgba(139,207,155,.7); box-shadow:0 0 36px rgba(139,207,155,.18); } 100% { transform:none; } }
+@keyframes saveDotPulse { 50% { opacity:.48; transform:scale(.76); } }
 
 @media (max-width: 1020px) {
   .launch-console { grid-template-columns:auto 1fr; }
@@ -97,6 +106,8 @@
   .angle-control button { min-height:44px; flex:1; }
   .launch-actions { grid-column:auto; display:grid; grid-template-columns:1fr 1fr; }
   .launch-actions .launch-button { grid-column:1/-1; min-width:0; }
+  .launcher-save-bar { align-items:flex-start; flex-wrap:wrap; }
+  .launcher-save-bar a { margin-left:17px; }
   .launcher-upgrades { padding:15px; }
   .upgrade-heading { align-items:flex-start; flex-direction:column; }
   .launcher-upgrade-grid { grid-template-columns:1fr 1fr; }
@@ -112,5 +123,5 @@
 
 @media (prefers-reduced-motion: reduce) {
   .game-message,.power-track span,.launcher-upgrade-card,.launcher-stage,.launcher-toast,.upgrade-levels i { transition:none; }
-  .launcher-stage::after,.launch-button.is-charging,.launcher-upgrade-card.just-upgraded { animation:none!important; }
+  .launcher-stage::after,.launch-button.is-charging,.launcher-upgrade-card.just-upgraded,.launcher-save-dot { animation:none!important; }
 }

@@ -3,7 +3,7 @@
 This Worker now serves two separate systems:
 
 - `admin.danny4686.com` — private owner workspace authenticated with the approved GitHub account.
-- `api.danny4686.com` — public account, leaderboard, record, and Journal-like API.
+- `api.danny4686.com` — public account, cross-device game-save, leaderboard, record, and Journal-like API.
 
 The public website pages are:
 
@@ -57,11 +57,13 @@ Use a non-owner test account and verify:
 3. Duplicate usernames are rejected without regard to capitalization.
 4. The account remains signed in after reopening the browser.
 5. Signing out clears the session.
-6. A local game record is copied to the account after signing in.
-7. Only an improved personal record replaces the saved value.
-8. The player appears on the correct leaderboard.
-9. A full Journal article can be liked and unliked once per account.
-10. Mobile Safari and desktop browsers both complete signup and login.
+6. Existing local progress in Flappy Cloud, CloudLab Clicker, and Launcher merges into the account after signing in.
+7. Progress reloads on a second signed-in device without granting offline Clicker production.
+8. A stale tab cannot overwrite a newer save, and an explicit Clicker reset stays reset.
+9. Only an improved personal record replaces the saved leaderboard value.
+10. The player appears on the correct leaderboard for all three new games.
+11. A full Journal article can be liked and unliked once per account.
+12. Mobile Safari and desktop browsers both complete signup, login, save sync, and leaderboard loading.
 
 ## 5. Before a larger public launch
 

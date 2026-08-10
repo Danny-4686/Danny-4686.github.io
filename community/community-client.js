@@ -2,9 +2,12 @@
   const API = 'https://api.danny4686.com/v1';
   let session = { authenticated: false, user: null, csrfToken: '' };
   let sessionPromise = null;
+  let sessionGeneration = 0;
   let profileOverlay = null;
   let profileReturnFocus = null;
   let profileRequest = 0;
+  let leaderboardRefreshTimer = 0;
+  let lastLeaderboardRefreshAt = 0;
 
   if (!document.querySelector('link[data-public-profile-ui]')) {
     const styles = document.createElement('link');
@@ -24,8 +27,24 @@
     '/games/breakout/': { id: 'breakout', name: 'Breakout', selector: '#best', metric: 'points', direction: 'desc' },
     '/games/connect-four/': { id: 'connect-four', name: 'Connect Four', selector: '#cyanWins', metric: 'wins', direction: 'desc' },
     '/games/cloud-hopper/': { id: 'cloud-hopper', name: 'Cloud Hopper', selector: '#best', metric: 'points', direction: 'desc' },
+    '/games/flappy-cloud/': { id: 'flappy-cloud', name: 'Flappy Cloud', selector: '#best', metric: 'points', direction: 'desc' },
+    '/games/cloudlab-clicker/': { id: 'cloudlab-clicker', name: 'CloudLab Clicker', selector: '#allTime', attribute: 'data-record-value', metric: 'clouds', direction: 'desc', syncDelay: 5000 },
+    '/games/launcher/': { id: 'launcher', name: 'Launcher', selector: '#bestDistance', metric: 'distance', direction: 'desc' },
     '/games/tower-stacker/': { id: 'tower-stacker', name: 'Tower Stacker', selector: '#best', metric: 'height', direction: 'desc' }
   };
+
+  function publishCommunity() {
+    const community = {
+      session,
+      refresh: refreshSession,
+      submitRecord,
+      loadGameSave,
+      saveGameState
+    };
+    window.CloudLabCommunity = community;
+    window.dispatchEvent(new CustomEvent('cloudlab:community-ready', { detail: community }));
+    return community;
+  }
 
   async function api(path, options = {}) {
     const headers = new Headers(options.headers || {});
@@ -33,18 +52,25 @@
     if (options.method && options.method !== 'GET' && session.csrfToken) headers.set('X-CloudLab-CSRF', session.csrfToken);
     const response = await fetch(`${API}${path}`, { ...options, headers, credentials: 'include' });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.error || 'The community service could not complete that request.');
+    if (!response.ok) {
+      const error = new Error(data.error || 'The community service could not complete that request.');
+      error.status = response.status;
+      error.data = data;
+      throw error;
+    }
     return data;
   }
 
   function loadSession() {
     if (!sessionPromise) {
+      const generation = ++sessionGeneration;
       sessionPromise = api('/session').then((data) => {
+        if (generation !== sessionGeneration) return session;
         session = data;
-        window.CloudLabCommunity = { session, refresh: refreshSession, submitRecord };
+        publishCommunity();
         return session;
       }).catch(() => {
-        sessionPromise = null;
+        if (generation === sessionGeneration) sessionPromise = null;
         return session;
       });
     }
@@ -174,8 +200,9 @@
     return Object.entries(GAME_CONFIG).find(([route]) => path.startsWith(route))?.[1] || null;
   }
 
-  function parseRecord(config, text) {
-    const value = String(text || '').trim();
+  function parseRecord(config, target) {
+    const rawValue = config.attribute ? target?.getAttribute(config.attribute) : target?.textContent;
+    const value = String(rawValue || '').trim();
     if (!value || value === '--') return null;
     if (config.metric === 'memory') {
       const match = value.match(/(\d+)\s*\/\s*(\d+):(\d+)/);
@@ -196,6 +223,8 @@
     if (config.metric === 'rally') return `${entry.value} rally`;
     if (config.metric === 'wins') return `${entry.value} wins`;
     if (config.metric === 'height') return `${Number(entry.value).toLocaleString()} high`;
+    if (config.metric === 'clouds') return `${Number(entry.value).toLocaleString()} Clouds`;
+    if (config.metric === 'distance') return `${Number(entry.value).toLocaleString()} m`;
     return Number(entry.value).toLocaleString();
   }
 
@@ -206,6 +235,77 @@
       method: 'POST',
       body: JSON.stringify({ gameId, value, secondary, extra })
     });
+  }
+
+  async function loadGameSave(gameId) {
+    await refreshSession();
+    if (!session.authenticated) {
+      return { authenticated: false, user: null, gameId, save: null };
+    }
+    const expectedUserId = session.user?.id || '';
+    let data;
+    try {
+      data = await api(`/game-saves/${encodeURIComponent(gameId)}`);
+    } catch (error) {
+      if (error.status !== 401) throw error;
+      await refreshSession();
+      if (!session.authenticated) return { authenticated: false, signedOut: true, user: null, gameId, save: null };
+      data = await api(`/game-saves/${encodeURIComponent(gameId)}`);
+    }
+    if (data.accountUserId && data.accountUserId !== expectedUserId) {
+      await refreshSession();
+      if (!session.authenticated) return { authenticated: false, signedOut: true, user: null, gameId, save: null };
+      if (data.accountUserId !== session.user?.id) {
+        return { authenticated: true, accountChanged: true, user: session.user, gameId, save: null };
+      }
+    }
+    return { ...data, authenticated: true, user: session.user };
+  }
+
+  async function saveGameState(gameId, state, options = {}) {
+    await loadSession();
+    if (!session.authenticated) {
+      return { ok: false, authenticated: false, signedOut: true, gameId };
+    }
+    const expectedUserId = session.user?.id || '';
+    const request = {
+      method: 'POST',
+      body: JSON.stringify({
+        state,
+        schemaVersion: 1,
+        version: Number.isSafeInteger(options.version) && options.version >= 0 ? options.version : 0,
+        reset: options.reset === true
+      })
+    };
+    if (options.keepalive) request.keepalive = true;
+    let data;
+    try {
+      data = await api(`/game-saves/${encodeURIComponent(gameId)}`, request);
+    } catch (error) {
+      if (error.status === 409 && error.data?.save) {
+        if (error.data.accountUserId && error.data.accountUserId !== expectedUserId) {
+          await refreshSession();
+          return { ok: false, authenticated: session.authenticated, accountChanged: true, gameId, user: session.user };
+        }
+        return { ...error.data, conflict: true, authenticated: true, user: session.user };
+      }
+      const canRefresh = error.status === 401 || (error.status === 403 && /security token expired/i.test(error.message));
+      if (!canRefresh) throw error;
+      await refreshSession();
+      if (!session.authenticated) {
+        return { ok: false, authenticated: false, signedOut: true, gameId };
+      }
+      if (session.user?.id !== expectedUserId) {
+        return { ok: false, authenticated: true, accountChanged: true, gameId, user: session.user };
+      }
+      data = await api(`/game-saves/${encodeURIComponent(gameId)}`, request);
+    }
+    if (data.accountUserId && data.accountUserId !== expectedUserId) {
+      await refreshSession();
+      return { ok: false, authenticated: session.authenticated, accountChanged: true, gameId, user: session.user };
+    }
+    if (data.leaderboardImproved) scheduleLeaderboardRefresh();
+    return { ...data, authenticated: true, user: session.user };
   }
 
   async function initHeaderAccount() {
@@ -363,7 +463,7 @@
     let lastSent = '';
     let timer = null;
     async function sync() {
-      const record = parseRecord(config, target.textContent);
+      const record = parseRecord(config, target);
       if (!record) return;
       const signature = `${record.value}:${record.secondary ?? ''}`;
       if (signature === lastSent) return;
@@ -372,7 +472,7 @@
         const result = await submitRecord(config.id, record.value, record.secondary, record.extra);
         if (result.improved) {
           toast(`${config.name} personal best saved to your account.`, 'success');
-          window.setTimeout(initLeaderboardRefresh, 450);
+          scheduleLeaderboardRefresh();
         }
       } catch (error) {
         lastSent = '';
@@ -380,20 +480,44 @@
       }
     }
 
+    let syncRunning = false;
+    let pending = false;
     function schedule() {
-      window.clearTimeout(timer);
-      timer = window.setTimeout(sync, 750);
+      if (timer || syncRunning) {
+        pending = true;
+        return;
+      }
+      timer = window.setTimeout(async () => {
+        timer = null;
+        syncRunning = true;
+        await sync();
+        syncRunning = false;
+        if (pending) {
+          pending = false;
+          schedule();
+        }
+      }, config.syncDelay || 750);
     }
 
-    new MutationObserver(schedule).observe(target, { childList: true, characterData: true, subtree: true });
+    new MutationObserver(schedule).observe(target, { attributes: true, childList: true, characterData: true, subtree: true });
     schedule();
   }
 
   async function initLeaderboardRefresh() {
     const existing = document.querySelector('.community-leaderboard');
-    if (!existing) return;
-    existing.remove();
+    if (existing) existing.remove();
     await initLeaderboard();
+  }
+
+  function scheduleLeaderboardRefresh() {
+    if (leaderboardRefreshTimer) return;
+    const elapsed = Date.now() - lastLeaderboardRefreshAt;
+    const wait = Math.max(450, 5000 - elapsed);
+    leaderboardRefreshTimer = window.setTimeout(async () => {
+      leaderboardRefreshTimer = 0;
+      lastLeaderboardRefreshAt = Date.now();
+      await initLeaderboardRefresh();
+    }, wait);
   }
 
   async function init() {
@@ -403,6 +527,6 @@
     initRecordSync();
   }
 
-  window.CloudLabCommunity = { session, refresh: refreshSession, submitRecord };
+  publishCommunity();
   init();
 })();

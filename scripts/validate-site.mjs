@@ -135,9 +135,13 @@ if (duplicateGameIds.length) fail(arcadePage, `duplicate game IDs: ${duplicateGa
 for (const gameId of ['cloud-hopper', 'cloudlab-clicker', 'launcher', 'flappy-cloud']) {
   if (!arcadeGameIds.includes(gameId)) fail(arcadePage, `missing arcade card ${gameId}`);
 }
-for (const token of ['id="featuredGameGrid"', 'arcade-expansion.css?v=', 'games.js?v=20260810']) {
+for (const token of ['id="featuredGameGrid"', 'id="featuredGameStatus">TOP GAMES', 'arcade-expansion.css?v=', 'games.js?v=20260810']) {
   if (!arcadeHtml.includes(token)) fail(arcadePage, `missing featured arcade token ${token}`);
 }
+const arcadeScriptPath = join(root, 'games', 'games.js');
+const arcadeScript = readFileSync(arcadeScriptPath, 'utf8');
+if (!arcadeScript.includes("featuredStatus.textContent = 'TOP GAMES'")) fail(arcadeScriptPath, 'featured games must be labeled Top Games');
+if (/ADMIN PICKS|CLOUDLAB PICKS/.test(arcadeScript)) fail(arcadeScriptPath, 'featured games label must not include an admin label or count');
 
 const sitemapPath = join(root, 'sitemap.xml');
 const sitemap = readFileSync(sitemapPath, 'utf8');
@@ -147,14 +151,28 @@ for (const gameId of arcadeGameIds) {
 }
 
 const requiredGameControls = new Map([
-  ['flappy-cloud', ['id="flappyCanvas"', 'id="startButton"', 'id="pauseButton"', 'game.js']],
-  ['cloudlab-clicker', ['id="cloudCore"', 'id="buildingList"', 'id="boostList"', 'id="buyModes"', 'id="productionNetwork"', 'id="activeResearch"', 'game.js']],
-  ['launcher', ['id="launcherCanvas"', 'id="launchButton"', 'id="launcherUpgradeGrid"', 'id="angleButtons"', 'id="phaseLabel"', 'id="launcherToastLayer"', 'game.js']]
+  ['flappy-cloud', ['id="flappyCanvas"', 'id="startButton"', 'id="pauseButton"', 'id="flappySaveStatus"', 'game.js']],
+  ['cloudlab-clicker', ['id="cloudCore"', 'id="buildingList"', 'id="boostList"', 'id="buyModes"', 'id="productionNetwork"', 'id="activeResearch"', 'id="clickerTabs"', 'id="cloudSignIn"', 'game.js']],
+  ['launcher', ['id="launcherCanvas"', 'id="launchButton"', 'id="launcherUpgradeGrid"', 'id="angleButtons"', 'id="phaseLabel"', 'id="launcherToastLayer"', 'id="launcherSaveStatus"', 'game.js']]
 ]);
 for (const [slug, tokens] of requiredGameControls) {
   const path = join(root, 'games', slug, 'index.html');
   const html = readFileSync(path, 'utf8');
   tokens.forEach((token) => { if (!html.includes(token)) fail(path, `missing required game control ${token}`); });
+}
+
+const communityClientPath = join(root, 'community', 'community-client.js');
+const communityClient = readFileSync(communityClientPath, 'utf8');
+for (const token of ["id: 'flappy-cloud'", "id: 'cloudlab-clicker'", "id: 'launcher'", 'loadGameSave', 'saveGameState']) {
+  if (!communityClient.includes(token)) fail(communityClientPath, `missing account game integration ${token}`);
+}
+const clickerScript = readFileSync(join(root, 'games', 'cloudlab-clicker', 'game.js'), 'utf8');
+for (const token of [':user:', ':reset-pending', 'persistResetIntent', 'save.reset === true', 'spentProgressValue']) {
+  if (!clickerScript.includes(token)) fail(join(root, 'games', 'cloudlab-clicker', 'game.js'), `missing durable account-save safeguard ${token}`);
+}
+const launcherScript = readFileSync(join(root, 'games', 'launcher', 'game.js'), 'utf8');
+if (/flightStartedAt\s*>\s*\d+/.test(launcherScript)) {
+  fail(join(root, 'games', 'launcher', 'game.js'), 'Launcher must not end a run before the Earth naturally settles');
 }
 
 const settingsPath = join(root, 'site-settings.json');

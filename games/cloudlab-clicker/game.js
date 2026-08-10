@@ -23,6 +23,10 @@
   const nextMilestoneFill = document.getElementById('nextMilestoneFill');
   const toastLayer = document.getElementById('clickerToastLayer');
   const corePanel = cloudCore?.closest('.core-panel');
+  const clickerPanel = document.querySelector('.clicker-panel');
+  const cloudSignIn = document.getElementById('cloudSignIn');
+  const clickerTabs = document.getElementById('clickerTabs');
+  const compactLayout = window.matchMedia?.('(max-width: 1179px)');
 
   if (!cloudCore || !buildingList || !boostList || !productionNetwork || !activeResearch) return;
 
@@ -61,29 +65,66 @@
     achievements: []
   });
 
+  function isBlankState(value) {
+    return value.clouds === 0
+      && value.total === 0
+      && value.clicks === 0
+      && Object.values(value.counts).every((count) => count === 0)
+      && value.boosts.length === 0
+      && value.achievements.length === 0;
+  }
+
   function finite(value, fallback = 0) {
     const number = Number(value);
     return Number.isFinite(number) && number >= 0 ? number : fallback;
   }
 
-  function loadState() {
+  function sanitizeState(raw) {
     const next = blankState();
-    try {
-      const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-      if (!raw || typeof raw !== 'object') return next;
-      next.clouds = finite(raw.clouds);
-      next.total = finite(raw.total);
-      next.clicks = Math.floor(finite(raw.clicks));
-      buildings.forEach((building) => {
-        next.counts[building.id] = Math.floor(finite(raw.counts?.[building.id]));
-      });
-      next.boosts = Array.isArray(raw.boosts) ? [...new Set(raw.boosts.filter((id) => boosts.some((boost) => boost.id === id)))] : [];
-      next.achievements = Array.isArray(raw.achievements) ? [...new Set(raw.achievements.filter((id) => achievements.some((achievement) => achievement.id === id)))] : [];
-    } catch (_) {}
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return next;
+    next.clouds = finite(raw.clouds);
+    next.total = Math.max(next.clouds, finite(raw.total));
+    next.clicks = Math.floor(finite(raw.clicks));
+    buildings.forEach((building) => {
+      next.counts[building.id] = Math.floor(finite(raw.counts?.[building.id]));
+    });
+    next.boosts = Array.isArray(raw.boosts) ? [...new Set(raw.boosts.filter((id) => boosts.some((boost) => boost.id === id)))] : [];
+    next.achievements = Array.isArray(raw.achievements) ? [...new Set(raw.achievements.filter((id) => achievements.some((achievement) => achievement.id === id)))] : [];
     return next;
   }
 
-  let state = loadState();
+  function loadStateFromKey(key) {
+    try { return sanitizeState(JSON.parse(localStorage.getItem(key) || 'null')); }
+    catch (_) { return blankState(); }
+  }
+
+  function spentProgressValue(candidate) {
+    const buildingValue = buildings.reduce(
+      (total, building) => total + candidate.counts[building.id] * building.baseCost,
+      0
+    );
+    const boostValue = boosts.reduce(
+      (total, boost) => total + (candidate.boosts.includes(boost.id) ? boost.cost : 0),
+      0
+    );
+    return buildingValue + boostValue;
+  }
+
+  function mergeStates(localValue, remoteValue) {
+    const local = sanitizeState(localValue);
+    const remote = sanitizeState(remoteValue);
+    // Keep a complete progression branch so spent Clouds cannot be restored by
+    // combining one device's upgrades with another device's unspent balance.
+    if (local.total !== remote.total) return sanitizeState(local.total > remote.total ? local : remote);
+    const localSpent = spentProgressValue(local);
+    const remoteSpent = spentProgressValue(remote);
+    if (localSpent !== remoteSpent) return sanitizeState(localSpent > remoteSpent ? local : remote);
+    if (local.clicks !== remote.clicks) return sanitizeState(local.clicks > remote.clicks ? local : remote);
+    return remote;
+  }
+
+  let activeStorageKey = STORAGE_KEY;
+  let state = loadStateFromKey(activeStorageKey);
   let combo = 0;
   let lastClickAt = 0;
   let buyMode = '1';
@@ -92,6 +133,42 @@
   let lastMachinePulse = 0;
   let lastAmbientEffect = 0;
   let saveTimer = 0;
+  let activeView = 'core';
+  let lastComboBurstLevel = 0;
+  let cloudCommunity = null;
+  let cloudConnected = false;
+  let cloudVersion = 0;
+  let cloudSaveTimer = 0;
+  let cloudSaveInFlight = false;
+  let cloudSaveQueued = false;
+  let lastCloudSignature = '';
+  let cloudResetPending = false;
+  let cloudResetTombstone = false;
+  let cloudUsername = '';
+  let cloudResetIntentKey = '';
+
+  function persistResetIntent(pending) {
+    cloudResetPending = pending;
+    if (!cloudResetIntentKey) return;
+    try {
+      if (pending) localStorage.setItem(cloudResetIntentKey, '1');
+      else localStorage.removeItem(cloudResetIntentKey);
+    } catch (_) {}
+  }
+
+  function selectAccountStorage(userId) {
+    const cleanUserId = String(userId || '').replace(/[^A-Za-z0-9-]/g, '').slice(0, 80);
+    if (!cleanUserId) throw new Error('CloudLab account identity is unavailable.');
+    const accountKey = `${STORAGE_KEY}:user:${cleanUserId}`;
+    state = mergeStates(state, loadStateFromKey(accountKey));
+    activeStorageKey = accountKey;
+    cloudResetIntentKey = `${accountKey}:reset-pending`;
+    try {
+      localStorage.setItem(activeStorageKey, JSON.stringify(state));
+      localStorage.removeItem(STORAGE_KEY);
+      cloudResetPending = localStorage.getItem(cloudResetIntentKey) === '1';
+    } catch (_) {}
+  }
 
   function format(value) {
     const number = Math.max(0, Number(value) || 0);
@@ -153,16 +230,198 @@
     return { amount, cost };
   }
 
-  function save(showMessage = false) {
+  function setAccountSaveStatus(text, stateName = 'syncing', showSignIn = false) {
+    saveStatus.textContent = text;
+    if (clickerPanel) clickerPanel.dataset.saveState = stateName;
+    if (cloudSignIn) cloudSignIn.hidden = !showSignIn;
+  }
+
+  function waitForCommunity(timeout = 6000) {
+    if (window.CloudLabCommunity?.loadGameSave && window.CloudLabCommunity?.saveGameState) {
+      return Promise.resolve(window.CloudLabCommunity);
+    }
+    return new Promise((resolve) => {
+      let settled = false;
+      const finish = (value) => {
+        if (settled) return;
+        settled = true;
+        window.removeEventListener('cloudlab:community-ready', ready);
+        resolve(value);
+      };
+      const ready = (event) => {
+        const community = event.detail || window.CloudLabCommunity;
+        if (community?.loadGameSave && community?.saveGameState) finish(community);
+      };
+      window.addEventListener('cloudlab:community-ready', ready);
+      window.setTimeout(() => finish(null), timeout);
+    });
+  }
+
+  function save(showMessage = false, options = {}) {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      localStorage.setItem(activeStorageKey, JSON.stringify(state));
       if (showMessage) {
-        saveStatus.textContent = 'Progress saved on this device.';
-        window.clearTimeout(saveTimer);
-        saveTimer = window.setTimeout(() => { saveStatus.textContent = 'Progress saves automatically on this device.'; }, 2600);
+        if (cloudConnected) setAccountSaveStatus('Saving to your CloudLab account…', 'syncing');
+        else {
+          setAccountSaveStatus('Progress saved on this device.', 'local', true);
+          window.clearTimeout(saveTimer);
+          saveTimer = window.setTimeout(() => {
+            if (!cloudConnected) setAccountSaveStatus('Progress saves here. Sign in to play anywhere.', 'local', true);
+          }, 2600);
+        }
       }
     } catch (_) {
-      if (showMessage) saveStatus.textContent = 'This browser could not save progress.';
+      if (showMessage) setAccountSaveStatus('This browser could not save progress.', 'error');
+    }
+    if (options.cloud !== false) scheduleCloudSave(Boolean(options.immediate || showMessage), Boolean(options.keepalive));
+  }
+
+  function scheduleCloudSave(immediate = false, keepalive = false) {
+    if (!cloudConnected) return;
+    window.clearTimeout(cloudSaveTimer);
+    if (immediate) {
+      syncCloudSave({ force: true, keepalive });
+      return;
+    }
+    cloudSaveTimer = window.setTimeout(() => syncCloudSave(), 650);
+  }
+
+  async function syncCloudSave(options = {}) {
+    if (!cloudConnected || !cloudCommunity) return;
+    if (cloudSaveInFlight) {
+      cloudSaveQueued = true;
+      return;
+    }
+    const reset = options.reset === true || cloudResetPending;
+    const snapshot = reset ? blankState() : sanitizeState(state);
+    if (!reset && cloudResetTombstone && isBlankState(snapshot)) {
+      setAccountSaveStatus('Account progress is reset · new play will start a fresh save.', 'synced');
+      return;
+    }
+    const signature = JSON.stringify(snapshot);
+    if (!reset && !options.force && signature === lastCloudSignature) return;
+    cloudSaveInFlight = true;
+    setAccountSaveStatus(reset ? 'Resetting account progress…' : 'Syncing progress to your account…', 'syncing');
+    try {
+      const result = await cloudCommunity.saveGameState('cloudlab-clicker', snapshot, {
+        version: cloudVersion,
+        reset,
+        keepalive: Boolean(options.keepalive)
+      });
+      if (result.accountChanged) {
+        cloudConnected = false;
+        setAccountSaveStatus('Account changed · loading the correct save…', 'syncing');
+        window.setTimeout(() => location.reload(), 250);
+        return;
+      }
+      if (result.signedOut || !result.authenticated) {
+        cloudConnected = false;
+        setAccountSaveStatus('Signed out · switching to device-only progress…', 'syncing');
+        window.setTimeout(() => location.reload(), 250);
+        return;
+      }
+      if (result.conflict && result.save) {
+        cloudVersion = Number(result.save.version || cloudVersion);
+        cloudResetTombstone = result.save.reset === true;
+        const remoteState = sanitizeState(result.save.state);
+        state = cloudResetTombstone ? blankState() : mergeStates(state, remoteState);
+        const mergedSignature = JSON.stringify(state);
+        const remoteSignature = JSON.stringify(remoteState);
+        save(false, { cloud: false });
+        unlockAchievements();
+        renderAchievements();
+        renderActiveResearch();
+        renderStats();
+        refreshShop();
+        refreshNetwork();
+        if (cloudResetTombstone) {
+          lastCloudSignature = mergedSignature;
+          persistResetIntent(false);
+          setAccountSaveStatus('A newer account reset was applied on this device.', 'synced');
+        } else if (mergedSignature === remoteSignature) {
+          lastCloudSignature = remoteSignature;
+          setAccountSaveStatus('Loaded newer progress from your CloudLab account.', 'synced');
+        } else {
+          lastCloudSignature = '';
+          cloudSaveQueued = true;
+        }
+      } else {
+        cloudVersion = Number(result.save?.version || result.version || cloudVersion);
+        if (reset) persistResetIntent(false);
+        cloudResetTombstone = result.save?.reset === true;
+        lastCloudSignature = signature;
+        setAccountSaveStatus(`Saved to ${cloudUsername || result.user?.username || 'your CloudLab account'} · ready on any device.`, 'synced');
+        if (reset && !isBlankState(state)) cloudSaveQueued = true;
+      }
+    } catch (error) {
+      if (reset) persistResetIntent(true);
+      setAccountSaveStatus('Local progress is safe. Account sync will retry.', 'error');
+      window.setTimeout(() => scheduleCloudSave(true, true), error?.status === 429 ? 30000 : 5000);
+    } finally {
+      cloudSaveInFlight = false;
+      if (cloudSaveQueued) {
+        cloudSaveQueued = false;
+        window.setTimeout(() => syncCloudSave({ force: true }), 180);
+      }
+    }
+  }
+
+  function applyCloudPayload(payload) {
+    cloudVersion = Number(payload.save?.version || payload.version || 0);
+    cloudUsername = payload.user?.username || '';
+    if (cloudResetPending) {
+      save(false, { cloud: false });
+      setAccountSaveStatus('Finishing your account reset…', 'syncing');
+      syncCloudSave({ force: true, reset: true, keepalive: true });
+      return;
+    }
+    cloudResetTombstone = payload.save?.reset === true;
+    const remoteState = payload.save?.state ? sanitizeState(payload.save.state) : null;
+    if (cloudResetTombstone) state = blankState();
+    else if (remoteState) state = mergeStates(state, remoteState);
+    save(false, { cloud: false });
+    unlockAchievements();
+    renderAchievements();
+    renderActiveResearch();
+    renderStats();
+    refreshShop();
+    refreshNetwork();
+    if (cloudResetTombstone && isBlankState(state)) {
+      lastCloudSignature = JSON.stringify(state);
+      setAccountSaveStatus('Account progress is reset · new play will start a fresh save.', 'synced');
+    } else if (!remoteState || JSON.stringify(state) !== JSON.stringify(remoteState)) {
+      syncCloudSave({ force: true });
+    } else {
+      lastCloudSignature = JSON.stringify(remoteState);
+      setAccountSaveStatus(`Loaded progress for ${cloudUsername || 'your CloudLab account'}.`, 'synced');
+    }
+  }
+
+  async function initializeCloudSave() {
+    setAccountSaveStatus('Checking CloudLab account…', 'syncing');
+    cloudCommunity = await waitForCommunity();
+    if (!cloudCommunity) {
+      setAccountSaveStatus('Progress saves on this device. Account sync is temporarily unavailable.', 'local');
+      return;
+    }
+    try {
+      const payload = await cloudCommunity.loadGameSave('cloudlab-clicker');
+      if (payload.accountChanged) {
+        setAccountSaveStatus('Account changed · loading the correct save…', 'syncing');
+        window.setTimeout(() => location.reload(), 250);
+        return;
+      }
+      if (!payload.authenticated) {
+        setAccountSaveStatus('Progress saves here. Sign in to play anywhere.', 'local', true);
+        return;
+      }
+      selectAccountStorage(payload.user?.id);
+      cloudConnected = true;
+      applyCloudPayload(payload);
+      showToast('Account progress linked', 'CloudLab Clicker now follows you to every signed-in device.', 'mint');
+    } catch (_) {
+      setAccountSaveStatus('Progress saves on this device. Account sync will retry.', 'error');
+      window.setTimeout(initializeCloudSave, 5000);
     }
   }
 
@@ -225,9 +484,14 @@
   }
 
   function renderStats() {
-    cloudCount.textContent = format(state.clouds);
-    cloudRate.textContent = format(cps());
-    allTime.textContent = format(state.total);
+    const cloudText = format(state.clouds);
+    const rateText = format(cps());
+    const totalText = format(state.total);
+    const rawTotal = String(Math.floor(state.total));
+    if (cloudCount.textContent !== cloudText) cloudCount.textContent = cloudText;
+    if (cloudRate.textContent !== rateText) cloudRate.textContent = rateText;
+    if (allTime.textContent !== totalText) allTime.textContent = totalText;
+    if (allTime.dataset.recordValue !== rawTotal) allTime.dataset.recordValue = rawTotal;
     coreValue.textContent = `+${format(clickPower())}`;
     comboValue.textContent = `${comboMultiplier().toFixed(2)}×`;
     comboFill.style.width = `${Math.min(100, combo * 2)}%`;
@@ -237,31 +501,96 @@
     updateMilestone();
   }
 
-  function createParticle(value, critical) {
+  function getParticleOrigin(event) {
+    const layerRect = particleLayer.getBoundingClientRect();
+    const coreRect = cloudCore.getBoundingClientRect();
+    const fromPointer = event && event.detail !== 0 && Number.isFinite(event.clientX) && Number.isFinite(event.clientY);
+    const x = fromPointer ? event.clientX - layerRect.left : coreRect.left + coreRect.width / 2 - layerRect.left;
+    const y = fromPointer ? event.clientY - layerRect.top : coreRect.top + coreRect.height / 2 - layerRect.top;
+    return {
+      x: Math.max(18, Math.min(layerRect.width - 18, x)),
+      y: Math.max(18, Math.min(layerRect.height - 18, y))
+    };
+  }
+
+  function trimParticleLayer() {
+    while (particleLayer.childElementCount > 120) particleLayer.firstElementChild?.remove();
+  }
+
+  function createParticle(value, critical, event) {
+    trimParticleLayer();
+    const origin = getParticleOrigin(event);
     const particle = document.createElement('span');
     particle.className = `click-particle${critical ? ' critical' : ''}`;
     particle.textContent = `${critical ? 'CRIT ' : ''}+${format(value)}`;
     particle.style.setProperty('--drift', `${(Math.random() - .5) * 100}px`);
-    particle.style.left = `${40 + Math.random() * 20}%`;
+    particle.style.left = `${origin.x + (Math.random() - .5) * 20}px`;
+    particle.style.top = `${origin.y - 4}px`;
     particleLayer.appendChild(particle);
     window.setTimeout(() => particle.remove(), reducedMotion ? 120 : 950);
 
     if (reducedMotion) return;
+    const flash = document.createElement('span');
+    flash.className = `impact-flash${critical ? ' critical' : ''}`;
+    flash.style.left = `${origin.x}px`;
+    flash.style.top = `${origin.y}px`;
+    particleLayer.appendChild(flash);
+    window.setTimeout(() => flash.remove(), 520);
+
     const ripple = document.createElement('span');
     ripple.className = `core-ripple${critical ? ' critical' : ''}`;
     cloudCore.appendChild(ripple);
     window.setTimeout(() => ripple.remove(), 720);
-    for (let index = 0; index < (critical ? 11 : 6); index += 1) {
+    for (let index = 0; index < (critical ? 14 : 8); index += 1) {
       const spark = document.createElement('span');
       spark.className = `click-spark${critical ? ' critical' : ''}`;
       const angle = Math.random() * Math.PI * 2;
       const distance = 55 + Math.random() * (critical ? 100 : 60);
       spark.style.setProperty('--spark-x', `${Math.cos(angle) * distance}px`);
       spark.style.setProperty('--spark-y', `${Math.sin(angle) * distance}px`);
-      spark.style.left = `${45 + Math.random() * 10}%`;
-      spark.style.top = `${43 + Math.random() * 12}%`;
+      spark.style.left = `${origin.x + (Math.random() - .5) * 10}px`;
+      spark.style.top = `${origin.y + (Math.random() - .5) * 10}px`;
       particleLayer.appendChild(spark);
       window.setTimeout(() => spark.remove(), 760);
+    }
+
+    for (let index = 0; index < (critical ? 7 : 4); index += 1) {
+      const cloudlet = document.createElement('span');
+      const angle = Math.random() * Math.PI * 2;
+      const distance = 42 + Math.random() * (critical ? 94 : 60);
+      cloudlet.className = `click-cloudlet${critical ? ' critical' : ''}`;
+      cloudlet.style.left = `${origin.x}px`;
+      cloudlet.style.top = `${origin.y}px`;
+      cloudlet.style.setProperty('--cloud-x', `${Math.cos(angle) * distance}px`);
+      cloudlet.style.setProperty('--cloud-y', `${Math.sin(angle) * distance - 18}px`);
+      cloudlet.style.setProperty('--cloud-rotate', `${Math.round((Math.random() - .5) * 36)}deg`);
+      particleLayer.appendChild(cloudlet);
+      window.setTimeout(() => cloudlet.remove(), 860);
+    }
+
+    for (let index = 0; index < (critical ? 6 : 3); index += 1) {
+      const streak = document.createElement('span');
+      const angle = Math.random() * 360;
+      streak.className = `energy-streak${critical ? ' critical' : ''}`;
+      streak.style.left = `${origin.x}px`;
+      streak.style.top = `${origin.y}px`;
+      streak.style.setProperty('--streak-angle', `${angle}deg`);
+      streak.style.setProperty('--streak-travel', `${35 + Math.random() * (critical ? 75 : 45)}px`);
+      streak.style.setProperty('--streak-size', `${22 + Math.random() * 28}px`);
+      particleLayer.appendChild(streak);
+      window.setTimeout(() => streak.remove(), 620);
+    }
+
+    const comboBurstLevel = Math.floor(combo / 10);
+    if (comboBurstLevel > lastComboBurstLevel) {
+      lastComboBurstLevel = comboBurstLevel;
+      const burst = document.createElement('span');
+      burst.className = 'combo-burst';
+      burst.textContent = `${comboMultiplier().toFixed(2)}× flow`;
+      burst.style.left = `${origin.x}px`;
+      burst.style.top = `${origin.y}px`;
+      particleLayer.appendChild(burst);
+      window.setTimeout(() => burst.remove(), 850);
     }
     if (critical) {
       corePanel?.classList.remove('critical-flash');
@@ -283,9 +612,10 @@
     window.setTimeout(() => cloud.remove(), 2600);
   }
 
-  function pressCore() {
+  function pressCore(event) {
     const now = performance.now();
     combo = now - lastClickAt < 1100 ? Math.min(50, combo + 1) : 1;
+    if (combo < 10) lastComboBurstLevel = 0;
     lastClickAt = now;
     const critical = Math.random() < criticalChance();
     const gain = clickPower() * comboMultiplier() * (critical ? criticalMultiplier() : 1);
@@ -297,7 +627,7 @@
     cloudCore.classList.add('is-pressed');
     if (critical) cloudCore.classList.add('is-critical');
     window.setTimeout(() => cloudCore.classList.remove('is-pressed', 'is-critical'), 180);
-    createParticle(gain, critical);
+    createParticle(gain, critical, event);
     renderStats();
     refreshShop();
     unlockAchievements();
@@ -326,11 +656,14 @@
       const scene = document.createElement('div');
       scene.className = 'machine-scene';
       scene.setAttribute('aria-hidden', 'true');
+      const stage = document.createElement('div');
+      stage.className = 'machine-stage';
       for (let index = 0; index < 6; index += 1) {
         const part = document.createElement('span');
         part.className = `machine-part part-${index + 1}`;
-        scene.appendChild(part);
+        stage.appendChild(part);
       }
+      scene.appendChild(stage);
 
       const footer = document.createElement('div');
       footer.className = 'machine-footer';
@@ -564,6 +897,52 @@
     requestAnimationFrame(loop);
   }
 
+  function syncClickerSections() {
+    if (!clickerTabs || !clickerPanel) return;
+    const compact = Boolean(compactLayout?.matches);
+    const views = [...clickerPanel.querySelectorAll('[data-clicker-view]')];
+    const tabs = [...clickerTabs.querySelectorAll('[data-clicker-tab]')];
+    clickerPanel.dataset.activeView = activeView;
+    views.forEach((view) => {
+      const selected = view.dataset.clickerView === activeView;
+      view.hidden = compact && !selected;
+      view.setAttribute('aria-hidden', String(compact && !selected));
+    });
+    tabs.forEach((tab) => {
+      const selected = tab.dataset.clickerTab === activeView;
+      tab.classList.toggle('is-active', selected);
+      tab.setAttribute('aria-selected', String(selected));
+      tab.tabIndex = selected ? 0 : -1;
+    });
+  }
+
+  function selectClickerSection(view) {
+    if (!clickerTabs?.querySelector(`[data-clicker-tab="${view}"]`)) return;
+    activeView = view;
+    syncClickerSections();
+  }
+
+  clickerTabs?.addEventListener('click', (event) => {
+    const tab = event.target.closest('[data-clicker-tab]');
+    if (!tab) return;
+    selectClickerSection(tab.dataset.clickerTab);
+  });
+  clickerTabs?.addEventListener('keydown', (event) => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+    const tabs = [...clickerTabs.querySelectorAll('[data-clicker-tab]')];
+    const currentIndex = Math.max(0, tabs.indexOf(event.target.closest('[data-clicker-tab]')));
+    const nextIndex = event.key === 'Home'
+      ? 0
+      : event.key === 'End'
+        ? tabs.length - 1
+        : (currentIndex + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+    event.preventDefault();
+    selectClickerSection(tabs[nextIndex].dataset.clickerTab);
+    tabs[nextIndex].focus();
+  });
+  if (compactLayout?.addEventListener) compactLayout.addEventListener('change', syncClickerSections);
+  else compactLayout?.addListener?.(syncClickerSections);
+
   cloudCore.addEventListener('click', pressCore);
   buyModes.addEventListener('click', (event) => {
     const button = event.target.closest('[data-buy]');
@@ -578,30 +957,37 @@
   });
   document.getElementById('saveButton').addEventListener('click', () => save(true));
   document.getElementById('resetButton').addEventListener('click', () => {
-    if (!window.confirm('Reset all CloudLab Clicker progress on this device? This cannot be undone.')) return;
+    const scope = cloudConnected ? 'on this device and your CloudLab account' : 'on this device';
+    if (!window.confirm(`Reset all CloudLab Clicker progress ${scope}? This cannot be undone.`)) return;
     state = blankState();
     combo = 0;
     lastClickAt = 0;
-    save(false);
+    save(false, { cloud: false });
     renderAchievements();
     renderStats();
     refreshShop();
     refreshNetwork();
     renderActiveResearch();
-    saveStatus.textContent = 'Progress reset.';
+    if (cloudConnected) {
+      persistResetIntent(true);
+      syncCloudSave({ force: true, reset: true, keepalive: true });
+    } else {
+      setAccountSaveStatus('Progress reset on this device.', 'local', true);
+    }
     announce('CloudLab Clicker progress reset.');
   });
   document.addEventListener('visibilitychange', () => {
     lastFrame = performance.now();
     updateVisibilityStatus();
-    save(false);
+    save(false, { immediate: document.hidden, keepalive: document.hidden });
   });
-  window.addEventListener('pagehide', () => save(false));
-  window.setInterval(() => save(false), 5000);
+  window.addEventListener('pagehide', () => save(false, { immediate: true, keepalive: true }));
+  window.setInterval(() => save(false), 15000);
 
   renderBuildings();
   renderBoosts();
   renderNetwork();
+  syncClickerSections();
   unlockAchievements();
   renderAchievements();
   renderActiveResearch();
@@ -609,5 +995,6 @@
   renderStats();
   refreshShop();
   refreshNetwork();
+  initializeCloudSave();
   requestAnimationFrame(loop);
 })();

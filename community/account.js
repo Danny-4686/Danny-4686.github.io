@@ -325,7 +325,8 @@
   const GAME_LABELS = {
     snake: 'Snake', '2048': '2048', 'memory-match': 'Memory Match', pong: 'Pong',
     'tic-tac-toe': 'Tic-Tac-Toe', minesweeper: 'Minesweeper', breakout: 'Breakout',
-    'connect-four': 'Connect Four', 'cloud-hopper': 'Cloud Hopper', 'tower-stacker': 'Tower Stacker'
+    'connect-four': 'Connect Four', 'cloud-hopper': 'Cloud Hopper', 'flappy-cloud': 'Flappy Cloud',
+    'cloudlab-clicker': 'CloudLab Clicker', launcher: 'Launcher', 'tower-stacker': 'Tower Stacker'
   };
 
   function formatRecord(record) {
@@ -334,6 +335,8 @@
       return `${record.value} moves · ${Math.floor(time / 60)}:${String(time % 60).padStart(2, '0')}`;
     }
     if (record.gameId === 'minesweeper') return `${record.value}s`;
+    if (record.gameId === 'cloudlab-clicker') return `${Number(record.value).toLocaleString('en-US')} Clouds`;
+    if (record.gameId === 'launcher') return `${Number(record.value).toLocaleString('en-US')} m`;
     return Number(record.value).toLocaleString('en-US');
   }
 
