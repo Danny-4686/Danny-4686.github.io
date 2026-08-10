@@ -152,7 +152,7 @@ for (const gameId of arcadeGameIds) {
 
 const requiredGameControls = new Map([
   ['flappy-cloud', ['id="flappyCanvas"', 'id="startButton"', 'id="pauseButton"', 'id="flappySaveStatus"', 'game.js']],
-  ['cloudlab-clicker', ['id="cloudCore"', 'id="buildingList"', 'id="boostList"', 'id="buyModes"', 'id="productionNetwork"', 'id="activeResearch"', 'id="clickerTabs"', 'id="cloudSignIn"', 'id="clickRateStatus"', 'rate-limiter.js?v=1', 'game.js']],
+  ['cloudlab-clicker', ['id="cloudCore"', 'id="buildingList"', 'id="boostList"', 'id="buyModes"', 'id="productionNetwork"', 'id="activeResearch"', 'id="clickerTabs"', 'id="cloudSignIn"', 'id="clickRateStatus"', 'rate-limiter.js?v=1', 'save-policy.js?v=1', 'game.js?v=5']],
   ['launcher', ['id="launcherCanvas"', 'id="launchButton"', 'id="launcherUpgradeGrid"', 'id="angleButtons"', 'id="phaseLabel"', 'id="launcherToastLayer"', 'id="launcherSaveStatus"', 'game.js']]
 ]);
 for (const [slug, tokens] of requiredGameControls) {
@@ -167,12 +167,16 @@ for (const token of ["id: 'flappy-cloud'", "id: 'cloudlab-clicker'", "id: 'launc
   if (!communityClient.includes(token)) fail(communityClientPath, `missing account game integration ${token}`);
 }
 const clickerScript = readFileSync(join(root, 'games', 'cloudlab-clicker', 'game.js'), 'utf8');
-for (const token of [':user:', ':reset-pending', 'persistResetIntent', 'save.reset === true', 'spentProgressValue', 'coreInputLimiter?.attempt', 'event?.isTrusted === false', '10 CPS CAP ACTIVE']) {
+for (const token of [':user:', ':reset-pending', 'persistResetIntent', 'save.reset === true', 'spentProgressValue', 'coreInputLimiter?.attempt', 'event?.isTrusted === false', '10 CPS CAP ACTIVE', 'cloud autosave runs every minute', 'save(false, { cloud: false })', 'scheduleCloudSave()']) {
   if (!clickerScript.includes(token)) fail(join(root, 'games', 'cloudlab-clicker', 'game.js'), `missing durable account-save safeguard ${token}`);
 }
 const clickRateLimiterScript = readFileSync(join(root, 'games', 'cloudlab-clicker', 'rate-limiter.js'), 'utf8');
 for (const token of ['createRollingLimiter', 'acceptedAt.length >= limit', 'retryAfterMs']) {
   if (!clickRateLimiterScript.includes(token)) fail(join(root, 'games', 'cloudlab-clicker', 'rate-limiter.js'), `missing click-rate limiter safeguard ${token}`);
+}
+const clickerSavePolicyScript = readFileSync(join(root, 'games', 'cloudlab-clicker', 'save-policy.js'), 'utf8');
+for (const token of ['LOCAL_SAVE_INTERVAL_MS = 15000', 'CLOUD_SAVE_INTERVAL_MS = 60000', 'createCloudSaveQueue', 'pending.notify ||=']) {
+  if (!clickerSavePolicyScript.includes(token)) fail(join(root, 'games', 'cloudlab-clicker', 'save-policy.js'), `missing batched save-policy safeguard ${token}`);
 }
 const launcherScript = readFileSync(join(root, 'games', 'launcher', 'game.js'), 'utf8');
 if (/flightStartedAt\s*>\s*\d+/.test(launcherScript)) {
