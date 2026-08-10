@@ -31,7 +31,6 @@ jobs:
       - run: npm ci
       - run: npm test
       - id: cloudflare_deploy
-        continue-on-error: true
         uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -39,20 +38,22 @@ jobs:
           workingDirectory: cloudflare-admin
           command: deploy
       - name: Verify live community API
-        id: community_smoke
-        if: steps.cloudflare_deploy.outcome == 'success'
-        continue-on-error: true
         working-directory: .
         run: |
-          sleep 12
-          HEALTH_CODE="$(curl -sS --retry 3 --retry-delay 2 --retry-all-errors --max-time 40 -o /tmp/community-health.json -w '%{http_code}' 'https://api.danny4686.com/v1/health?deep=1' || printf '000')"
           CHECK_NAME="DeployCheck${GITHUB_RUN_NUMBER}"
           CHECK_NAME="${CHECK_NAME:0:20}"
-          USERNAME_CODE="$(curl -sS --retry 3 --retry-delay 2 --retry-all-errors --max-time 25 -o /tmp/community-username.json -w '%{http_code}' "https://api.danny4686.com/v1/username?name=${CHECK_NAME}" || printf '000')"
-          SESSION_CODE="$(curl -sS --retry 3 --retry-delay 2 --retry-all-errors --max-time 25 -o /tmp/community-session.json -w '%{http_code}' 'https://api.danny4686.com/v1/session' || printf '000')"
-          ADMIN_CODE="$(curl -sS --retry 3 --retry-delay 2 --retry-all-errors --max-time 25 -o /tmp/admin-root.html -w '%{http_code}' 'https://admin.danny4686.com/' || printf '000')"
-          export HEALTH_CODE USERNAME_CODE SESSION_CODE ADMIN_CODE CHECK_NAME
-          python - <<'PY'
+          EXPECTED_BUILD="$(sed -n "s/^const COMMUNITY_BUILD = '\([^']*\)';$/\1/p" cloudflare-admin/src/community-api-runtime.js)"
+          test -n "$EXPECTED_BUILD"
+          SMOKE_OK=0
+
+          for ATTEMPT in 1 2 3 4 5 6 7 8; do
+            HEALTH_CODE="$(curl -sS --retry 2 --retry-delay 2 --retry-all-errors --max-time 25 -o /tmp/community-health.json -w '%{http_code}' 'https://api.danny4686.com/v1/health?deep=1' || printf '000')"
+            USERNAME_CODE="$(curl -sS --retry 2 --retry-delay 2 --retry-all-errors --max-time 20 -o /tmp/community-username.json -w '%{http_code}' "https://api.danny4686.com/v1/username?name=${CHECK_NAME}" || printf '000')"
+            SESSION_CODE="$(curl -sS --retry 2 --retry-delay 2 --retry-all-errors --max-time 20 -o /tmp/community-session.json -w '%{http_code}' 'https://api.danny4686.com/v1/session' || printf '000')"
+            ADMIN_CODE="$(curl -sS --retry 2 --retry-delay 2 --retry-all-errors --max-time 20 -o /tmp/admin-root.html -w '%{http_code}' 'https://admin.danny4686.com/' || printf '000')"
+            export HEALTH_CODE USERNAME_CODE SESSION_CODE ADMIN_CODE CHECK_NAME EXPECTED_BUILD ATTEMPT
+
+            if python - <<'PY'
           import json, os
           from pathlib import Path
 
@@ -74,6 +75,8 @@ jobs:
           result = {
               "healthHttpStatus": os.environ.get("HEALTH_CODE", "000"),
               "health": health,
+              "expectedBuild": os.environ.get("EXPECTED_BUILD", ""),
+              "attempt": int(os.environ.get("ATTEMPT", "0")),
               "usernameHttpStatus": os.environ.get("USERNAME_CODE", "000"),
               "usernameCheck": username,
               "usernameChecked": os.environ.get("CHECK_NAME", ""),
@@ -87,7 +90,7 @@ jobs:
           healthy = (
               os.environ.get("HEALTH_CODE") == "200"
               and health.get("ok") is True
-              and health.get("build") == "2026-08-10.2"
+              and health.get("build") == os.environ.get("EXPECTED_BUILD")
               and health.get("storageReady") is True
               and health.get("accountFeaturesConfigured") is True
               and os.environ.get("USERNAME_CODE") == "200"
@@ -100,6 +103,13 @@ jobs:
           if not healthy:
               raise SystemExit(1)
           PY
-      - name: Fail workflow when deployment or live verification failed
-        if: steps.cloudflare_deploy.outcome != 'success' || steps.community_smoke.outcome != 'success'
-        run: exit 1
+            then
+              SMOKE_OK=1
+              break
+            fi
+
+            if [ "$ATTEMPT" -lt 8 ]; then sleep 8; fi
+          done
+
+          cat /tmp/community-smoke.json
+          test "$SMOKE_OK" -eq 1
