@@ -32,7 +32,7 @@
   <link rel="stylesheet" href="/assets/css/site-loader.css?v=20260808">
   <script src="/assets/js/site-loader.js?v=20260808"></script>
   <link rel="stylesheet" href="/assets/css/hub.css">
-  <link rel="stylesheet" href="game.css?v=3">
+  <link rel="stylesheet" href="game.css?v=4">
   <link rel="stylesheet" href="/assets/css/site-quality.css?v=20260808">
 </head>
 <body class="premium-game">
@@ -64,7 +64,7 @@
           <div class="core-status"><span class="active-dot"></span><span id="productionStatus">ACTIVE TAB PRODUCTION</span></div>
           <div class="core-copy"><p class="eyebrow">POWER SOURCE</p><h2 id="coreTitle">CloudLab Core</h2><p>Every press creates Clouds. Keep a rhythm to raise your combo and trigger critical surges.</p></div>
           <div class="core-wrap">
-            <button id="cloudCore" class="cloud-core" type="button" aria-label="Generate Clouds">
+            <button id="cloudCore" class="cloud-core" type="button" aria-label="Generate Clouds" aria-describedby="clickRateStatus">
               <span class="core-ring ring-one"></span><span class="core-ring ring-two"></span>
               <img src="/assets/images/optimized/cloudlab-logo-256.webp" width="256" height="256" alt="">
               <span class="core-glow"></span>
@@ -72,7 +72,7 @@
             <div id="particleLayer" class="particle-layer" aria-hidden="true"></div>
           </div>
           <div class="core-value"><strong id="coreValue">+1</strong><span>per press</span></div>
-          <div class="combo-card"><div><span>COMBO</span><strong id="comboValue">1.00×</strong></div><div class="combo-track"><span id="comboFill"></span></div></div>
+          <div class="combo-card"><div><span>COMBO <small id="clickRateStatus" class="click-rate-status">10 CPS MAX</small></span><strong id="comboValue">1.00×</strong></div><div class="combo-track"><span id="comboFill"></span></div></div>
           <div class="active-research" id="activeResearch" role="group" aria-label="Active Core research"><span class="research-empty">Research boosts appear around the Core.</span></div>
           <div class="active-note"><span>◎</span><p><strong>No offline grinding.</strong> Automatic production pauses whenever this tab is hidden or closed.</p></div>
         </section>
@@ -103,6 +103,7 @@
 
   <footer class="site-footer"><a class="footer-brand" href="/"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>CloudLab Clicker</small></span></a><p>© <span id="year"></span> Danny4686.</p></footer>
   <script src="/assets/js/hub.js?v=20260810"></script>
-  <script src="game.js?v=3"></script>
+  <script src="rate-limiter.js?v=1"></script>
+  <script src="game.js?v=4"></script>
 </body>
 </html>

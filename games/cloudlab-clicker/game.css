@@ -83,6 +83,10 @@
 .combo-card > div:first-child { display:flex; justify-content:space-between; align-items:center; margin-bottom:9px; }
 .combo-card span { color:var(--muted); font-size:.62rem; font-weight:900; letter-spacing:.08em; }
 .combo-card strong { color:var(--cyan); font-size:.8rem; }
+.click-rate-status { margin-left:5px; padding:2px 5px; border:1px solid rgba(104,208,223,.2); border-radius:999px; color:#83cdd8; background:rgba(104,208,223,.055); font-size:.48rem; font-style:normal; letter-spacing:.06em; white-space:nowrap; transition:color .16s ease,border-color .16s ease,background .16s ease,box-shadow .16s ease; }
+.click-rate-status.is-capped { color:#ffe4a0; border-color:rgba(242,199,92,.5); background:rgba(242,199,92,.12); box-shadow:0 0 16px rgba(242,199,92,.16); }
+.core-panel.input-capped .combo-card { border-color:rgba(242,199,92,.3); }
+.core-panel.input-capped .cloud-core { box-shadow:inset 0 0 52px rgba(242,199,92,.12),0 28px 65px rgba(0,0,0,.38),0 0 42px rgba(242,199,92,.14); }
 .combo-track { height:5px; overflow:hidden; border-radius:999px; background:rgba(255,255,255,.055); }
 .combo-track span { display:block; width:0; height:100%; border-radius:inherit; background:linear-gradient(90deg,var(--cyan),var(--mint),var(--gold)); box-shadow:0 0 16px rgba(104,208,223,.36); transition:width .14s ease; }
 .active-research { width:100%; max-width:390px; min-height:42px; margin-top:10px; display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:6px; }
