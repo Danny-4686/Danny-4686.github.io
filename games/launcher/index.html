@@ -32,7 +32,7 @@
   <link rel="stylesheet" href="/assets/css/site-loader.css?v=20260808">
   <script src="/assets/js/site-loader.js?v=20260808"></script>
   <link rel="stylesheet" href="/assets/css/hub.css">
-  <link rel="stylesheet" href="game.css?v=1">
+  <link rel="stylesheet" href="game.css?v=2">
   <link rel="stylesheet" href="/assets/css/site-quality.css?v=20260808">
 </head>
 <body class="premium-game">
@@ -57,7 +57,7 @@
     <section class="game-panel launcher-panel reveal" aria-label="Launcher game">
       <div class="launcher-stage" id="launcherStage">
         <canvas id="launcherCanvas" width="1120" height="630" role="img" aria-label="Earth launcher flight area"></canvas>
-        <div class="flight-hud" aria-hidden="true"><span id="velocityLabel">0 m/s</span><span id="boostLabel">1 BOOST</span></div>
+        <div class="flight-hud" aria-hidden="true"><div><span id="phaseLabel">READY</span><span id="velocityLabel">0 m/s</span></div><div><span id="ringLabel">0 RINGS</span><span id="boostLabel">1 BOOST</span></div></div>
         <div class="game-message" id="launcherMessage"><div><p class="eyebrow">FLIGHT CONTROL</p><h2 id="launcherMessageTitle">Prepare launch</h2><p id="launcherMessageText">Choose an angle, hold the launch button to charge, then release at the brightest point.</p></div></div>
       </div>
 
@@ -71,11 +71,12 @@
       <div class="flight-report" id="flightReport"><span>LAST FLIGHT</span><p>Launch the Earth to create your first flight report.</p></div>
       <p class="control-note"><span class="desktop-only">Hold Space to charge and release to launch.</span> During flight, tap the stage or press Space to use a boost.</p>
       <p class="sr-only" id="launcherAnnouncement" aria-live="polite"></p>
+      <div id="launcherToastLayer" class="launcher-toast-layer" aria-live="polite" aria-atomic="true"></div>
     </section>
   </main>
 
   <footer class="site-footer"><a class="footer-brand" href="/"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>Launcher</small></span></a><p>© <span id="year"></span> Danny4686.</p></footer>
   <script src="/assets/js/hub.js?v=20260808"></script>
-  <script src="game.js?v=1"></script>
+  <script src="game.js?v=2"></script>
 </body>
 </html>
