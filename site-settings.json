@@ -1,5 +1,10 @@
 {
   "forceSiteIntro": false,
+  "featuredGames": [
+    "cloud-hopper",
+    "cloudlab-clicker",
+    "launcher"
+  ],
   "updatedAt": "2026-08-08T09:24:23.017Z",
   "updatedBy": "Danny-4686"
 }

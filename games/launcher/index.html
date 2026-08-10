@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Charge the launcher, send the CloudLab Earth flying, bounce across the horizon, and upgrade every part of the run.">
+  <meta name="theme-color" content="#061117">
+  <meta name="author" content="Danny4686">
+  <meta name="application-name" content="CloudLab">
+  <meta name="apple-mobile-web-app-title" content="CloudLab">
+  <link rel="canonical" href="https://danny4686.com/games/launcher/">
+  <meta property="og:site_name" content="CloudLab">
+  <meta property="og:title" content="Launcher | CloudLab Arcade">
+  <meta property="og:description" content="Launch the CloudLab Earth, ride the physics, collect sky rings, and upgrade for a farther flight.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://danny4686.com/games/launcher/">
+  <meta property="og:image" content="https://danny4686.com/assets/images/cloudlab-logo.png">
+  <meta property="og:image:alt" content="CloudLab Earth logo">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Launcher | CloudLab Arcade">
+  <meta name="twitter:description" content="Launch the CloudLab Earth and upgrade for a farther flight.">
+  <meta name="twitter:image" content="https://danny4686.com/assets/images/cloudlab-logo.png">
+  <title>Launcher | CloudLab Arcade</title>
+  <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="icon" href="/assets/icons/favicon-48x48.png" type="image/png" sizes="48x48">
+  <link rel="icon" href="/assets/icons/favicon-32x32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" sizes="180x180">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/site-loader.css?v=20260808">
+  <script src="/assets/js/site-loader.js?v=20260808"></script>
+  <link rel="stylesheet" href="/assets/css/hub.css">
+  <link rel="stylesheet" href="game.css?v=1">
+  <link rel="stylesheet" href="/assets/css/site-quality.css?v=20260808">
+</head>
+<body class="premium-game">
+  <header class="hub-header">
+    <a class="hub-brand" href="/" aria-label="Return to Danny4686.com"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>Danny4686</strong><small>CloudLab Studio</small></span></a>
+    <nav class="hub-nav" aria-label="Site navigation"><a href="/#about">About</a><a href="/#projects">Projects</a><a class="active" href="/games/" aria-current="page">Games</a><a href="/journal/">Journal</a><a href="/#connect">Connect</a></nav>
+    <a class="header-action" href="/games/">All Games</a>
+  </header>
+
+  <main class="page-shell game-page launcher-page">
+    <a class="back-link reveal" href="/games/">← Back to Browser Games</a>
+    <div class="game-heading reveal">
+      <div><p class="eyebrow">CLOUDLAB ARCADE</p><h1>Launcher</h1><p>Charge the cannon, launch the CloudLab Earth, use midair boosts, and upgrade every run.</p></div>
+      <div class="score-row" role="group" aria-label="Launcher totals">
+        <div class="score-chip"><small>DISTANCE</small><strong id="distance">0 m</strong></div>
+        <div class="score-chip"><small>BEST</small><strong id="bestDistance">0 m</strong></div>
+        <div class="score-chip"><small>CREDITS</small><strong id="credits">0</strong></div>
+        <div class="score-chip"><small>BOUNCES</small><strong id="bounceCount">0</strong></div>
+      </div>
+    </div>
+
+    <section class="game-panel launcher-panel reveal" aria-label="Launcher game">
+      <div class="launcher-stage" id="launcherStage">
+        <canvas id="launcherCanvas" width="1120" height="630" role="img" aria-label="Earth launcher flight area"></canvas>
+        <div class="flight-hud" aria-hidden="true"><span id="velocityLabel">0 m/s</span><span id="boostLabel">1 BOOST</span></div>
+        <div class="game-message" id="launcherMessage"><div><p class="eyebrow">FLIGHT CONTROL</p><h2 id="launcherMessageTitle">Prepare launch</h2><p id="launcherMessageText">Choose an angle, hold the launch button to charge, then release at the brightest point.</p></div></div>
+      </div>
+
+      <div class="launch-console">
+        <div class="angle-control"><span>LAUNCH ANGLE</span><div id="angleButtons" role="group" aria-label="Launch angle"><button type="button" data-angle="25" aria-pressed="false">25°</button><button type="button" class="active" data-angle="35" aria-pressed="true">35°</button><button type="button" data-angle="45" aria-pressed="false">45°</button></div></div>
+        <div class="power-control"><div><span>LAUNCH POWER</span><strong id="powerValue">25%</strong></div><div class="power-track"><span id="powerFill"></span><i></i></div></div>
+        <div class="launch-actions"><button class="game-button primary launch-button" id="launchButton" type="button">Hold to Charge</button><button class="game-button" id="boostButton" type="button" disabled>Use Boost</button><button class="game-button" id="endRunButton" type="button">Reset Run</button></div>
+      </div>
+
+      <section class="launcher-upgrades" aria-labelledby="launcherUpgradeTitle"><div class="upgrade-heading"><div><p class="eyebrow">LAUNCH LAB</p><h2 id="launcherUpgradeTitle">Upgrade the next flight.</h2><p>Credits are earned from distance, bounces, and every sky ring collected.</p></div><span id="upgradeSummary">0 upgrades installed</span></div><div id="launcherUpgradeGrid" class="launcher-upgrade-grid"></div></section>
+      <div class="flight-report" id="flightReport"><span>LAST FLIGHT</span><p>Launch the Earth to create your first flight report.</p></div>
+      <p class="control-note"><span class="desktop-only">Hold Space to charge and release to launch.</span> During flight, tap the stage or press Space to use a boost.</p>
+      <p class="sr-only" id="launcherAnnouncement" aria-live="polite"></p>
+    </section>
+  </main>
+
+  <footer class="site-footer"><a class="footer-brand" href="/"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>Launcher</small></span></a><p>© <span id="year"></span> Danny4686.</p></footer>
+  <script src="/assets/js/hub.js?v=20260808"></script>
+  <script src="game.js?v=1"></script>
+</body>
+</html>

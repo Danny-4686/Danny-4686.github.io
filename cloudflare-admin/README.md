@@ -83,3 +83,7 @@ journal/posts.json
 All files for one publish action are committed atomically through GitHub's Git Data API.
 
 A Coming Soon entry updates `journal/posts.json` but does not create a clickable article page.
+
+## Site settings
+
+The dashboard's **Settings** tab manages both the Earth loading-animation rule and the arcade's featured lineup. Featured games are stored in `site-settings.json` in display order; the dashboard accepts 1–6 unique games and publishes the change through the same protected repository writer.
