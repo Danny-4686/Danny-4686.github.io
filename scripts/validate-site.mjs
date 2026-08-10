@@ -148,8 +148,8 @@ for (const gameId of arcadeGameIds) {
 
 const requiredGameControls = new Map([
   ['flappy-cloud', ['id="flappyCanvas"', 'id="startButton"', 'id="pauseButton"', 'game.js']],
-  ['cloudlab-clicker', ['id="cloudCore"', 'id="buildingList"', 'id="boostList"', 'id="buyModes"', 'game.js']],
-  ['launcher', ['id="launcherCanvas"', 'id="launchButton"', 'id="launcherUpgradeGrid"', 'id="angleButtons"', 'game.js']]
+  ['cloudlab-clicker', ['id="cloudCore"', 'id="buildingList"', 'id="boostList"', 'id="buyModes"', 'id="productionNetwork"', 'id="activeResearch"', 'game.js']],
+  ['launcher', ['id="launcherCanvas"', 'id="launchButton"', 'id="launcherUpgradeGrid"', 'id="angleButtons"', 'id="phaseLabel"', 'id="launcherToastLayer"', 'game.js']]
 ]);
 for (const [slug, tokens] of requiredGameControls) {
   const path = join(root, 'games', slug, 'index.html');
@@ -160,9 +160,14 @@ for (const [slug, tokens] of requiredGameControls) {
 const settingsPath = join(root, 'site-settings.json');
 try {
   const settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
-  const expectedFeatured = ['cloud-hopper', 'cloudlab-clicker', 'launcher'];
-  if (JSON.stringify(settings.featuredGames) !== JSON.stringify(expectedFeatured)) {
-    fail(settingsPath, `default featured games must be ${expectedFeatured.join(', ')}`);
+  const selected = settings.featuredGames;
+  if (!Array.isArray(selected) || selected.length < 1 || selected.length > 6) {
+    fail(settingsPath, 'featured games must contain between 1 and 6 entries');
+  } else {
+    const unknown = selected.filter((id) => !arcadeGameIds.includes(id));
+    const duplicate = selected.filter((id, index) => selected.indexOf(id) !== index);
+    if (unknown.length) fail(settingsPath, `unknown featured games: ${[...new Set(unknown)].join(', ')}`);
+    if (duplicate.length) fail(settingsPath, `duplicate featured games: ${[...new Set(duplicate)].join(', ')}`);
   }
 } catch (error) {
   fail(settingsPath, `invalid settings JSON: ${error.message}`);

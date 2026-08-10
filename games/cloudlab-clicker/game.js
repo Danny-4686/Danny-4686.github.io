@@ -17,8 +17,14 @@
   const saveStatus = document.getElementById('saveStatus');
   const announcement = document.getElementById('clickerAnnouncement');
   const buyModes = document.getElementById('buyModes');
+  const productionNetwork = document.getElementById('productionNetwork');
+  const activeResearch = document.getElementById('activeResearch');
+  const nextMilestone = document.getElementById('nextMilestone');
+  const nextMilestoneFill = document.getElementById('nextMilestoneFill');
+  const toastLayer = document.getElementById('clickerToastLayer');
+  const corePanel = cloudCore?.closest('.core-panel');
 
-  if (!cloudCore || !buildingList || !boostList) return;
+  if (!cloudCore || !buildingList || !boostList || !productionNetwork || !activeResearch) return;
 
   const buildings = [
     { id: 'drone', icon: '⌁', name: 'Cursor Drone', baseCost: 15, cps: .1, description: 'A tiny drone taps the Core for you.' },
@@ -31,12 +37,12 @@
   ];
 
   const boosts = [
-    { id: 'tap-array', name: 'Reinforced Touch', cost: 200, description: 'Double every manual Core press.' },
-    { id: 'static-charge', name: 'Static Charge', cost: 3500, description: 'Triple tap power again and improve critical surges.' },
-    { id: 'drone-sync', name: 'Drone Synchronizer', cost: 12000, description: 'Double Cursor Drone and Cloud Farm production.' },
-    { id: 'weather-ai', name: 'Weather Intelligence', cost: 100000, description: 'Double Weather Station and Sky Factory output.' },
-    { id: 'golden-core', name: 'Golden Core', cost: 1000000, description: 'Critical presses become much more common and powerful.' },
-    { id: 'quantum-network', name: 'Quantum Network', cost: 8000000, description: 'Double all automatic Cloud production.' }
+    { id: 'tap-array', icon: '◉', name: 'Reinforced Touch', cost: 200, description: 'Double every manual Core press.' },
+    { id: 'static-charge', icon: 'ϟ', name: 'Static Charge', cost: 3500, description: 'Triple tap power again and improve critical surges.' },
+    { id: 'drone-sync', icon: '⌘', name: 'Drone Synchronizer', cost: 12000, description: 'Double Cursor Drone and Cloud Farm production.' },
+    { id: 'weather-ai', icon: '◌', name: 'Weather Intelligence', cost: 100000, description: 'Double Weather Station and Sky Factory output.' },
+    { id: 'golden-core', icon: '✦', name: 'Golden Core', cost: 1000000, description: 'Critical presses become much more common and powerful.' },
+    { id: 'quantum-network', icon: '∞', name: 'Quantum Network', cost: 8000000, description: 'Double all automatic Cloud production.' }
   ];
 
   const achievements = [
@@ -83,6 +89,8 @@
   let buyMode = '1';
   let lastFrame = performance.now();
   let lastShopRefresh = 0;
+  let lastMachinePulse = 0;
+  let lastAmbientEffect = 0;
   let saveTimer = 0;
 
   function format(value) {
@@ -163,6 +171,43 @@
     window.setTimeout(() => { announcement.textContent = text; }, 20);
   }
 
+  function showToast(title, detail, tone = 'cyan') {
+    if (!toastLayer) return;
+    const toast = document.createElement('div');
+    toast.className = `clicker-toast tone-${tone}`;
+    const icon = document.createElement('span');
+    icon.textContent = tone === 'gold' ? '✦' : tone === 'mint' ? '✓' : '＋';
+    const copy = document.createElement('div');
+    const heading = document.createElement('strong');
+    const description = document.createElement('small');
+    heading.textContent = title;
+    description.textContent = detail;
+    copy.append(heading, description);
+    toast.append(icon, copy);
+    toastLayer.appendChild(toast);
+    while (toastLayer.children.length > 3) toastLayer.firstElementChild?.remove();
+    requestAnimationFrame(() => toast.classList.add('is-visible'));
+    window.setTimeout(() => {
+      toast.classList.remove('is-visible');
+      window.setTimeout(() => toast.remove(), 260);
+    }, reducedMotion ? 1500 : 2800);
+  }
+
+  function updateMilestone() {
+    if (!nextMilestone || !nextMilestoneFill) return;
+    const upcoming = achievements.find((achievement) => state.total < achievement.target);
+    if (!upcoming) {
+      nextMilestone.textContent = 'All records complete';
+      nextMilestoneFill.style.width = '100%';
+      return;
+    }
+    const previousIndex = achievements.indexOf(upcoming) - 1;
+    const previous = previousIndex >= 0 ? achievements[previousIndex].target : 0;
+    const progress = Math.max(0, Math.min(1, (state.total - previous) / (upcoming.target - previous)));
+    nextMilestone.textContent = upcoming.label;
+    nextMilestoneFill.style.width = `${progress * 100}%`;
+  }
+
   function unlockAchievements() {
     let changed = false;
     achievements.forEach((achievement) => {
@@ -170,6 +215,7 @@
         state.achievements.push(achievement.id);
         changed = true;
         announce(`${achievement.title} milestone unlocked.`);
+        showToast('Record unlocked', achievement.title, 'gold');
       }
     });
     if (changed) {
@@ -185,6 +231,10 @@
     coreValue.textContent = `+${format(clickPower())}`;
     comboValue.textContent = `${comboMultiplier().toFixed(2)}×`;
     comboFill.style.width = `${Math.min(100, combo * 2)}%`;
+    corePanel?.style.setProperty('--combo-energy', String(Math.min(1, combo / 50)));
+    corePanel?.classList.toggle('combo-hot', combo >= 15);
+    corePanel?.classList.toggle('combo-max', combo >= 42);
+    updateMilestone();
   }
 
   function createParticle(value, critical) {
@@ -195,6 +245,42 @@
     particle.style.left = `${40 + Math.random() * 20}%`;
     particleLayer.appendChild(particle);
     window.setTimeout(() => particle.remove(), reducedMotion ? 120 : 950);
+
+    if (reducedMotion) return;
+    const ripple = document.createElement('span');
+    ripple.className = `core-ripple${critical ? ' critical' : ''}`;
+    cloudCore.appendChild(ripple);
+    window.setTimeout(() => ripple.remove(), 720);
+    for (let index = 0; index < (critical ? 11 : 6); index += 1) {
+      const spark = document.createElement('span');
+      spark.className = `click-spark${critical ? ' critical' : ''}`;
+      const angle = Math.random() * Math.PI * 2;
+      const distance = 55 + Math.random() * (critical ? 100 : 60);
+      spark.style.setProperty('--spark-x', `${Math.cos(angle) * distance}px`);
+      spark.style.setProperty('--spark-y', `${Math.sin(angle) * distance}px`);
+      spark.style.left = `${45 + Math.random() * 10}%`;
+      spark.style.top = `${43 + Math.random() * 12}%`;
+      particleLayer.appendChild(spark);
+      window.setTimeout(() => spark.remove(), 760);
+    }
+    if (critical) {
+      corePanel?.classList.remove('critical-flash');
+      void corePanel?.offsetWidth;
+      corePanel?.classList.add('critical-flash');
+      window.setTimeout(() => corePanel?.classList.remove('critical-flash'), 520);
+      navigator.vibrate?.(18);
+    }
+  }
+
+  function createAmbientCloud() {
+    if (reducedMotion) return;
+    const cloud = document.createElement('span');
+    cloud.className = 'ambient-cloud';
+    cloud.style.setProperty('--ambient-x', `${15 + Math.random() * 70}%`);
+    cloud.style.setProperty('--ambient-size', `${12 + Math.random() * 22}px`);
+    cloud.style.setProperty('--ambient-drift', `${(Math.random() - .5) * 90}px`);
+    particleLayer.appendChild(cloud);
+    window.setTimeout(() => cloud.remove(), 2600);
   }
 
   function pressCore() {
@@ -211,10 +297,112 @@
     cloudCore.classList.add('is-pressed');
     if (critical) cloudCore.classList.add('is-critical');
     window.setTimeout(() => cloudCore.classList.remove('is-pressed', 'is-critical'), 180);
-    if (!reducedMotion) createParticle(gain, critical);
+    createParticle(gain, critical);
     renderStats();
     refreshShop();
     unlockAchievements();
+  }
+
+  function renderNetwork() {
+    productionNetwork.replaceChildren();
+    buildings.forEach((building) => {
+      const card = document.createElement('li');
+      card.className = 'machine-card is-locked';
+      card.dataset.machine = building.id;
+      const header = document.createElement('div');
+      header.className = 'machine-header';
+      const identity = document.createElement('span');
+      identity.className = 'machine-identity';
+      const icon = document.createElement('i');
+      icon.textContent = building.icon;
+      const name = document.createElement('strong');
+      name.textContent = building.name;
+      identity.append(icon, name);
+      const count = document.createElement('b');
+      count.dataset.role = 'machine-count';
+      count.textContent = '×0';
+      header.append(identity, count);
+
+      const scene = document.createElement('div');
+      scene.className = 'machine-scene';
+      scene.setAttribute('aria-hidden', 'true');
+      for (let index = 0; index < 6; index += 1) {
+        const part = document.createElement('span');
+        part.className = `machine-part part-${index + 1}`;
+        scene.appendChild(part);
+      }
+
+      const footer = document.createElement('div');
+      footer.className = 'machine-footer';
+      const stateLabel = document.createElement('span');
+      stateLabel.dataset.role = 'machine-state';
+      stateLabel.textContent = 'LOCKED';
+      const output = document.createElement('strong');
+      output.dataset.role = 'machine-output';
+      output.textContent = '0/s';
+      footer.append(stateLabel, output);
+      card.append(header, scene, footer);
+      productionNetwork.appendChild(card);
+    });
+  }
+
+  function refreshNetwork() {
+    buildings.forEach((building) => {
+      const card = productionNetwork.querySelector(`[data-machine="${building.id}"]`);
+      if (!card) return;
+      const owned = state.counts[building.id];
+      const output = owned * building.cps * buildingMultiplier(building.id);
+      const active = owned > 0;
+      card.classList.toggle('is-active', active);
+      card.classList.toggle('is-locked', !active);
+      card.dataset.tier = String(Math.min(5, Math.max(0, Math.ceil(Math.log10(owned + 1)))));
+      card.style.setProperty('--machine-speed', `${Math.max(.7, 3.2 - Math.log10(owned + 1) * .65)}s`);
+      card.querySelector('[data-role="machine-count"]').textContent = `×${format(owned)}`;
+      card.querySelector('[data-role="machine-state"]').textContent = active ? 'ONLINE' : 'BUY TO ACTIVATE';
+      card.querySelector('[data-role="machine-output"]').textContent = `${format(output)}/s`;
+      card.setAttribute('aria-label', `${building.name}. ${owned} owned. Producing ${format(output)} Clouds per second.`);
+    });
+  }
+
+  function pulseMachine(id, purchased = false) {
+    const card = productionNetwork.querySelector(`[data-machine="${id}"]`);
+    if (!card) return;
+    card.classList.remove('is-producing', 'just-purchased');
+    void card.offsetWidth;
+    card.classList.add(purchased ? 'just-purchased' : 'is-producing');
+    const scene = card.querySelector('.machine-scene');
+    if (!reducedMotion && scene) {
+      const orb = document.createElement('i');
+      orb.className = 'machine-output-orb';
+      orb.style.left = `${24 + Math.random() * 52}%`;
+      scene.appendChild(orb);
+      window.setTimeout(() => orb.remove(), 900);
+    }
+    window.setTimeout(() => card.classList.remove('is-producing', 'just-purchased'), purchased ? 900 : 520);
+  }
+
+  function renderActiveResearch() {
+    activeResearch.replaceChildren();
+    const researched = boosts.filter((boost) => owns(boost.id));
+    if (!researched.length) {
+      const empty = document.createElement('span');
+      empty.className = 'research-empty';
+      empty.textContent = 'Research boosts appear around the Core.';
+      activeResearch.appendChild(empty);
+      return;
+    }
+    researched.forEach((boost, index) => {
+      const chip = document.createElement('span');
+      chip.className = 'research-chip';
+      chip.dataset.research = boost.id;
+      chip.style.setProperty('--research-delay', `${index * -.37}s`);
+      const icon = document.createElement('i');
+      icon.textContent = boost.icon;
+      const label = document.createElement('b');
+      label.textContent = boost.name;
+      chip.append(icon, label);
+      activeResearch.appendChild(chip);
+    });
   }
 
   function renderBuildings() {
@@ -255,7 +443,7 @@
       button.className = 'boost-card';
       button.dataset.boost = boost.id;
       const title = document.createElement('strong');
-      title.textContent = boost.name;
+      title.textContent = `${boost.icon} ${boost.name}`;
       const description = document.createElement('p');
       description.textContent = boost.description;
       const cost = document.createElement('span');
@@ -311,8 +499,11 @@
     state.clouds -= quote.cost;
     state.counts[building.id] += amount;
     refreshShop();
+    refreshNetwork();
+    pulseMachine(building.id, true);
     renderStats();
     save(false);
+    showToast(`${building.name} online`, `${amount} added · ${format(state.counts[building.id] * building.cps * buildingMultiplier(building.id))} Clouds/s`, 'cyan');
     announce(`${amount} ${building.name} purchased.`);
   }
 
@@ -322,7 +513,14 @@
     state.boosts.push(boost.id);
     renderStats();
     refreshShop();
+    refreshNetwork();
+    renderActiveResearch();
+    corePanel?.classList.remove('research-flash');
+    void corePanel?.offsetWidth;
+    corePanel?.classList.add('research-flash');
+    window.setTimeout(() => corePanel?.classList.remove('research-flash'), 800);
     save(false);
+    showToast('Research complete', boost.name, 'mint');
     announce(`${boost.name} researched.`);
   }
 
@@ -345,6 +543,17 @@
       state.clouds += gain;
       state.total += gain;
       if (now - lastClickAt > 1050 && combo > 0) combo = Math.max(0, combo - dt * 18);
+      const machineDelay = Math.max(230, 1150 - Math.log10(cps() + 1) * 190);
+      if (cps() > 0 && now - lastMachinePulse > machineDelay) {
+        lastMachinePulse = now;
+        const activeMachines = buildings.filter((building) => state.counts[building.id] > 0);
+        const machine = activeMachines[Math.floor(Math.random() * activeMachines.length)];
+        if (machine) pulseMachine(machine.id, false);
+      }
+      if (now - lastAmbientEffect > 1200) {
+        lastAmbientEffect = now;
+        createAmbientCloud();
+      }
     }
     renderStats();
     if (now - lastShopRefresh > 350) {
@@ -377,6 +586,8 @@
     renderAchievements();
     renderStats();
     refreshShop();
+    refreshNetwork();
+    renderActiveResearch();
     saveStatus.textContent = 'Progress reset.';
     announce('CloudLab Clicker progress reset.');
   });
@@ -390,10 +601,13 @@
 
   renderBuildings();
   renderBoosts();
+  renderNetwork();
   unlockAchievements();
   renderAchievements();
+  renderActiveResearch();
   updateVisibilityStatus();
   renderStats();
   refreshShop();
+  refreshNetwork();
   requestAnimationFrame(loop);
 })();

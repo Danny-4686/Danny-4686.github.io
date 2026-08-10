@@ -21,6 +21,8 @@
   const creditsEl = document.getElementById('credits');
   const bounceEl = document.getElementById('bounceCount');
   const velocityLabel = document.getElementById('velocityLabel');
+  const phaseLabel = document.getElementById('phaseLabel');
+  const ringLabel = document.getElementById('ringLabel');
   const boostLabel = document.getElementById('boostLabel');
   const powerValue = document.getElementById('powerValue');
   const powerFill = document.getElementById('powerFill');
@@ -36,6 +38,7 @@
   const flightReport = document.getElementById('flightReport');
   const announcement = document.getElementById('launcherAnnouncement');
   const stage = document.getElementById('launcherStage');
+  const toastLayer = document.getElementById('launcherToastLayer');
 
   const upgradeDefinitions = [
     { id: 'power', icon: '➤', name: 'Launch Power', baseCost: 120, max: 10, description: 'Adds 7.5% launch velocity per level.' },
@@ -78,6 +81,8 @@
   let earth;
   let rings = [];
   let particles = [];
+  let shockwaves = [];
+  let floatingLabels = [];
   let cameraX = 0;
   let status = 'ready';
   let paused = false;
@@ -91,6 +96,14 @@
   let boostsRemaining = 1;
   let farthestX = START_X;
   let ignoreClickUntil = 0;
+  let settleTimer = 0;
+  let airtime = 0;
+  let rollingDistance = 0;
+  let trailTimer = 0;
+  let dustTimer = 0;
+  let cameraShake = 0;
+  let muzzleFlashUntil = 0;
+  let perfectLaunch = false;
 
   function level(id) { return save.levels[id] || 0; }
   function upgradeCost(upgrade) { return Math.floor(upgrade.baseCost * Math.pow(1.72, level(upgrade.id))); }
@@ -113,6 +126,43 @@
   function announce(text) {
     announcement.textContent = '';
     window.setTimeout(() => { announcement.textContent = text; }, 20);
+  }
+
+  function showToast(title, detail, tone = 'cyan') {
+    if (!toastLayer) return;
+    const toast = document.createElement('div');
+    toast.className = `launcher-toast tone-${tone}`;
+    const icon = document.createElement('span');
+    icon.textContent = tone === 'gold' ? '✦' : tone === 'mint' ? '✓' : '➤';
+    const copy = document.createElement('div');
+    const heading = document.createElement('strong');
+    const description = document.createElement('small');
+    heading.textContent = title;
+    description.textContent = detail;
+    copy.append(heading, description);
+    toast.append(icon, copy);
+    toastLayer.appendChild(toast);
+    while (toastLayer.children.length > 3) toastLayer.firstElementChild?.remove();
+    requestAnimationFrame(() => toast.classList.add('is-visible'));
+    window.setTimeout(() => {
+      toast.classList.remove('is-visible');
+      window.setTimeout(() => toast.remove(), 260);
+    }, reducedMotion ? 1500 : 2700);
+  }
+
+  function flashStage(effect, duration = 420) {
+    stage.classList.remove(effect);
+    void stage.offsetWidth;
+    stage.classList.add(effect);
+    window.setTimeout(() => stage.classList.remove(effect), duration);
+  }
+
+  function addFloatingLabel(x, y, text, color = '#d8f8fb') {
+    floatingLabels.push({ x, y, text, color, life: 1.15, maxLife: 1.15 });
+  }
+
+  function spawnShockwave(x, y, color = '#68d0df', size = 85) {
+    shockwaves.push({ x, y, color, size, life: .72, maxLife: .72 });
   }
 
   function showMessage(title, text) {
@@ -138,19 +188,22 @@
   }
 
   function updateHud() {
-    distanceEl.textContent = `${format(status === 'flying' ? currentDistanceMeters() : distanceMeters())} m`;
+    distanceEl.textContent = `${format(distanceMeters())} m`;
     bestEl.textContent = `${format(Math.max(save.best, distanceMeters()))} m`;
     creditsEl.textContent = format(save.credits);
     bounceEl.textContent = String(bounces);
-    const velocity = earth ? Math.hypot(earth.vx, earth.vy) / 3 : 0;
+    const velocity = earth ? (earth.grounded ? Math.abs(earth.vx) : Math.hypot(earth.vx, earth.vy)) / 3 : 0;
     velocityLabel.textContent = `${format(velocity)} m/s`;
+    phaseLabel.textContent = status === 'charging' ? 'CHARGING' : status === 'flying' ? earth?.grounded ? 'ROLLING' : 'AIRBORNE' : status === 'landed' ? 'LANDED' : 'READY';
+    ringLabel.textContent = `${ringHits} ${ringHits === 1 ? 'RING' : 'RINGS'}`;
     boostLabel.textContent = `${boostsRemaining} ${boostsRemaining === 1 ? 'BOOST' : 'BOOSTS'}`;
     boostButton.disabled = status !== 'flying' || paused || boostsRemaining <= 0;
     endRunButton.textContent = status === 'flying' ? 'End Run' : 'Reset Run';
+    stage.dataset.phase = status === 'flying' && earth?.grounded ? 'rolling' : status;
   }
 
   function resetFlight() {
-    earth = { x: START_X, y: EARTH_RADIUS, vx: 0, vy: 0, rotation: 0 };
+    earth = { x: START_X, y: EARTH_RADIUS, vx: 0, vy: 0, rotation: 0, grounded: false };
     cameraX = 0;
     status = 'ready';
     paused = false;
@@ -160,9 +213,19 @@
     boostsRemaining = boostCharges();
     farthestX = START_X;
     particles = [];
+    shockwaves = [];
+    floatingLabels = [];
+    settleTimer = 0;
+    airtime = 0;
+    rollingDistance = 0;
+    trailTimer = 0;
+    dustTimer = 0;
+    cameraShake = 0;
+    perfectLaunch = false;
     createRings();
     launchButton.textContent = 'Hold to Charge';
     launchButton.classList.remove('is-charging');
+    stage.classList.remove('is-perfect','is-boosting','is-impact');
     angleButtons.querySelectorAll('button').forEach((button) => { button.disabled = false; });
     showMessage('Prepare launch', 'Choose an angle, hold the launch button to charge, then release at the brightest point.');
     updatePowerUi();
@@ -176,9 +239,11 @@
     chargeStartedAt = performance.now();
     launchButton.textContent = 'Release to Launch';
     launchButton.classList.add('is-charging');
+    stage.dataset.phase = 'charging';
     angleButtons.querySelectorAll('button').forEach((button) => { button.disabled = true; });
     hideMessage();
     refreshUpgrades();
+    updateHud();
   }
 
   function cancelCharge() {
@@ -190,24 +255,35 @@
     angleButtons.querySelectorAll('button').forEach((button) => { button.disabled = false; });
     showMessage('Launch canceled', 'Hold the launch button again when you are ready.');
     updatePowerUi();
+    updateHud();
     refreshUpgrades();
   }
 
   function launch() {
     if (status !== 'charging') return;
-    const velocity = launchVelocity();
+    perfectLaunch = power >= .84 && power <= .96;
+    const velocity = launchVelocity() * (perfectLaunch ? 1.12 : 1);
     const radians = angle * Math.PI / 180;
     earth.vx = Math.cos(radians) * velocity;
     earth.vy = Math.sin(radians) * velocity;
     earth.rotation = 0;
+    earth.grounded = false;
     status = 'flying';
     flightStartedAt = performance.now();
     launchButton.textContent = 'In Flight';
     launchButton.classList.remove('is-charging');
     boostsRemaining = boostCharges();
     spawnBurst(earth.x, earth.y, '#68d0df', 24, -1);
+    spawnShockwave(START_X, EARTH_RADIUS, perfectLaunch ? '#f2c75c' : '#68d0df', perfectLaunch ? 130 : 95);
+    addFloatingLabel(START_X + 35, EARTH_RADIUS + 78, perfectLaunch ? 'PERFECT LAUNCH +12%' : 'LAUNCH!', perfectLaunch ? '#ffe28d' : '#c9f7fb');
+    muzzleFlashUntil = performance.now() + 260;
+    cameraShake = perfectLaunch ? 10 : 6;
+    flashStage(perfectLaunch ? 'is-perfect' : 'is-impact', perfectLaunch ? 700 : 360);
+    if (perfectLaunch) showToast('Perfect launch', 'Precision charge granted +12% launch velocity.', 'gold');
+    navigator.vibrate?.(perfectLaunch ? [24, 28, 38] : 22);
     hideMessage();
     refreshUpgrades();
+    updateHud();
     announce(`Launched at ${angle} degrees and ${Math.round(power * 100)} percent power.`);
   }
 
@@ -215,9 +291,16 @@
     if (status !== 'flying' || paused || boostsRemaining <= 0) return;
     const strength = boostStrength();
     earth.vx += strength;
-    earth.vy += strength * .42;
+    earth.vy = Math.max(earth.vy, earth.grounded ? 65 : earth.vy) + strength * .42;
+    earth.grounded = false;
+    settleTimer = 0;
     boostsRemaining -= 1;
     spawnBurst(earth.x, earth.y, '#f2c75c', 24, -1);
+    spawnShockwave(earth.x, earth.y, '#f2c75c', 72);
+    addFloatingLabel(earth.x, earth.y + 66, 'ROCKET BOOST', '#ffe28d');
+    cameraShake = Math.max(cameraShake, 5);
+    flashStage('is-boosting', 480);
+    navigator.vibrate?.(16);
     updateHud();
     announce(`${boostsRemaining} ${boostsRemaining === 1 ? 'boost' : 'boosts'} remaining.`);
   }
@@ -225,6 +308,7 @@
   function finishFlight(endedEarly = false) {
     if (status !== 'flying') return;
     status = 'landed';
+    earth.grounded = true;
     earth.vx = 0;
     earth.vy = 0;
     const distance = distanceMeters();
@@ -237,7 +321,10 @@
     launchButton.textContent = 'New Flight';
     angleButtons.querySelectorAll('button').forEach((button) => { button.disabled = false; });
     showMessage(newBest ? 'New distance record!' : endedEarly ? 'Run ended' : 'Flight complete', `${format(distance)} m · ${bounces} ${bounces === 1 ? 'bounce' : 'bounces'} · ${ringHits} ${ringHits === 1 ? 'ring' : 'rings'} · +${format(reward)} credits`);
-    flightReport.querySelector('p').textContent = `${format(distance)} m traveled, ${bounces} ${bounces === 1 ? 'bounce' : 'bounces'}, ${ringHits} sky ${ringHits === 1 ? 'ring' : 'rings'}, and ${format(reward)} credits earned.`;
+    flightReport.querySelector('p').textContent = `${format(distance)} m traveled · ${airtime.toFixed(1)}s airborne · ${format(rollingDistance)} m rolling · ${bounces} ${bounces === 1 ? 'bounce' : 'bounces'} · ${ringHits} sky ${ringHits === 1 ? 'ring' : 'rings'} · +${format(reward)} credits.`;
+    addFloatingLabel(earth.x, earth.y + 68, `+${format(reward)} CREDITS`, '#9fe1ab');
+    spawnShockwave(earth.x, EARTH_RADIUS, '#8bcf9b', 92);
+    showToast(newBest ? 'New distance record' : endedEarly ? 'Run ended' : 'Earth settled', `${format(distance)} m · +${format(reward)} credits`, newBest ? 'gold' : 'mint');
     updateHud();
     refreshUpgrades();
     announce(`Flight complete. ${distance} meters and ${reward} credits earned.`);
@@ -246,17 +333,59 @@
   function spawnBurst(x, y, color, amount = 14, direction = 0) {
     const count = reducedMotion ? Math.min(4, amount) : amount;
     for (let i = 0; i < count; i += 1) {
+      const life = .55 + Math.random() * .45;
       particles.push({
         x,
         y,
         vx: direction * (80 + Math.random() * 180) + (Math.random() - .5) * 90,
         vy: 40 + Math.random() * 190,
-        life: .55 + Math.random() * .45,
-        maxLife: 1,
+        life,
+        maxLife: life,
         size: 3 + Math.random() * 6,
-        color
+        color,
+        gravity: 330,
+        drag: .35,
+        glow: true
       });
     }
+  }
+
+  function spawnTrail(color = '#68d0df', dust = false) {
+    if (reducedMotion) return;
+    const life = dust ? .48 + Math.random() * .28 : .32 + Math.random() * .32;
+    particles.push({
+      x: earth.x - Math.sign(earth.vx || 1) * EARTH_RADIUS * .75,
+      y: dust ? EARTH_RADIUS * .35 : earth.y,
+      vx: -earth.vx * (dust ? .08 : .035) + (Math.random() - .5) * 30,
+      vy: dust ? 18 + Math.random() * 50 : (Math.random() - .5) * 28,
+      life,
+      maxLife: life,
+      size: dust ? 5 + Math.random() * 9 : 2 + Math.random() * 5,
+      color,
+      gravity: dust ? 80 : 0,
+      drag: dust ? 1.4 : .7,
+      glow: !dust
+    });
+  }
+
+  function updateEffects(dt) {
+    particles.forEach((particle) => {
+      particle.vx *= Math.exp(-(particle.drag || 0) * dt);
+      particle.x += particle.vx * dt;
+      particle.y += particle.vy * dt;
+      particle.vy -= (particle.gravity || 0) * dt;
+      particle.life -= dt;
+    });
+    particles = particles.filter((particle) => particle.life > 0);
+    shockwaves.forEach((wave) => { wave.life -= dt; });
+    shockwaves = shockwaves.filter((wave) => wave.life > 0);
+    floatingLabels.forEach((label) => {
+      label.y += 30 * dt;
+      label.life -= dt;
+    });
+    floatingLabels = floatingLabels.filter((label) => label.life > 0);
+    cameraShake *= Math.exp(-8 * dt);
+    if (cameraShake < .05) cameraShake = 0;
   }
 
   function collectRings() {
@@ -270,12 +399,19 @@
         earth.vx += 65;
         earth.vy += 34;
         spawnBurst(ring.x, ring.y, '#f2c75c', 20, 0);
+        spawnShockwave(ring.x, ring.y, '#f2c75c', 108);
+        addFloatingLabel(ring.x, ring.y + 58, `RING +${ringHits}`, '#ffe28d');
+        cameraShake = Math.max(cameraShake, 3);
+        flashStage('is-ring', 420);
+        navigator.vibrate?.(10);
+        updateHud();
         announce(`Sky ring ${ringHits} collected.`);
       }
     });
   }
 
   function update(dt, now) {
+    updateEffects(dt);
     if (status === 'charging') {
       const cycle = ((now - chargeStartedAt) % 1800) / 1800;
       const triangle = cycle < .5 ? cycle * 2 : (1 - cycle) * 2;
@@ -285,41 +421,81 @@
     }
     if (status !== 'flying' || paused) return;
 
-    const gravity = 660;
-    earth.vy -= gravity * dt;
-    earth.vx *= Math.exp(-airDrag() * dt);
-    earth.x += earth.vx * dt;
-    earth.y += earth.vy * dt;
-    earth.rotation += earth.vx * dt / 58;
-    farthestX = Math.max(farthestX, earth.x);
-
-    if (earth.y <= EARTH_RADIUS && earth.vy < 0) {
-      const impact = -earth.vy;
+    if (earth.grounded) {
+      const before = earth.x;
+      const speed = Math.abs(earth.vx);
+      const lowSpeedFriction = Math.max(0, (105 - speed) / 105) * 1.05;
+      earth.vx *= Math.exp(-(.42 + lowSpeedFriction) * dt);
+      earth.x += earth.vx * dt;
       earth.y = EARTH_RADIUS;
-      if (impact > 72 && earth.vx > 34 && bounces < 30) {
-        earth.vy = impact * bounceRetention();
-        earth.vx *= groundRetention();
-        bounces += 1;
-        spawnBurst(earth.x, earth.y, '#8bcf9b', 20, -1);
-        announce(`Bounce ${bounces}.`);
-      } else {
+      earth.rotation += earth.vx * dt / EARTH_RADIUS;
+      rollingDistance += Math.abs(earth.x - before) / 3;
+      farthestX = Math.max(farthestX, earth.x);
+      dustTimer -= dt;
+      if (speed > 7 && dustTimer <= 0) {
+        dustTimer = Math.max(.025, .11 - Math.min(80, speed) / 1100);
+        spawnTrail('#8bcf9b', true);
+      }
+      if (speed < 5) settleTimer += dt;
+      else settleTimer = 0;
+      if (settleTimer >= .72) {
         finishFlight(false);
         return;
       }
-    }
+    } else {
+      const gravity = 660;
+      airtime += dt;
+      earth.vy -= gravity * dt;
+      earth.vx *= Math.exp(-airDrag() * dt);
+      earth.x += earth.vx * dt;
+      earth.y += earth.vy * dt;
+      earth.rotation += earth.vx * dt / EARTH_RADIUS;
+      farthestX = Math.max(farthestX, earth.x);
+      trailTimer -= dt;
+      if (trailTimer <= 0 && Math.hypot(earth.vx, earth.vy) > 190) {
+        trailTimer = perfectLaunch ? .025 : .045;
+        spawnTrail(perfectLaunch ? '#f2c75c' : '#68d0df', false);
+      }
 
-    collectRings();
-    particles.forEach((particle) => {
-      particle.x += particle.vx * dt;
-      particle.y += particle.vy * dt;
-      particle.vy -= 330 * dt;
-      particle.life -= dt;
-    });
-    particles = particles.filter((particle) => particle.life > 0);
+      if (earth.y <= EARTH_RADIUS && earth.vy < 0) {
+        const impact = -earth.vy;
+        earth.y = EARTH_RADIUS;
+        const minimumBounce = Math.max(46, 68 - level('bounce') * 1.6);
+        if (impact > minimumBounce && earth.vx > 26 && bounces < 40) {
+          earth.vy = impact * bounceRetention();
+          earth.vx *= groundRetention();
+          bounces += 1;
+          cameraShake = Math.min(12, 3 + impact / 75);
+          spawnBurst(earth.x, earth.y, '#8bcf9b', 20, -1);
+          spawnShockwave(earth.x, EARTH_RADIUS, '#8bcf9b', Math.min(145, 72 + impact * .15));
+          addFloatingLabel(earth.x, EARTH_RADIUS + 72, `BOUNCE ${bounces}`, '#a9ebb5');
+          flashStage('is-impact', 350);
+          navigator.vibrate?.(Math.min(30, Math.round(impact / 20)));
+          announce(`Bounce ${bounces}.`);
+        } else if (Math.abs(earth.vx) > 5) {
+          earth.vy = 0;
+          earth.vx *= .985;
+          earth.grounded = true;
+          settleTimer = 0;
+          cameraShake = Math.max(cameraShake, 2.5);
+          spawnBurst(earth.x, earth.y, '#8bcf9b', 10, -1);
+          spawnShockwave(earth.x, EARTH_RADIUS, '#8bcf9b', 70);
+          addFloatingLabel(earth.x, EARTH_RADIUS + 68, 'ROLLING', '#bcefc6');
+          showToast('Touchdown', 'The Earth will keep rolling until it naturally settles.', 'mint');
+          updateHud();
+        } else {
+          earth.vx = 0;
+          earth.vy = 0;
+          earth.grounded = true;
+          settleTimer = .72;
+        }
+      }
+      collectRings();
+    }
 
     const targetCamera = Math.max(0, earth.x - W * .28);
     cameraX += (targetCamera - cameraX) * Math.min(1, dt * 4.2);
-    if (now - flightStartedAt > 42000 || earth.x < cameraX - 160) finishFlight(false);
+    if (now - flightStartedAt > 90000) finishFlight(false);
     updateHud();
   }
 
@@ -327,12 +503,22 @@
   function worldToScreenY(y) { return GROUND_Y - y; }
 
   function drawSky(now) {
+    const horizonShift = Math.min(1, distanceMeters() / 2200);
     const gradient = ctx.createLinearGradient(0, 0, 0, H);
-    gradient.addColorStop(0, '#0e3c51');
-    gradient.addColorStop(.52, '#092734');
+    gradient.addColorStop(0, horizonShift > .7 ? '#25284e' : '#0e3c51');
+    gradient.addColorStop(.52, horizonShift > .7 ? '#16364a' : '#092734');
     gradient.addColorStop(1, '#06151d');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, W, H);
+
+    if (horizonShift > 0) {
+      const sunset = ctx.createRadialGradient(W * .78, H * .5, 10, W * .78, H * .5, W * .75);
+      sunset.addColorStop(0, `rgba(242,199,92,${horizonShift * .17})`);
+      sunset.addColorStop(.48, `rgba(119,85,151,${horizonShift * .09})`);
+      sunset.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = sunset;
+      ctx.fillRect(0, 0, W, H);
+    }
 
     ctx.fillStyle = 'rgba(255,255,255,.55)';
     for (let i = 0; i < 58; i += 1) {
@@ -344,6 +530,24 @@
       ctx.fillRect(x, y, size, size);
     }
     ctx.globalAlpha = 1;
+
+    for (let index = 0; index < 9; index += 1) {
+      const layer = .07 + (index % 3) * .035;
+      const x = ((index * 311 - cameraX * layer) % (W + 280) + W + 280) % (W + 280) - 140;
+      const y = 105 + (index * 97) % 225;
+      const scale = .7 + (index % 4) * .18;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(scale, scale);
+      ctx.fillStyle = `rgba(190,232,238,${.035 + (index % 3) * .018})`;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 70, 19, 0, 0, Math.PI * 2);
+      ctx.ellipse(-28, -9, 30, 23, 0, 0, Math.PI * 2);
+      ctx.ellipse(15, -13, 38, 29, 0, 0, Math.PI * 2);
+      ctx.ellipse(48, -5, 28, 20, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
 
     const sunX = W - 112 - (cameraX * .018) % 180;
     ctx.save();
@@ -367,14 +571,16 @@
     ctx.closePath();
     ctx.fill();
 
-    if (!reducedMotion && status === 'flying') {
-      ctx.strokeStyle = 'rgba(190,242,248,.11)';
-      ctx.lineWidth = 2;
-      for (let i = 0; i < 6; i += 1) {
-        const y = 95 + i * 75 + Math.sin(now / 700 + i) * 9;
+    if (!reducedMotion && status === 'flying' && !earth.grounded) {
+      const speed = Math.min(1, Math.hypot(earth.vx, earth.vy) / 900);
+      ctx.strokeStyle = `rgba(190,242,248,${.05 + speed * .18})`;
+      ctx.lineWidth = 1.5 + speed * 2;
+      for (let i = 0; i < 9; i += 1) {
+        const y = 65 + i * 54 + Math.sin(now / 500 + i) * 9;
+        const length = 90 + speed * 260 + (i % 3) * 35;
         ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(W, y - 18);
+        ctx.moveTo(W - ((now * (.08 + speed * .24) + i * 173) % (W + length)), y);
+        ctx.lineTo(W - ((now * (.08 + speed * .24) + i * 173) % (W + length)) + length, y - 14);
         ctx.stroke();
       }
     }
@@ -389,6 +595,16 @@
     ctx.fillRect(0, GROUND_Y, W, H - GROUND_Y);
     ctx.fillStyle = '#77c992';
     ctx.fillRect(0, GROUND_Y, W, 5);
+
+    ctx.strokeStyle = 'rgba(104,208,223,.055)';
+    ctx.lineWidth = 1;
+    const tileOffset = -((cameraX * .82) % 54);
+    for (let x = tileOffset; x < W + 54; x += 54) {
+      ctx.beginPath();
+      ctx.moveTo(x, GROUND_Y + 7);
+      ctx.lineTo(x - 28, H);
+      ctx.stroke();
+    }
 
     const firstMarker = Math.floor(cameraX / 300) * 300;
     ctx.font = '800 12px Inter, sans-serif';
@@ -427,6 +643,17 @@
     ctx.beginPath();
     ctx.roundRect(0, -24, 112, 48, 18);
     ctx.fill();
+    if (performance.now() < muzzleFlashUntil) {
+      const strength = Math.max(0, (muzzleFlashUntil - performance.now()) / 260);
+      const flash = ctx.createRadialGradient(120, 0, 2, 120, 0, 44 + strength * 30);
+      flash.addColorStop(0, '#fff7cf');
+      flash.addColorStop(.25, perfectLaunch ? '#f2c75c' : '#68d0df');
+      flash.addColorStop(1, 'rgba(104,208,223,0)');
+      ctx.fillStyle = flash;
+      ctx.beginPath();
+      ctx.arc(120, 0, 52 + strength * 22, 0, Math.PI * 2);
+      ctx.fill();
+    }
     ctx.restore();
   }
 
@@ -498,27 +725,85 @@
     ctx.restore();
   }
 
+  function drawEarthShadow() {
+    if (!earth) return;
+    const height = Math.max(0, earth.y - EARTH_RADIUS);
+    const opacity = Math.max(.04, .3 - height / 1150);
+    const scale = Math.max(.22, 1 - height / 850);
+    ctx.save();
+    ctx.translate(worldToScreenX(earth.x), GROUND_Y + 3);
+    ctx.scale(scale, scale);
+    ctx.fillStyle = `rgba(0,0,0,${opacity})`;
+    ctx.filter = `blur(${Math.min(13, 3 + height / 80)}px)`;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, EARTH_RADIUS * 1.2, EARTH_RADIUS * .28, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
   function drawParticles() {
     particles.forEach((particle) => {
       const x = worldToScreenX(particle.x);
       const y = worldToScreenY(particle.y);
       ctx.globalAlpha = Math.max(0, particle.life / particle.maxLife);
       ctx.fillStyle = particle.color;
+      if (particle.glow) {
+        ctx.shadowColor = particle.color;
+        ctx.shadowBlur = 12;
+      }
       ctx.beginPath();
       ctx.arc(x, y, particle.size, 0, Math.PI * 2);
       ctx.fill();
+      ctx.shadowBlur = 0;
     });
     ctx.globalAlpha = 1;
   }
 
+  function drawShockwaves() {
+    shockwaves.forEach((wave) => {
+      const progress = 1 - wave.life / wave.maxLife;
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, (1 - progress) * .72);
+      ctx.strokeStyle = wave.color;
+      ctx.lineWidth = Math.max(1, 5 * (1 - progress));
+      ctx.shadowColor = wave.color;
+      ctx.shadowBlur = 18;
+      ctx.beginPath();
+      ctx.ellipse(worldToScreenX(wave.x), worldToScreenY(wave.y), wave.size * progress, wave.size * progress * .3, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    });
+  }
+
+  function drawFloatingLabels() {
+    floatingLabels.forEach((label) => {
+      const progress = 1 - label.life / label.maxLife;
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, label.life * 2.2) * Math.min(1, progress * 5);
+      ctx.fillStyle = label.color;
+      ctx.shadowColor = 'rgba(0,0,0,.65)';
+      ctx.shadowBlur = 8;
+      ctx.font = '900 15px Inter, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(label.text, worldToScreenX(label.x), worldToScreenY(label.y + progress * 35));
+      ctx.restore();
+    });
+  }
+
   function draw(now) {
+    ctx.save();
+    if (cameraShake > 0 && !reducedMotion) ctx.translate((Math.random() - .5) * cameraShake, (Math.random() - .5) * cameraShake * .65);
     drawSky(now);
     drawGround();
     drawLauncher();
     drawTrajectory();
     drawRings(now);
+    drawEarthShadow();
+    drawShockwaves();
     drawParticles();
     drawEarth();
+    drawFloatingLabels();
+    ctx.restore();
   }
 
   function renderUpgrades() {
@@ -535,9 +820,13 @@
       title.textContent = upgrade.name;
       const description = document.createElement('p');
       description.textContent = upgrade.description;
+      const levels = document.createElement('span');
+      levels.className = 'upgrade-levels';
+      levels.dataset.role = 'upgrade-levels';
+      for (let index = 0; index < upgrade.max; index += 1) levels.appendChild(document.createElement('i'));
       const cost = document.createElement('span');
       cost.dataset.role = 'upgrade-cost';
-      button.append(icon, title, description, cost);
+      button.append(icon, title, description, levels, cost);
       button.addEventListener('click', () => buyUpgrade(upgrade));
       upgradeGrid.appendChild(button);
     });
@@ -554,6 +843,7 @@
       button.classList.toggle('is-max', maxed);
       button.disabled = status === 'flying' || status === 'charging' || maxed || save.credits < cost;
       button.querySelector('[data-role="upgrade-cost"]').textContent = maxed ? `MAX LEVEL ${upgrade.max}` : `LEVEL ${current} · ${format(cost)} CREDITS`;
+      button.querySelectorAll('[data-role="upgrade-levels"] i').forEach((pip, index) => pip.classList.toggle('is-filled', index < current));
       button.setAttribute('aria-label', `${upgrade.name}. Level ${current} of ${upgrade.max}.${maxed ? ' Maximum level.' : ` Upgrade for ${cost} credits.`}`);
     });
     upgradeSummary.textContent = `${installed} ${installed === 1 ? 'upgrade' : 'upgrades'} installed`;
@@ -570,6 +860,14 @@
     boostsRemaining = boostCharges();
     updateHud();
     refreshUpgrades();
+    const button = upgradeGrid.querySelector(`[data-upgrade="${upgrade.id}"]`);
+    button?.classList.remove('just-upgraded');
+    void button?.offsetWidth;
+    button?.classList.add('just-upgraded');
+    window.setTimeout(() => button?.classList.remove('just-upgraded'), 850);
+    flashStage('is-upgraded', 560);
+    showToast('Upgrade installed', `${upgrade.name} is now level ${save.levels[upgrade.id]}.`, 'mint');
+    navigator.vibrate?.(12);
     announce(`${upgrade.name} upgraded to level ${save.levels[upgrade.id]}.`);
   }
 
