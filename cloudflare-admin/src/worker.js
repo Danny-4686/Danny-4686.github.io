@@ -14,6 +14,23 @@ import {
 } from './utils.js';
 
 const SITE_SETTINGS_PATH = 'site-settings.json';
+export const FEATURED_GAME_IDS = Object.freeze([
+  'breakout',
+  'connect-four',
+  'cloud-hopper',
+  'cloudlab-clicker',
+  'launcher',
+  'flappy-cloud',
+  'tower-stacker',
+  'snake',
+  '2048',
+  'memory-match',
+  'pong',
+  'tic-tac-toe',
+  'minesweeper'
+]);
+export const DEFAULT_FEATURED_GAMES = Object.freeze(['cloud-hopper', 'cloudlab-clicker', 'launcher']);
+const FEATURED_GAME_ID_SET = new Set(FEATURED_GAME_IDS);
 let siteSettingsCache = null;
 let siteSettingsCacheUntil = 0;
 
@@ -64,9 +81,31 @@ function validCsrf(request, session) {
   );
 }
 
-function normalizeSiteSettings(value) {
+export function normalizeFeaturedGames(value) {
+  if (!Array.isArray(value)) return [...DEFAULT_FEATURED_GAMES];
+  const seen = new Set();
+  const normalized = [];
+  for (const gameId of value) {
+    if (typeof gameId !== 'string' || !FEATURED_GAME_ID_SET.has(gameId) || seen.has(gameId)) continue;
+    seen.add(gameId);
+    normalized.push(gameId);
+    if (normalized.length === 6) break;
+  }
+  return normalized.length ? normalized : [...DEFAULT_FEATURED_GAMES];
+}
+
+export function isValidFeaturedGameSelection(value) {
+  return Array.isArray(value)
+    && value.length >= 1
+    && value.length <= 6
+    && new Set(value).size === value.length
+    && value.every((gameId) => typeof gameId === 'string' && FEATURED_GAME_ID_SET.has(gameId));
+}
+
+export function normalizeSiteSettings(value) {
   return {
     forceSiteIntro: Boolean(value?.forceSiteIntro),
+    featuredGames: normalizeFeaturedGames(value?.featuredGames),
     updatedAt: typeof value?.updatedAt === 'string' ? value.updatedAt : '',
     updatedBy: typeof value?.updatedBy === 'string' ? value.updatedBy : ''
   };
@@ -75,7 +114,10 @@ function normalizeSiteSettings(value) {
 async function readSiteSettings(env, forceRefresh = false) {
   const now = Date.now();
   if (!forceRefresh && siteSettingsCache && now < siteSettingsCacheUntil) return siteSettingsCache;
-  const value = await readJsonFile(env, SITE_SETTINGS_PATH, { forceSiteIntro: false });
+  const value = await readJsonFile(env, SITE_SETTINGS_PATH, {
+    forceSiteIntro: false,
+    featuredGames: [...DEFAULT_FEATURED_GAMES]
+  });
   siteSettingsCache = normalizeSiteSettings(value);
   siteSettingsCacheUntil = now + 5000;
   return siteSettingsCache;
@@ -99,11 +141,17 @@ async function publicSiteSettings(env) {
     return publicSiteSettingsJson({
       ok: true,
       forceSiteIntro: settings.forceSiteIntro,
+      featuredGames: settings.featuredGames,
       updatedAt: settings.updatedAt || null
     });
   } catch (error) {
-    console.error('Could not read public site intro setting', error);
-    return publicSiteSettingsJson({ ok: false, forceSiteIntro: false, updatedAt: null });
+    console.error('Could not read public site settings', error);
+    return publicSiteSettingsJson({
+      ok: false,
+      forceSiteIntro: false,
+      featuredGames: [...DEFAULT_FEATURED_GAMES],
+      updatedAt: null
+    });
   }
 }
 
@@ -114,16 +162,37 @@ async function handleSiteIntroAdmin(request, env, session) {
   }
 
   if (request.method !== 'POST') return json({ error: 'Method not allowed.' }, 405);
-  const body = await request.json().catch(() => ({}));
+  const parsedBody = await request.json().catch(() => ({}));
+  const body = parsedBody && typeof parsedBody === 'object' && !Array.isArray(parsedBody) ? parsedBody : {};
+  const hasForceSetting = Object.prototype.hasOwnProperty.call(body, 'forceSiteIntro');
+  const hasFeaturedSetting = Object.prototype.hasOwnProperty.call(body, 'featuredGames');
+  if (!hasForceSetting && !hasFeaturedSetting) return json({ error: 'No site setting was provided.' }, 400);
+  if (hasForceSetting && typeof body.forceSiteIntro !== 'boolean') {
+    return json({ error: 'The loading setting must be true or false.' }, 400);
+  }
+  if (hasFeaturedSetting) {
+    if (!isValidFeaturedGameSelection(body.featuredGames)) {
+      return json({ error: 'Choose between 1 and 6 unique games from the arcade.' }, 400);
+    }
+  }
+  const current = await readSiteSettings(env, true);
   const settings = {
-    forceSiteIntro: body.forceSiteIntro === true,
+    forceSiteIntro: hasForceSetting ? body.forceSiteIntro : current.forceSiteIntro,
+    featuredGames: hasFeaturedSetting ? normalizeFeaturedGames(body.featuredGames) : current.featuredGames,
     updatedAt: new Date().toISOString(),
     updatedBy: session.login
   };
+  const message = hasForceSetting && hasFeaturedSetting
+    ? 'Update site settings'
+    : hasFeaturedSetting
+      ? 'Update featured arcade games'
+      : settings.forceSiteIntro
+        ? 'Site intro: force animation on'
+        : 'Site intro: restore hourly animation';
   const commit = await commitFiles(env, [{
     path: SITE_SETTINGS_PATH,
     text: `${JSON.stringify(settings, null, 2)}\n`
-  }], settings.forceSiteIntro ? 'Site intro: force animation on' : 'Site intro: restore hourly animation');
+  }], message);
 
   siteSettingsCache = settings;
   siteSettingsCacheUntil = Date.now() + 5000;

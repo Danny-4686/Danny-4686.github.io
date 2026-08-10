@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Guide a cheerful cloud through storm gates, build perfect-flight streaks, and chase a new best score in Flappy Cloud.">
+  <meta name="theme-color" content="#061117">
+  <meta name="author" content="Danny4686">
+  <meta name="application-name" content="CloudLab">
+  <meta name="apple-mobile-web-app-title" content="CloudLab">
+  <link rel="canonical" href="https://danny4686.com/games/flappy-cloud/">
+  <meta property="og:site_name" content="CloudLab">
+  <meta property="og:title" content="Flappy Cloud | CloudLab Arcade">
+  <meta property="og:description" content="Fly through storm gates, collect shield stars, and build a perfect-flight streak.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://danny4686.com/games/flappy-cloud/">
+  <meta property="og:image" content="https://danny4686.com/assets/images/cloudlab-logo.png">
+  <meta property="og:image:alt" content="CloudLab Earth logo">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Flappy Cloud | CloudLab Arcade">
+  <meta name="twitter:description" content="Fly through storm gates and chase a new best score.">
+  <meta name="twitter:image" content="https://danny4686.com/assets/images/cloudlab-logo.png">
+  <title>Flappy Cloud | CloudLab Arcade</title>
+  <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="icon" href="/assets/icons/favicon-48x48.png" type="image/png" sizes="48x48">
+  <link rel="icon" href="/assets/icons/favicon-32x32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" sizes="180x180">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/site-loader.css?v=20260808">
+  <script src="/assets/js/site-loader.js?v=20260808"></script>
+  <link rel="stylesheet" href="/assets/css/hub.css">
+  <link rel="stylesheet" href="game.css?v=1">
+  <link rel="stylesheet" href="/assets/css/site-quality.css?v=20260808">
+</head>
+<body class="premium-game">
+  <header class="hub-header">
+    <a class="hub-brand" href="/" aria-label="Return to Danny4686.com"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>Danny4686</strong><small>CloudLab Studio</small></span></a>
+    <nav class="hub-nav" aria-label="Site navigation"><a href="/#about">About</a><a href="/#projects">Projects</a><a class="active" href="/games/" aria-current="page">Games</a><a href="/journal/">Journal</a><a href="/#connect">Connect</a></nav>
+    <a class="header-action" href="/games/">All Games</a>
+  </header>
+
+  <main class="page-shell game-page">
+    <a class="back-link reveal" href="/games/">← Back to Browser Games</a>
+    <div class="game-heading reveal">
+      <div><p class="eyebrow">CLOUDLAB ARCADE</p><h1>Flappy Cloud</h1><p>Glide through storm gates, collect shield stars, and keep your perfect-flight streak alive.</p></div>
+      <div class="score-row" role="group" aria-label="Game scores">
+        <div class="score-chip"><small>SCORE</small><strong id="score">0</strong></div>
+        <div class="score-chip"><small>BEST</small><strong id="best">0</strong></div>
+        <div class="score-chip"><small>STREAK</small><strong id="streak">0</strong></div>
+      </div>
+    </div>
+
+    <section class="game-panel reveal" aria-label="Flappy Cloud game">
+      <div class="flappy-stage" id="flappyStage">
+        <canvas id="flappyCanvas" width="720" height="900" role="img" aria-label="Flappy Cloud flight area"></canvas>
+        <div class="flight-status" aria-hidden="true"><span id="speedLabel">CALM SKIES</span><span id="shieldLabel">NO SHIELD</span></div>
+        <div class="game-message" id="gameMessage">
+          <div><p class="eyebrow">CLOUD FLIGHT</p><h2 id="messageTitle">Ready to fly?</h2><p id="messageText">Tap, click, or press Space to lift the cloud through each opening.</p></div>
+        </div>
+      </div>
+      <div class="game-toolbar">
+        <button class="game-button primary" id="startButton" type="button">Start Flight</button>
+        <button class="game-button" id="pauseButton" type="button">Pause</button>
+        <button class="game-button" id="restartButton" type="button">Restart</button>
+      </div>
+      <p class="control-note"><span class="desktop-only">Space or ↑ lifts the cloud.</span> Tap anywhere inside the flight area on touch devices. Shield stars absorb one collision.</p>
+      <p class="sr-only" id="gameAnnouncement" aria-live="polite"></p>
+    </section>
+  </main>
+
+  <footer class="site-footer"><a class="footer-brand" href="/"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>Flappy Cloud</small></span></a><p>© <span id="year"></span> Danny4686.</p></footer>
+  <script src="/assets/js/hub.js?v=20260808"></script>
+  <script src="game.js?v=1"></script>
+</body>
+</html>

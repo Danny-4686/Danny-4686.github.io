@@ -126,6 +126,48 @@ for (const page of filesUnder(join(root, 'games'), '.html').filter((path) => dir
   required.forEach((token) => { if (!html.includes(token)) fail(page, `missing metadata token ${token}`); });
 }
 
+const arcadePage = join(root, 'games', 'index.html');
+const arcadeHtml = readFileSync(arcadePage, 'utf8');
+const arcadeGameIds = [...arcadeHtml.matchAll(/\bdata-game-id="([^"]+)"/g)].map((match) => match[1]);
+if (arcadeGameIds.length !== 13) fail(arcadePage, `expected 13 game cards, found ${arcadeGameIds.length}`);
+const duplicateGameIds = [...new Set(arcadeGameIds.filter((id, index) => arcadeGameIds.indexOf(id) !== index))];
+if (duplicateGameIds.length) fail(arcadePage, `duplicate game IDs: ${duplicateGameIds.join(', ')}`);
+for (const gameId of ['cloud-hopper', 'cloudlab-clicker', 'launcher', 'flappy-cloud']) {
+  if (!arcadeGameIds.includes(gameId)) fail(arcadePage, `missing arcade card ${gameId}`);
+}
+for (const token of ['id="featuredGameGrid"', 'arcade-expansion.css?v=', 'games.js?v=20260810']) {
+  if (!arcadeHtml.includes(token)) fail(arcadePage, `missing featured arcade token ${token}`);
+}
+
+const sitemapPath = join(root, 'sitemap.xml');
+const sitemap = readFileSync(sitemapPath, 'utf8');
+for (const gameId of arcadeGameIds) {
+  const url = `https://danny4686.com/games/${gameId}/`;
+  if (!sitemap.includes(`<loc>${url}</loc>`)) fail(sitemapPath, `missing arcade URL ${url}`);
+}
+
+const requiredGameControls = new Map([
+  ['flappy-cloud', ['id="flappyCanvas"', 'id="startButton"', 'id="pauseButton"', 'game.js']],
+  ['cloudlab-clicker', ['id="cloudCore"', 'id="buildingList"', 'id="boostList"', 'id="buyModes"', 'game.js']],
+  ['launcher', ['id="launcherCanvas"', 'id="launchButton"', 'id="launcherUpgradeGrid"', 'id="angleButtons"', 'game.js']]
+]);
+for (const [slug, tokens] of requiredGameControls) {
+  const path = join(root, 'games', slug, 'index.html');
+  const html = readFileSync(path, 'utf8');
+  tokens.forEach((token) => { if (!html.includes(token)) fail(path, `missing required game control ${token}`); });
+}
+
+const settingsPath = join(root, 'site-settings.json');
+try {
+  const settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
+  const expectedFeatured = ['cloud-hopper', 'cloudlab-clicker', 'launcher'];
+  if (JSON.stringify(settings.featuredGames) !== JSON.stringify(expectedFeatured)) {
+    fail(settingsPath, `default featured games must be ${expectedFeatured.join(', ')}`);
+  }
+} catch (error) {
+  fail(settingsPath, `invalid settings JSON: ${error.message}`);
+}
+
 const accountPage = join(root, 'account', 'index.html');
 const accountHtml = readFileSync(accountPage, 'utf8');
 for (const token of ['name="robots" content="noindex', 'rel="canonical" href="https://danny4686.com/account/"', 'rel="manifest"']) {
@@ -145,4 +187,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log('Site validation passed: repository layout, favicons, metadata, local references, password forms, IDs, manifest, and JavaScript syntax.');
+console.log('Site validation passed: repository layout, favicons, metadata, sitemap, local references, password forms, IDs, manifest, and JavaScript syntax.');

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Power the CloudLab Core, buy animated production upgrades, unlock boosts, and build an active-tab cloud empire.">
+  <meta name="theme-color" content="#061117">
+  <meta name="author" content="Danny4686">
+  <meta name="application-name" content="CloudLab">
+  <meta name="apple-mobile-web-app-title" content="CloudLab">
+  <link rel="canonical" href="https://danny4686.com/games/cloudlab-clicker/">
+  <meta property="og:site_name" content="CloudLab">
+  <meta property="og:title" content="CloudLab Clicker | CloudLab Arcade">
+  <meta property="og:description" content="Power the CloudLab Core and grow an active-tab cloud empire with buildings, boosts, and achievements.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://danny4686.com/games/cloudlab-clicker/">
+  <meta property="og:image" content="https://danny4686.com/assets/images/cloudlab-logo.png">
+  <meta property="og:image:alt" content="CloudLab Earth logo">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="CloudLab Clicker | CloudLab Arcade">
+  <meta name="twitter:description" content="Build a cloud empire while the game tab is active.">
+  <meta name="twitter:image" content="https://danny4686.com/assets/images/cloudlab-logo.png">
+  <title>CloudLab Clicker | CloudLab Arcade</title>
+  <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="icon" href="/assets/icons/favicon-48x48.png" type="image/png" sizes="48x48">
+  <link rel="icon" href="/assets/icons/favicon-32x32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" sizes="180x180">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/site-loader.css?v=20260808">
+  <script src="/assets/js/site-loader.js?v=20260808"></script>
+  <link rel="stylesheet" href="/assets/css/hub.css">
+  <link rel="stylesheet" href="game.css?v=1">
+  <link rel="stylesheet" href="/assets/css/site-quality.css?v=20260808">
+</head>
+<body class="premium-game">
+  <header class="hub-header">
+    <a class="hub-brand" href="/" aria-label="Return to Danny4686.com"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>Danny4686</strong><small>CloudLab Studio</small></span></a>
+    <nav class="hub-nav" aria-label="Site navigation"><a href="/#about">About</a><a href="/#projects">Projects</a><a class="active" href="/games/" aria-current="page">Games</a><a href="/journal/">Journal</a><a href="/#connect">Connect</a></nav>
+    <a class="header-action" href="/games/">All Games</a>
+  </header>
+
+  <main class="page-shell game-page clicker-page">
+    <a class="back-link reveal" href="/games/">← Back to Browser Games</a>
+    <div class="game-heading reveal">
+      <div><p class="eyebrow">CLOUDLAB ARCADE</p><h1>CloudLab Clicker</h1><p>Charge the CloudLab Core, automate production, and unlock permanent boosts while this tab is active.</p></div>
+      <div class="score-row" role="group" aria-label="Clicker totals">
+        <div class="score-chip"><small>CLOUDS</small><strong id="cloudCount">0</strong></div>
+        <div class="score-chip"><small>PER SECOND</small><strong id="cloudRate">0</strong></div>
+        <div class="score-chip"><small>ALL TIME</small><strong id="allTime">0</strong></div>
+      </div>
+    </div>
+
+    <section class="game-panel clicker-panel reveal" aria-label="CloudLab Clicker game">
+      <div class="clicker-layout">
+        <section class="core-panel" aria-labelledby="coreTitle">
+          <div class="core-status"><span class="active-dot"></span><span id="productionStatus">ACTIVE TAB PRODUCTION</span></div>
+          <div class="core-copy"><p class="eyebrow">POWER SOURCE</p><h2 id="coreTitle">CloudLab Core</h2><p>Every press creates Clouds. Keep a rhythm to raise your combo and trigger critical surges.</p></div>
+          <div class="core-wrap">
+            <button id="cloudCore" class="cloud-core" type="button" aria-label="Generate Clouds">
+              <span class="core-ring ring-one"></span><span class="core-ring ring-two"></span>
+              <img src="/assets/images/optimized/cloudlab-logo-256.webp" width="256" height="256" alt="">
+              <span class="core-glow"></span>
+            </button>
+            <div id="particleLayer" class="particle-layer" aria-hidden="true"></div>
+          </div>
+          <div class="core-value"><strong id="coreValue">+1</strong><span>per press</span></div>
+          <div class="combo-card"><div><span>COMBO</span><strong id="comboValue">1.00×</strong></div><div class="combo-track"><span id="comboFill"></span></div></div>
+          <div class="active-note"><span>◎</span><p><strong>No offline grinding.</strong> Automatic production pauses whenever this tab is hidden or closed.</p></div>
+        </section>
+
+        <section class="shop-panel" aria-labelledby="shopTitle">
+          <div class="shop-head"><div><p class="eyebrow">UPGRADE LAB</p><h2 id="shopTitle">Build the network.</h2></div><div class="buy-modes" id="buyModes" role="group" aria-label="Purchase amount"><button type="button" class="active" data-buy="1" aria-pressed="true">×1</button><button type="button" data-buy="10" aria-pressed="false">×10</button><button type="button" data-buy="max" aria-pressed="false">MAX</button></div></div>
+          <div id="buildingList" class="upgrade-list" role="group" aria-label="Production buildings"></div>
+          <div class="boost-heading"><div><p class="eyebrow">PERMANENT BOOSTS</p><h3>Core research</h3></div><span id="boostCount">0 / 6</span></div>
+          <div id="boostList" class="boost-list" role="group" aria-label="Permanent boosts"></div>
+        </section>
+      </div>
+
+      <section class="achievement-strip" aria-labelledby="achievementTitle"><div class="achievement-copy"><p class="eyebrow">MILESTONES</p><h2 id="achievementTitle">Cloud records</h2><p>Major production goals light up permanently.</p></div><div id="achievementList" class="achievement-list"></div></section>
+      <div class="clicker-actions"><span id="saveStatus">Progress saves automatically on this device.</span><button id="saveButton" class="game-button" type="button">Save Now</button><button id="resetButton" class="game-button danger-button" type="button">Reset Progress</button></div>
+      <p class="sr-only" id="clickerAnnouncement" aria-live="polite"></p>
+    </section>
+  </main>
+
+  <footer class="site-footer"><a class="footer-brand" href="/"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>CloudLab Clicker</small></span></a><p>© <span id="year"></span> Danny4686.</p></footer>
+  <script src="/assets/js/hub.js?v=20260808"></script>
+  <script src="game.js?v=1"></script>
+</body>
+</html>
