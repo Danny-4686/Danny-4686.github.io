@@ -7,9 +7,13 @@
 /* One clean account action replaces the previous Join CloudLab + Sign in pair. */
 .community-header-actions .header-action{display:none!important}
 .community-header-actions{gap:0}
-.community-account-link:not(.is-authenticated) span:last-child{font-size:0;max-width:none}
-.community-account-link:not(.is-authenticated) span:last-child::after{content:"Sign in / Sign up";font-size:.79rem}
+.community-account-link.is-signed-out span:last-child{font-size:0;max-width:none}
+.community-account-link.is-signed-out span:last-child::after{content:"Sign in / Sign up";font-size:.79rem}
 .community-account-link.is-authenticated{color:#dff8e4;border-color:rgba(139,207,155,.27);background:rgba(139,207,155,.055)}
+.community-account-link.is-checking .community-account-dot{background:var(--cyan);box-shadow:0 0 0 3px rgba(104,208,223,.1);animation:communityAccountPulse 1.2s ease-in-out infinite}
+.community-account-link.is-unavailable{color:#f4d889;border-color:rgba(242,199,92,.27);background:rgba(242,199,92,.055)}
+.community-account-link.is-unavailable .community-account-dot{background:var(--gold);box-shadow:0 0 12px rgba(242,199,92,.35)}
+@keyframes communityAccountPulse{50%{opacity:.5;transform:scale(.82)}}
 
 .header-cta.community-account-action{
   min-height:44px;
@@ -41,11 +45,27 @@
   background:var(--mint);
   box-shadow:0 0 14px rgba(139,207,155,.5);
 }
+.header-cta.community-account-action.is-checking .community-account-dot{
+  background:var(--cyan);
+  box-shadow:0 0 0 3px rgba(104,208,223,.1);
+  animation:communityAccountPulse 1.2s ease-in-out infinite;
+}
+.header-cta.community-account-action.is-unavailable{
+  color:#f4d889;
+  border-color:rgba(242,199,92,.3);
+  background:rgba(242,199,92,.065);
+}
+.header-cta.community-account-action.is-unavailable .community-account-dot{
+  background:var(--gold);
+  box-shadow:0 0 12px rgba(242,199,92,.35);
+}
 
 @media(max-width:620px){
-  .community-account-link:not(.is-authenticated) span:last-child{display:inline;max-width:none}
-  .community-account-link:not(.is-authenticated) span:last-child::after{content:"Sign in";font-size:.72rem}
+  .community-account-link.is-signed-out span:last-child{display:inline;max-width:none}
+  .community-account-link.is-signed-out span:last-child::after{content:"Sign in";font-size:.72rem}
   .community-account-link.is-authenticated span:last-child{display:inline;max-width:82px}
   .header-cta.community-account-action{padding:9px 11px;font-size:.72rem}
   .header-cta.community-account-action span:last-child{max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 }
+
+@media(prefers-reduced-motion:reduce){.community-account-link.is-checking .community-account-dot,.header-cta.community-account-action.is-checking .community-account-dot{animation:none}}

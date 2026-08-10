@@ -121,7 +121,8 @@ for (const page of filesUnder(join(root, 'games'), '.html').filter((path) => dir
     `rel="canonical" href="${canonical}"`,
     'property="og:title"', 'property="og:description"', `property="og:url" content="${canonical}"`,
     'property="og:image"', 'name="twitter:card"', 'name="twitter:title"',
-    'rel="manifest"', '/assets/js/site-loader.js?v=', '/assets/css/site-quality.css?v='
+    'rel="manifest"', '/assets/js/site-loader.js?v=', '/assets/css/site-quality.css?v=',
+    '/assets/js/hub.js?v=20260810.2'
   ];
   required.forEach((token) => { if (!html.includes(token)) fail(page, `missing metadata token ${token}`); });
 }
@@ -151,8 +152,8 @@ for (const gameId of arcadeGameIds) {
 }
 
 const requiredGameControls = new Map([
-  ['flappy-cloud', ['id="flappyCanvas"', 'id="startButton"', 'id="pauseButton"', 'id="flappySaveStatus"', 'game.js']],
-  ['cloudlab-clicker', ['id="cloudCore"', 'id="buildingList"', 'id="boostList"', 'id="buyModes"', 'id="productionNetwork"', 'id="activeResearch"', 'id="clickerTabs"', 'id="cloudSignIn"', 'id="clickRateStatus"', 'rate-limiter.js?v=1', 'save-policy.js?v=1', 'game.js?v=5']],
+  ['flappy-cloud', ['id="flappyCanvas"', 'id="startButton"', 'id="pauseButton"', 'id="flappySaveStatus"', 'game.js?v=3']],
+  ['cloudlab-clicker', ['id="cloudCore"', 'id="buildingList"', 'id="boostList"', 'id="buyModes"', 'id="productionNetwork"', 'id="activeResearch"', 'id="clickerTabs"', 'id="cloudSignIn"', 'id="clickRateStatus"', 'rate-limiter.js?v=1', 'save-policy.js?v=1', 'game.js?v=6']],
   ['launcher', ['id="launcherCanvas"', 'id="launchButton"', 'id="launcherUpgradeGrid"', 'id="angleButtons"', 'id="phaseLabel"', 'id="launcherToastLayer"', 'id="launcherSaveStatus"', 'game.js']]
 ]);
 for (const [slug, tokens] of requiredGameControls) {
@@ -166,6 +167,12 @@ const communityClient = readFileSync(communityClientPath, 'utf8');
 for (const token of ["id: 'flappy-cloud'", "id: 'cloudlab-clicker'", "id: 'launcher'", 'loadGameSave', 'saveGameState']) {
   if (!communityClient.includes(token)) fail(communityClientPath, `missing account game integration ${token}`);
 }
+if ((communityClient.match(/saveManaged: true/g) || []).length !== 3) {
+  fail(communityClientPath, 'all three account-save games must bypass duplicate generic score syncing');
+}
+if (!communityClient.includes('if (sessionPromise) return sessionPromise')) {
+  fail(communityClientPath, 'session checks must share one in-flight request');
+}
 const clickerScript = readFileSync(join(root, 'games', 'cloudlab-clicker', 'game.js'), 'utf8');
 for (const token of [':user:', ':reset-pending', 'persistResetIntent', 'save.reset === true', 'spentProgressValue', 'coreInputLimiter?.attempt', 'event?.isTrusted === false', '10 CPS CAP ACTIVE', 'cloud autosave runs every minute', 'save(false, { cloud: false })', 'scheduleCloudSave()']) {
   if (!clickerScript.includes(token)) fail(join(root, 'games', 'cloudlab-clicker', 'game.js'), `missing durable account-save safeguard ${token}`);
@@ -173,6 +180,10 @@ for (const token of [':user:', ':reset-pending', 'persistResetIntent', 'save.res
 const clickRateLimiterScript = readFileSync(join(root, 'games', 'cloudlab-clicker', 'rate-limiter.js'), 'utf8');
 for (const token of ['createRollingLimiter', 'acceptedAt.length >= limit', 'retryAfterMs']) {
   if (!clickRateLimiterScript.includes(token)) fail(join(root, 'games', 'cloudlab-clicker', 'rate-limiter.js'), `missing click-rate limiter safeguard ${token}`);
+}
+const flappyScript = readFileSync(join(root, 'games', 'flappy-cloud', 'game.js'), 'utf8');
+for (const token of ['lastCloudBest', 'only new records sync']) {
+  if (!flappyScript.includes(token)) fail(join(root, 'games', 'flappy-cloud', 'game.js'), `missing quiet record-sync safeguard ${token}`);
 }
 const clickerSavePolicyScript = readFileSync(join(root, 'games', 'cloudlab-clicker', 'save-policy.js'), 'utf8');
 for (const token of ['LOCAL_SAVE_INTERVAL_MS = 15000', 'CLOUD_SAVE_INTERVAL_MS = 60000', 'createCloudSaveQueue', 'pending.notify ||=']) {

@@ -467,7 +467,6 @@
       selectAccountStorage(payload.user?.id);
       cloudConnected = true;
       applyCloudPayload(payload);
-      showToast('Account progress linked', 'CloudLab Clicker now follows you to every signed-in device.', 'mint');
     } catch (_) {
       setAccountSaveStatus('Progress saves on this device. Account sync will retry.', 'error');
       window.setTimeout(initializeCloudSave, 5000);

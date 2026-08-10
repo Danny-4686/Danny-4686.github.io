@@ -1,13 +1,17 @@
 (() => {
   const API = 'https://api.danny4686.com/v1';
+  const SESSION_CACHE_MS = 15000;
   let session = { authenticated: false, user: null, csrfToken: '' };
   let sessionPromise = null;
-  let sessionGeneration = 0;
+  let sessionLoaded = false;
+  let sessionLoadedAt = 0;
   let profileOverlay = null;
   let profileReturnFocus = null;
   let profileRequest = 0;
   let leaderboardRefreshTimer = 0;
   let lastLeaderboardRefreshAt = 0;
+  let sessionRefreshTimer = 0;
+  let accountReloadScheduled = false;
 
   if (!document.querySelector('link[data-public-profile-ui]')) {
     const styles = document.createElement('link');
@@ -27,15 +31,15 @@
     '/games/breakout/': { id: 'breakout', name: 'Breakout', selector: '#best', metric: 'points', direction: 'desc' },
     '/games/connect-four/': { id: 'connect-four', name: 'Connect Four', selector: '#cyanWins', metric: 'wins', direction: 'desc' },
     '/games/cloud-hopper/': { id: 'cloud-hopper', name: 'Cloud Hopper', selector: '#best', metric: 'points', direction: 'desc' },
-    '/games/flappy-cloud/': { id: 'flappy-cloud', name: 'Flappy Cloud', selector: '#best', metric: 'points', direction: 'desc' },
-    '/games/cloudlab-clicker/': { id: 'cloudlab-clicker', name: 'CloudLab Clicker', selector: '#allTime', attribute: 'data-record-value', metric: 'clouds', direction: 'desc', syncDelay: 5000 },
-    '/games/launcher/': { id: 'launcher', name: 'Launcher', selector: '#bestDistance', metric: 'distance', direction: 'desc' },
+    '/games/flappy-cloud/': { id: 'flappy-cloud', name: 'Flappy Cloud', selector: '#best', metric: 'points', direction: 'desc', saveManaged: true },
+    '/games/cloudlab-clicker/': { id: 'cloudlab-clicker', name: 'CloudLab Clicker', selector: '#allTime', attribute: 'data-record-value', metric: 'clouds', direction: 'desc', saveManaged: true },
+    '/games/launcher/': { id: 'launcher', name: 'Launcher', selector: '#bestDistance', metric: 'distance', direction: 'desc', saveManaged: true },
     '/games/tower-stacker/': { id: 'tower-stacker', name: 'Tower Stacker', selector: '#best', metric: 'height', direction: 'desc' }
   };
 
   function publishCommunity() {
     const community = {
-      session,
+      get session() { return session; },
       refresh: refreshSession,
       submitRecord,
       loadGameSave,
@@ -61,25 +65,53 @@
     return data;
   }
 
-  function loadSession() {
-    if (!sessionPromise) {
-      const generation = ++sessionGeneration;
-      sessionPromise = api('/session').then((data) => {
-        if (generation !== sessionGeneration) return session;
-        session = data;
-        publishCommunity();
-        return session;
-      }).catch(() => {
-        if (generation === sessionGeneration) sessionPromise = null;
-        return session;
-      });
+  function applySession(data) {
+    if (!data || typeof data.authenticated !== 'boolean' || (data.authenticated && !data.user?.id)) {
+      throw new Error('The account service returned an invalid session response.');
     }
-    return sessionPromise;
+    const previous = session;
+    const wasLoaded = sessionLoaded;
+    session = data.authenticated
+      ? data
+      : { authenticated: false, user: null, csrfToken: '', expiresAt: data.expiresAt || null };
+    sessionLoaded = true;
+    sessionLoadedAt = Date.now();
+    publishCommunity();
+    const previousIdentity = previous.authenticated ? `${previous.user?.id || ''}:${previous.user?.username || ''}` : 'signed-out';
+    const nextIdentity = session.authenticated ? `${session.user?.id || ''}:${session.user?.username || ''}` : 'signed-out';
+    const previousAccount = previous.authenticated ? previous.user?.id || '' : 'signed-out';
+    const nextAccount = session.authenticated ? session.user?.id || '' : 'signed-out';
+    window.dispatchEvent(new CustomEvent('cloudlab:session-changed', {
+      detail: {
+        session,
+        previousUserId: previous.user?.id || '',
+        initialConfirmation: !wasLoaded,
+        identityChanged: !wasLoaded || previousIdentity !== nextIdentity,
+        accountChanged: wasLoaded && previousAccount !== nextAccount
+      }
+    }));
+    return session;
   }
 
-  async function refreshSession() {
-    sessionPromise = null;
-    return loadSession();
+  function requestSession(force = false) {
+    if (sessionPromise) return sessionPromise;
+    if (!force && sessionLoaded && Date.now() - sessionLoadedAt < SESSION_CACHE_MS) {
+      return Promise.resolve(session);
+    }
+    const request = api('/session').then(applySession);
+    const tracked = request.finally(() => {
+      if (sessionPromise === tracked) sessionPromise = null;
+    });
+    sessionPromise = tracked;
+    return tracked;
+  }
+
+  function loadSession() {
+    return requestSession(false);
+  }
+
+  function refreshSession() {
+    return requestSession(true);
   }
 
   function toast(message, type = '') {
@@ -231,14 +263,27 @@
   async function submitRecord(gameId, value, secondary = null, extra = {}) {
     await loadSession();
     if (!session.authenticated) return { improved: false, signedOut: true };
-    return api('/scores', {
+    const expectedUserId = session.user?.id || '';
+    const request = {
       method: 'POST',
       body: JSON.stringify({ gameId, value, secondary, extra })
-    });
+    };
+    try {
+      return await api('/scores', request);
+    } catch (error) {
+      const canRefresh = error.status === 401 || (error.status === 403 && /security token expired/i.test(error.message));
+      if (!canRefresh) throw error;
+      await refreshSession();
+      if (!session.authenticated) return { improved: false, signedOut: true };
+      if (session.user?.id !== expectedUserId) {
+        return { improved: false, accountChanged: true, user: session.user };
+      }
+      return api('/scores', request);
+    }
   }
 
   async function loadGameSave(gameId) {
-    await refreshSession();
+    await loadSession();
     if (!session.authenticated) {
       return { authenticated: false, user: null, gameId, save: null };
     }
@@ -250,14 +295,15 @@
       if (error.status !== 401) throw error;
       await refreshSession();
       if (!session.authenticated) return { authenticated: false, signedOut: true, user: null, gameId, save: null };
+      if (session.user?.id !== expectedUserId) {
+        return { authenticated: true, accountChanged: true, user: session.user, gameId, save: null };
+      }
       data = await api(`/game-saves/${encodeURIComponent(gameId)}`);
     }
     if (data.accountUserId && data.accountUserId !== expectedUserId) {
       await refreshSession();
       if (!session.authenticated) return { authenticated: false, signedOut: true, user: null, gameId, save: null };
-      if (data.accountUserId !== session.user?.id) {
-        return { authenticated: true, accountChanged: true, user: session.user, gameId, save: null };
-      }
+      return { authenticated: true, accountChanged: true, user: session.user, gameId, save: null };
     }
     return { ...data, authenticated: true, user: session.user };
   }
@@ -308,6 +354,39 @@
     return { ...data, authenticated: true, user: session.user };
   }
 
+  function renderHeaderAccount(account, currentSession = session, unavailable = false) {
+    const label = account.querySelector('span:last-child');
+    account.classList.remove('is-authenticated', 'is-signed-out', 'is-checking', 'is-unavailable');
+    account.removeAttribute('aria-label');
+
+    if (unavailable) {
+      account.href = '/account/';
+      account.classList.add('is-unavailable');
+      if (sessionLoaded && currentSession.authenticated) {
+        account.classList.add('is-authenticated');
+        label.textContent = currentSession.user.username;
+        account.setAttribute('aria-label', `Open ${currentSession.user.username}'s account; sync is reconnecting`);
+      } else {
+        label.textContent = 'Account';
+        account.setAttribute('aria-label', 'Open account; account status is temporarily unavailable');
+      }
+      return;
+    }
+
+    if (currentSession.authenticated) {
+      account.href = '/account/';
+      account.classList.add('is-authenticated');
+      label.textContent = currentSession.user.username;
+      account.setAttribute('aria-label', `Open ${currentSession.user.username}'s account`);
+      return;
+    }
+
+    account.href = `/login/?next=${encodeURIComponent(location.pathname)}`;
+    account.classList.add('is-signed-out');
+    label.textContent = 'Sign in';
+    account.setAttribute('aria-label', 'Sign in or create a CloudLab account');
+  }
+
   async function initHeaderAccount() {
     const header = document.querySelector('.hub-header');
     const action = header?.querySelector('.header-action');
@@ -318,17 +397,23 @@
     action.before(wrapper);
 
     const account = document.createElement('a');
-    account.className = 'community-account-link';
-    account.href = '/login/';
-    account.innerHTML = '<span class="community-account-dot"></span><span>Sign in</span>';
+    account.className = 'community-account-link is-checking';
+    account.href = '/account/';
+    account.innerHTML = '<span class="community-account-dot"></span><span>Account</span>';
+    account.setAttribute('aria-label', 'Checking CloudLab account status');
     wrapper.append(account, action);
 
-    await loadSession();
-    if (session.authenticated) {
-      account.href = '/account/';
-      account.classList.add('is-authenticated');
-      account.querySelector('span:last-child').textContent = session.user.username;
-      account.setAttribute('aria-label', `Open ${session.user.username}'s account`);
+    window.addEventListener('cloudlab:session-changed', (event) => {
+      renderHeaderAccount(account, event.detail?.session || session);
+    });
+    window.addEventListener('cloudlab:session-unavailable', () => {
+      renderHeaderAccount(account, session, true);
+    });
+
+    try {
+      renderHeaderAccount(account, await loadSession());
+    } catch (_) {
+      renderHeaderAccount(account, session, true);
     }
   }
 
@@ -360,19 +445,53 @@
     } catch (_) {}
 
     button.addEventListener('click', async () => {
-      await loadSession();
-      if (!session.authenticated) {
-        location.href = `/login/?next=${encodeURIComponent(location.pathname)}`;
-        return;
-      }
       button.disabled = true;
       try {
+        await loadSession();
+        if (!session.authenticated) {
+          location.href = `/login/?next=${encodeURIComponent(location.pathname)}`;
+          return;
+        }
         apply(await api(`/posts/${slug}/like`, { method: 'POST', body: '{}' }));
       } catch (error) {
         toast(error.message, 'error');
       } finally {
         button.disabled = false;
       }
+    });
+  }
+
+  function renderLeaderboardAccountState(section, currentSession = session, unavailable = false) {
+    if (!section) return;
+    const note = section.querySelector('.community-sync-note');
+    const link = section.querySelector('.community-leaderboard-foot a');
+    if (!note || !link) return;
+
+    if (unavailable) {
+      if (sessionLoaded && currentSession.authenticated) {
+        note.textContent = `Signed in as ${currentSession.user.username}. Account sync is reconnecting.`;
+        link.href = '/account/';
+        link.textContent = 'My records';
+      } else {
+        note.textContent = 'Account status is temporarily unavailable. The public leaderboard still works.';
+        link.href = '/account/';
+        link.textContent = 'Account';
+      }
+      return;
+    }
+
+    if (currentSession.authenticated) {
+      note.textContent = `Signed in as ${currentSession.user.username}. Improved records sync automatically.`;
+      link.href = '/account/';
+      link.textContent = 'My records';
+    } else {
+      note.textContent = 'Sign in to sync your personal best.';
+      link.href = `/login/?next=${encodeURIComponent(location.pathname)}`;
+      link.textContent = 'Sign in';
+    }
+
+    section.querySelectorAll('.community-rank-row').forEach((row) => {
+      row.classList.toggle('is-me', Boolean(currentSession.user?.id && row.dataset.userId === currentSession.user.id));
     });
   }
 
@@ -383,22 +502,17 @@
 
     const section = document.createElement('section');
     section.className = 'community-leaderboard reveal visible';
-    section.innerHTML = `<div class="community-leaderboard-head"><div><p class="eyebrow">COMMUNITY RECORDS</p><h2>${config.name} leaderboard</h2><p>Tap a player to view their CloudLab profile.</p></div><span class="community-leaderboard-status">TOP 10</span></div><div class="community-ranking"><div class="community-leaderboard-empty">Loading leaderboard…</div></div><div class="community-leaderboard-foot"><span class="community-sync-note">Sign in to sync your personal best.</span><a href="/login/">Sign in</a></div>`;
+    section.innerHTML = `<div class="community-leaderboard-head"><div><p class="eyebrow">COMMUNITY RECORDS</p><h2>${config.name} leaderboard</h2><p>Tap a player to view their CloudLab profile.</p></div><span class="community-leaderboard-status">TOP 10</span></div><div class="community-ranking"><div class="community-leaderboard-empty">Loading leaderboard…</div></div><div class="community-leaderboard-foot"><span class="community-sync-note">Checking account status…</span><a href="/account/">Account</a></div>`;
     panel.insertAdjacentElement('afterend', section);
     const ranking = section.querySelector('.community-ranking');
-    const note = section.querySelector('.community-sync-note');
-    const link = section.querySelector('.community-leaderboard-foot a');
 
     try {
-      await loadSession();
-      if (session.authenticated) {
-        note.textContent = `Signed in as ${session.user.username}. Improved records sync automatically.`;
-        link.href = '/account/';
-        link.textContent = 'My records';
-      } else {
-        link.href = `/login/?next=${encodeURIComponent(location.pathname)}`;
-      }
+      renderLeaderboardAccountState(section, await loadSession());
+    } catch (_) {
+      renderLeaderboardAccountState(section, session, true);
+    }
 
+    try {
       const data = await api(`/leaderboards/${config.id}?limit=10`);
       ranking.replaceChildren();
       if (!data.entries.length) {
@@ -410,6 +524,7 @@
         data.entries.forEach((entry) => {
           const row = document.createElement('div');
           row.className = `community-rank-row${session.user?.id === entry.userId ? ' is-me' : ''}`;
+          row.dataset.userId = entry.userId;
 
           const rank = document.createElement('span');
           rank.className = 'community-rank-number';
@@ -454,14 +569,20 @@
 
   async function initRecordSync() {
     const config = currentGame();
-    if (!config) return;
+    if (!config || config.saveManaged) return;
     const target = document.querySelector(config.selector);
     if (!target) return;
-    await loadSession();
+    try {
+      await loadSession();
+    } catch (_) {
+      return;
+    }
     if (!session.authenticated) return;
 
     let lastSent = '';
     let timer = null;
+    let suppressInitialNotice = Boolean(parseRecord(config, target));
+    let lastNoticeAt = 0;
     async function sync() {
       const record = parseRecord(config, target);
       if (!record) return;
@@ -470,13 +591,18 @@
       lastSent = signature;
       try {
         const result = await submitRecord(config.id, record.value, record.secondary, record.extra);
+        if (result.signedOut || result.accountChanged) return;
         if (result.improved) {
-          toast(`${config.name} personal best saved to your account.`, 'success');
+          const canNotify = !suppressInitialNotice && Date.now() - lastNoticeAt >= 30000;
+          if (canNotify) {
+            lastNoticeAt = Date.now();
+            toast(`${config.name} personal best saved to your account.`, 'success');
+          }
           scheduleLeaderboardRefresh();
         }
-      } catch (error) {
+        suppressInitialNotice = false;
+      } catch (_) {
         lastSent = '';
-        if (!/sign in/i.test(error.message)) toast(error.message, 'error');
       }
     }
 
@@ -520,7 +646,41 @@
     }, wait);
   }
 
+  function initSessionUiUpdates() {
+    window.addEventListener('cloudlab:session-changed', (event) => {
+      renderLeaderboardAccountState(
+        document.querySelector('.community-leaderboard'),
+        event.detail?.session || session
+      );
+      if (event.detail?.accountChanged && normalizePath().startsWith('/games/') && !accountReloadScheduled) {
+        accountReloadScheduled = true;
+        window.setTimeout(() => location.reload(), 120);
+      }
+    });
+    window.addEventListener('cloudlab:session-unavailable', () => {
+      renderLeaderboardAccountState(document.querySelector('.community-leaderboard'), session, true);
+    });
+  }
+
+  function initSessionFreshness() {
+    const recheck = () => {
+      if (!sessionLoaded || sessionRefreshTimer) return;
+      sessionRefreshTimer = window.setTimeout(() => {
+        sessionRefreshTimer = 0;
+        refreshSession().catch(() => {
+          window.dispatchEvent(new CustomEvent('cloudlab:session-unavailable', { detail: { session } }));
+        });
+      }, 80);
+    };
+    window.addEventListener('focus', recheck);
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) recheck();
+    });
+  }
+
   async function init() {
+    initSessionUiUpdates();
+    initSessionFreshness();
     initHeaderAccount();
     initJournalLike();
     initLeaderboard();

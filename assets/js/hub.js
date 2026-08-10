@@ -2,13 +2,13 @@
   if (!document.querySelector('link[data-community-ui]')) {
     const styles = document.createElement('link');
     styles.rel = 'stylesheet';
-    styles.href = '/community/community.css?v=20260808';
+    styles.href = '/community/community.css?v=20260810.2';
     styles.dataset.communityUi = 'true';
     document.head.append(styles);
   }
   if (!document.querySelector('script[data-community-ui]')) {
     const script = document.createElement('script');
-    script.src = '/community/community-client.js?v=20260810';
+    script.src = '/community/community-client.js?v=20260810.2';
     script.dataset.communityUi = 'true';
     document.head.append(script);
   }
