@@ -1,12 +1,16 @@
 /* Managed home-project cards. Loaded by assets/js/script.js so the existing page remains a safe fallback. */
 .project-grid.is-managed {
   align-items: stretch;
+  min-width: 0;
 }
 
 .project-card.managed-project {
   --project-accent: var(--cyan);
   --project-accent-rgb: 104, 208, 223;
+  width: 100%;
+  max-width: 100%;
   min-width: 0;
+  padding: 0;
   display: grid;
   grid-template-columns: minmax(220px, .82fr) minmax(0, 1.18fr);
   isolation: isolate;
@@ -51,6 +55,8 @@
 .managed-project-content {
   position: relative;
   z-index: 1;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .managed-project-media {
@@ -65,7 +71,9 @@
 }
 
 .managed-project-media img {
+  display: block;
   width: 100%;
+  max-width: 100%;
   height: 100%;
   min-height: 265px;
   object-fit: cover;
@@ -100,10 +108,12 @@
   flex-direction: column;
   justify-content: center;
   align-items: flex-start;
+  overflow-wrap: anywhere;
 }
 
 .managed-project-meta {
   width: 100%;
+  min-width: 0;
   margin-bottom: 14px;
   display: flex;
   align-items: center;
@@ -112,14 +122,17 @@
 }
 
 .managed-project-kicker {
+  min-width: 0;
   margin: 0;
   color: var(--project-accent);
   font-size: .7rem;
   font-weight: 900;
   letter-spacing: .14em;
+  overflow-wrap: anywhere;
 }
 
 .managed-project-badge {
+  max-width: 100%;
   min-height: 26px;
   padding: 5px 9px;
   display: inline-flex;
@@ -131,22 +144,29 @@
   font-size: .63rem;
   font-weight: 900;
   letter-spacing: .05em;
+  overflow-wrap: anywhere;
 }
 
 .managed-project-content h3 {
+  max-width: 100%;
   margin: 0 0 12px;
   font-size: clamp(2rem, 4vw, 3.1rem);
   line-height: 1;
   letter-spacing: -.05em;
+  overflow-wrap: anywhere;
 }
 
 .managed-project-description {
+  max-width: 100%;
   margin: 0;
   color: var(--muted);
   line-height: 1.75;
+  overflow-wrap: anywhere;
 }
 
 .managed-project-actions {
+  width: 100%;
+  min-width: 0;
   margin-top: 23px;
   display: flex;
   flex-wrap: wrap;
@@ -154,6 +174,7 @@
 }
 
 .managed-project-button {
+  max-width: 100%;
   min-height: 44px;
   padding: 11px 15px;
   display: inline-flex;
@@ -167,6 +188,8 @@
   box-shadow: 0 12px 25px rgba(var(--project-accent-rgb), .12);
   font-size: .82rem;
   font-weight: 900;
+  text-align: center;
+  overflow-wrap: anywhere;
   transition: transform .18s ease, filter .18s ease;
 }
 .managed-project-button:hover { transform: translateY(-2px); filter: brightness(1.04); }
@@ -195,8 +218,9 @@
 .project-card.managed-project[data-layout="compact"] .managed-project-content h3 { font-size: clamp(1.75rem, 3vw, 2.45rem); }
 
 @media (max-width: 780px) {
+  .project-grid.is-managed { grid-template-columns: minmax(0, 1fr); }
   .project-card.managed-project,
-  .project-card.managed-project[data-layout="compact"] { grid-template-columns: 1fr; }
+  .project-card.managed-project[data-layout="compact"] { grid-template-columns: minmax(0, 1fr); }
   .project-card.managed-project .managed-project-media,
   .project-card.managed-project[data-layout="compact"] .managed-project-media {
     min-height: 220px;
@@ -209,11 +233,18 @@
 }
 
 @media (max-width: 520px) {
-  .managed-project-content { padding: 22px; }
-  .managed-project-content h3 { font-size: 2rem; }
+  .managed-project-content { padding: 21px 19px 22px; }
+  .managed-project-content h3 { font-size: clamp(1.85rem, 9vw, 2.2rem); }
   .managed-project-meta { align-items: flex-start; flex-direction: column; }
+  .managed-project-media,
+  .project-card.managed-project[data-layout="compact"] .managed-project-media { min-height: 190px; aspect-ratio: 16 / 10; }
   .managed-project-actions { width: 100%; }
   .managed-project-button { width: 100%; }
+}
+
+@media (hover:none) {
+  .project-card.managed-project:hover { transform: none; }
+  .managed-project:hover .managed-project-media img { transform: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
