@@ -7,17 +7,17 @@
     "description": "A growing community built around friends, games, creative projects, and everything I’m building across platforms.",
     "url": "https://discord.com/invite/CloudLab",
     "buttonLabel": "Open CloudLab",
-    "showButton": true,
+    "showButton": false,
     "clickable": false,
-    "newTab": true,
+    "newTab": false,
     "image": "/assets/images/optimized/cloudlab-logo-256.webp",
-    "imageAlt": "CloudLab logo",
+    "imageAlt": "CloudLab project artwork",
     "fit": "contain",
     "accent": "cyan",
-    "layout": "media-left",
+    "layout": "compact",
     "draft": false,
-    "updatedAt": "",
-    "updatedBy": ""
+    "updatedAt": "2026-08-11T06:57:55.455Z",
+    "updatedBy": "Danny-4686"
   },
   {
     "id": "rocket-tycoon",
