@@ -1,0 +1,54 @@
+/* Keep the full site navigation available from /account/ on every screen size. */
+.account-header {
+  align-items: center;
+}
+
+.account-header-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+}
+
+.account-header-nav a {
+  white-space: nowrap;
+}
+
+@media (max-width: 860px) {
+  .account-header {
+    flex-wrap: wrap;
+  }
+
+  .account-header-nav {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 5px;
+  }
+
+  .account-header-nav a {
+    min-width: 0;
+    min-height: 40px;
+    padding: 9px 6px;
+    font-size: .75rem;
+  }
+}
+
+@media (max-width: 620px) {
+  .account-header-nav {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  /* account.css used to hide the first nav item on mobile. Keep Main visible. */
+  .account-header-nav a:first-child {
+    display: inline-flex !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .account-header-nav a {
+    padding-inline: 4px;
+    font-size: .7rem;
+  }
+}
