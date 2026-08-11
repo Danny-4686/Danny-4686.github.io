@@ -20,26 +20,6 @@
     "updatedBy": "Danny-4686"
   },
   {
-    "id": "rocket-tycoon",
-    "title": "Rocket Tycoon",
-    "kicker": "ROBLOX GAME",
-    "badge": "IN DEVELOPMENT",
-    "description": "Rocket Tycoon is an idle/incremental Roblox tycoon game where players build a rocket factory, buy droppers and upgrades to generate resources, and repeatedly rebirth to stack multipliers for exponentially growing income, all supported by events, offline earnings, and ongoing upgrades.",
-    "url": "https://www.roblox.com/games/846133735/Rocket-Tycoon",
-    "buttonLabel": "Play on Roblox",
-    "showButton": true,
-    "clickable": true,
-    "newTab": true,
-    "image": "/assets/images/optimized/rocket-tycoon-banner.webp",
-    "imageAlt": "Rocket Tycoon project artwork",
-    "fit": "cover",
-    "accent": "gold",
-    "layout": "media-top",
-    "draft": true,
-    "updatedAt": "2026-08-11T06:57:05.167Z",
-    "updatedBy": "Danny-4686"
-  },
-  {
     "id": "danny4686-com",
     "title": "Danny4686.com",
     "kicker": "Website",
@@ -57,6 +37,26 @@
     "layout": "media-top",
     "draft": false,
     "updatedAt": "2026-08-11T07:02:02.916Z",
+    "updatedBy": "Danny-4686"
+  },
+  {
+    "id": "rocket-tycoon",
+    "title": "Rocket Tycoon",
+    "kicker": "ROBLOX GAME",
+    "badge": "IN DEVELOPMENT",
+    "description": "Rocket Tycoon is an idle/incremental Roblox tycoon game where players build a rocket factory, buy droppers and upgrades to generate resources, and repeatedly rebirth to stack multipliers for exponentially growing income, all supported by events, offline earnings, and ongoing upgrades.",
+    "url": "https://www.roblox.com/games/846133735/Rocket-Tycoon",
+    "buttonLabel": "Play on Roblox",
+    "showButton": true,
+    "clickable": true,
+    "newTab": true,
+    "image": "/assets/images/optimized/rocket-tycoon-banner.webp",
+    "imageAlt": "Rocket Tycoon project artwork",
+    "fit": "cover",
+    "accent": "gold",
+    "layout": "media-top",
+    "draft": true,
+    "updatedAt": "2026-08-11T06:57:05.167Z",
     "updatedBy": "Danny-4686"
   }
 ]
