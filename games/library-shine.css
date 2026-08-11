@@ -1,0 +1,42 @@
+/* Hover polish for the normal library only. Featured clones keep their existing animation loop untouched. */
+.arcade-grid > .game-card {
+  isolation: isolate;
+}
+
+.arcade-grid > .game-card::after {
+  content: "";
+  position: absolute;
+  top: -22%;
+  bottom: -22%;
+  left: -52%;
+  width: 34%;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(-180%) skewX(-18deg);
+  background: linear-gradient(
+    100deg,
+    transparent 0%,
+    rgba(255,255,255,.02) 26%,
+    rgba(255,255,255,.24) 48%,
+    rgba(104,208,223,.12) 62%,
+    transparent 100%
+  );
+  filter: blur(.2px);
+}
+
+@media (hover:hover) and (pointer:fine) {
+  .arcade-grid > .game-card:hover::after {
+    opacity: .95;
+    transform: translateX(520%) skewX(-18deg);
+    transition: transform .72s cubic-bezier(.2,.75,.2,1), opacity .16s ease;
+  }
+
+  .arcade-grid > .game-card:hover {
+    box-shadow: 0 24px 60px rgba(0,0,0,.32), 0 0 30px rgba(104,208,223,.07);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arcade-grid > .game-card::after { display: none; }
+}

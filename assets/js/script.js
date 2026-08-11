@@ -5,11 +5,12 @@ revealItems.forEach((element, index) => {
   element.style.setProperty('--delay', `${Math.min(index % 4, 3) * 55}ms`);
 });
 
+let revealObserver = null;
 if (reducedMotion || !('IntersectionObserver' in window)) {
   revealItems.forEach((element) => element.classList.add('visible'));
 } else {
   revealItems.forEach((element) => element.classList.add('is-reveal-pending'));
-  const revealObserver = new IntersectionObserver((entries) => {
+  revealObserver = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
       if (entry.isIntersecting) {
         entry.target.classList.add('visible');
@@ -19,6 +20,18 @@ if (reducedMotion || !('IntersectionObserver' in window)) {
   }, { threshold: 0.12, rootMargin: '0px 0px -6% 0px' });
 
   revealItems.forEach((element) => revealObserver.observe(element));
+}
+
+function revealManaged(element, index = 0) {
+  if (!element) return;
+  element.classList.add('reveal');
+  element.style.setProperty('--delay', `${Math.min(index % 4, 3) * 55}ms`);
+  if (reducedMotion || !revealObserver) {
+    element.classList.add('visible');
+    return;
+  }
+  element.classList.add('is-reveal-pending');
+  revealObserver.observe(element);
 }
 
 const header = document.querySelector('.site-header');
@@ -120,28 +133,29 @@ window.addEventListener('scrollend', () => {
 
 requestNavigationUpdate();
 
+function attachSpotlight(element) {
+  if (!element || reducedMotion || element.dataset.spotlightBound === 'true') return;
+  element.dataset.spotlightBound = 'true';
+  element.addEventListener('pointermove', (event) => {
+    const rect = element.getBoundingClientRect();
+    element.style.setProperty('--spot-x', `${event.clientX - rect.left}px`);
+    element.style.setProperty('--spot-y', `${event.clientY - rect.top}px`);
+  });
+  element.addEventListener('pointerleave', () => {
+    element.style.removeProperty('--spot-x');
+    element.style.removeProperty('--spot-y');
+  });
+}
+
 if (!reducedMotion) {
   window.addEventListener('pointermove', (event) => {
     document.documentElement.style.setProperty('--mouse-x', `${(event.clientX / window.innerWidth) * 100}%`);
     document.documentElement.style.setProperty('--mouse-y', `${(event.clientY / window.innerHeight) * 100}%`);
   }, { passive: true });
 
-  const spotlightTargets = document.querySelectorAll(
+  document.querySelectorAll(
     '.hero-portrait, .studio-strip-inner, .gloss-card, .project-card, .connect-card, .destination-card'
-  );
-
-  spotlightTargets.forEach((element) => {
-    element.addEventListener('pointermove', (event) => {
-      const rect = element.getBoundingClientRect();
-      element.style.setProperty('--spot-x', `${event.clientX - rect.left}px`);
-      element.style.setProperty('--spot-y', `${event.clientY - rect.top}px`);
-    });
-
-    element.addEventListener('pointerleave', () => {
-      element.style.removeProperty('--spot-x');
-      element.style.removeProperty('--spot-y');
-    });
-  });
+  ).forEach(attachSpotlight);
 
   const portrait = document.querySelector('.hero-portrait');
   if (portrait && window.matchMedia('(min-width: 981px)').matches) {
@@ -159,6 +173,165 @@ if (!reducedMotion) {
     });
   }
 }
+
+function ensureManagedProjectStyles() {
+  if (document.querySelector('link[data-managed-projects]')) return;
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = '/assets/css/project-managed.css?v=20260811';
+  link.dataset.managedProjects = 'true';
+  document.head.append(link);
+}
+
+function safeProjectUrl(value) {
+  const url = String(value || '').trim();
+  if (!url) return '';
+  if (/^https?:\/\//i.test(url)) return url;
+  if (/^\/(?!\/)/.test(url)) return url;
+  return '';
+}
+
+function safeImagePath(value) {
+  const path = String(value || '').trim();
+  if (!path) return '';
+  if (/^\/assets\/[A-Za-z0-9_./-]+$/.test(path) && !path.includes('..')) return path;
+  return '';
+}
+
+function applyManagedProfileImage(settings) {
+  const path = safeImagePath(settings?.profileImage);
+  if (!path) return;
+  const stamp = typeof settings?.updatedAt === 'string' && settings.updatedAt ? `?v=${encodeURIComponent(settings.updatedAt)}` : '';
+  document.querySelectorAll('.hero-profile, .connect-identity img').forEach((image) => {
+    image.src = `${path}${stamp}`;
+  });
+}
+
+function createProjectMedia(project) {
+  const media = document.createElement('div');
+  media.className = 'managed-project-media';
+  media.dataset.fit = project.fit === 'contain' ? 'contain' : 'cover';
+  const imagePath = safeImagePath(project.image);
+  if (imagePath) {
+    const image = document.createElement('img');
+    image.src = imagePath;
+    image.alt = project.imageAlt || `${project.title} project artwork`;
+    image.loading = 'lazy';
+    image.decoding = 'async';
+    image.className = project.fit === 'contain' ? 'is-contain' : '';
+    media.append(image);
+  } else {
+    const monogram = document.createElement('span');
+    monogram.className = 'managed-project-media-placeholder';
+    monogram.textContent = String(project.title || 'P').trim().charAt(0).toUpperCase() || 'P';
+    media.append(monogram);
+  }
+  return media;
+}
+
+function makeProjectCard(project, index) {
+  const card = document.createElement('article');
+  const accent = ['cyan', 'gold', 'mint', 'orange'].includes(project.accent) ? project.accent : 'cyan';
+  const layout = ['media-left', 'media-top', 'compact'].includes(project.layout) ? project.layout : 'media-left';
+  card.className = 'project-card managed-project';
+  card.dataset.projectId = project.id || '';
+  card.dataset.accent = accent;
+  card.dataset.layout = layout;
+
+  const url = safeProjectUrl(project.url);
+  const clickable = Boolean(project.clickable && url);
+  const newTab = Boolean(project.newTab && /^https?:\/\//i.test(url));
+  if (clickable) {
+    card.classList.add('is-clickable');
+    card.tabIndex = 0;
+    card.setAttribute('role', 'link');
+    card.setAttribute('aria-label', `Open ${project.title}`);
+    const open = () => {
+      if (newTab) window.open(url, '_blank', 'noopener,noreferrer');
+      else window.location.href = url;
+    };
+    card.addEventListener('click', (event) => {
+      if (event.target.closest('a,button,input,select,textarea')) return;
+      open();
+    });
+    card.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      open();
+    });
+  }
+
+  card.append(createProjectMedia(project));
+
+  const content = document.createElement('div');
+  content.className = 'project-content managed-project-content';
+  const meta = document.createElement('div');
+  meta.className = 'managed-project-meta';
+
+  const kicker = document.createElement('p');
+  kicker.className = 'project-kicker managed-project-kicker';
+  kicker.textContent = project.kicker || 'PROJECT';
+  meta.append(kicker);
+  if (project.badge) {
+    const badge = document.createElement('span');
+    badge.className = 'managed-project-badge';
+    badge.textContent = project.badge;
+    meta.append(badge);
+  }
+
+  const title = document.createElement('h3');
+  title.textContent = project.title;
+  const description = document.createElement('p');
+  description.className = 'managed-project-description';
+  description.textContent = project.description;
+  content.append(meta, title, description);
+
+  if (url && project.showButton !== false) {
+    const actions = document.createElement('div');
+    actions.className = 'managed-project-actions';
+    const button = document.createElement('a');
+    button.className = 'project-button managed-project-button';
+    button.href = url;
+    button.textContent = project.buttonLabel || 'Open project';
+    if (newTab) {
+      button.target = '_blank';
+      button.rel = 'noopener noreferrer';
+    }
+    actions.append(button);
+    content.append(actions);
+  }
+  card.append(content);
+  revealManaged(card, index);
+  attachSpotlight(card);
+  return card;
+}
+
+async function loadManagedProjects() {
+  const grid = document.querySelector('#projects .project-grid');
+  if (!grid) return;
+  ensureManagedProjectStyles();
+  try {
+    const response = await fetch('/projects/projects.json', { cache: 'no-store' });
+    if (!response.ok) throw new Error(`Projects returned ${response.status}`);
+    const data = await response.json();
+    const published = (Array.isArray(data) ? data : [])
+      .filter((project) => project && !project.draft && project.title && project.description)
+      .slice(0, 50);
+    const fragment = document.createDocumentFragment();
+    published.forEach((project, index) => fragment.append(makeProjectCard(project, index)));
+    grid.replaceChildren(fragment);
+    grid.classList.add('is-managed');
+    grid.hidden = published.length === 0;
+  } catch (error) {
+    console.warn('Managed projects unavailable; keeping built-in projects.', error);
+  }
+}
+
+fetch('/site-settings.json', { cache: 'no-store' })
+  .then((response) => response.ok ? response.json() : Promise.reject(new Error(`Settings returned ${response.status}`)))
+  .then(applyManagedProfileImage)
+  .catch(() => {});
+loadManagedProjects();
 
 const year = document.getElementById('year');
 if (year) year.textContent = new Date().getFullYear();

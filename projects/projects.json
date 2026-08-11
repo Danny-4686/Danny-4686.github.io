@@ -1,0 +1,38 @@
+[
+  {
+    "id": "cloudlab",
+    "title": "CloudLab",
+    "kicker": "COMMUNITY",
+    "badge": "ACTIVE",
+    "description": "A growing community built around friends, games, creative projects, and everything I’m building across platforms.",
+    "url": "https://discord.com/invite/CloudLab",
+    "buttonLabel": "Open CloudLab",
+    "showButton": true,
+    "clickable": false,
+    "newTab": true,
+    "image": "/assets/images/optimized/cloudlab-logo-256.webp",
+    "imageAlt": "CloudLab logo",
+    "fit": "contain",
+    "accent": "cyan",
+    "layout": "media-left",
+    "draft": false
+  },
+  {
+    "id": "rocket-tycoon",
+    "title": "Rocket Tycoon",
+    "kicker": "ROBLOX GAME",
+    "badge": "IN DEVELOPMENT",
+    "description": "Rocket Tycoon is an idle/incremental Roblox tycoon game where players build a rocket factory, buy droppers and upgrades to generate resources, and repeatedly rebirth to stack multipliers for exponentially growing income, all supported by events, offline earnings, and ongoing upgrades.",
+    "url": "https://www.roblox.com/games/846133735/Rocket-Tycoon",
+    "buttonLabel": "Play on Roblox",
+    "showButton": true,
+    "clickable": true,
+    "newTab": true,
+    "image": "/assets/images/optimized/rocket-tycoon-banner.webp",
+    "imageAlt": "Rocket Tycoon banner",
+    "fit": "cover",
+    "accent": "gold",
+    "layout": "media-top",
+    "draft": false
+  }
+]
