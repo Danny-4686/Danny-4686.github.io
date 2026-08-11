@@ -38,5 +38,25 @@
     "draft": true,
     "updatedAt": "2026-08-11T06:57:05.167Z",
     "updatedBy": "Danny-4686"
+  },
+  {
+    "id": "danny4686-com",
+    "title": "Danny4686.com",
+    "kicker": "Website",
+    "badge": "IN DEVELOPMENT",
+    "description": "Working on my own website, Danny4686.com, has been a fun way to build something that feels completely mine. I’ve been designing, improving, and adding new features to make the site cleaner, faster, and more useful over time. It’s a project I can keep growing as I learn new things, share what I’m working on, and turn new ideas into something people can actually visit and use.",
+    "url": "https://danny4686.com/",
+    "buttonLabel": "Open project",
+    "showButton": false,
+    "clickable": true,
+    "newTab": false,
+    "image": "/assets/images/projects/danny4686-com/project-1786431722916.png",
+    "imageAlt": "Danny4686.com project artwork",
+    "fit": "cover",
+    "accent": "mint",
+    "layout": "media-top",
+    "draft": false,
+    "updatedAt": "2026-08-11T07:02:02.916Z",
+    "updatedBy": "Danny-4686"
   }
 ]
