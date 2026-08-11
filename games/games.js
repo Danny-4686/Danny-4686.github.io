@@ -31,6 +31,14 @@
     document.head.append(classicStyles);
   }
 
+  if (!document.querySelector('link[data-library-shine]')) {
+    const shineStyles = document.createElement('link');
+    shineStyles.rel = 'stylesheet';
+    shineStyles.href = 'library-shine.css?v=20260811';
+    shineStyles.dataset.libraryShine = 'true';
+    document.head.append(shineStyles);
+  }
+
   const grid = document.getElementById('gameGrid');
   const featuredGrid = document.getElementById('featuredGameGrid');
   const featuredStatus = document.getElementById('featuredGameStatus');
@@ -52,7 +60,7 @@
     return valid.length ? valid : [...defaultFeatured];
   }
 
-  function renderFeatured(value, isLive = false) {
+  function renderFeatured(value) {
     if (!featuredGrid) return;
     const featured = normalizedFeatured(value);
     const fragment = document.createDocumentFragment();
@@ -82,15 +90,15 @@
       if (!response.ok) throw new Error('Settings request failed');
       const data = await response.json();
       if (!data?.ok) throw new Error('Settings unavailable');
-      renderFeatured(data.featuredGames, true);
+      renderFeatured(data.featuredGames);
     } catch (_) {
-      renderFeatured(defaultFeatured, false);
+      renderFeatured(defaultFeatured);
     } finally {
       window.clearTimeout(timer);
     }
   }
 
-  renderFeatured(defaultFeatured, false);
+  renderFeatured(defaultFeatured);
   loadFeatured();
 
   if (!search || !filters || !cards.length || !empty) return;
