@@ -8,9 +8,11 @@ import { hashPassword, verifyPassword } from '../src/community-store.js';
 import { parseCookies } from '../src/utils.js';
 import {
   DEFAULT_FEATURED_GAMES,
+  DEFAULT_PROFILE_IMAGE,
   FEATURED_GAME_IDS,
   isValidFeaturedGameSelection,
   normalizeFeaturedGames,
+  normalizeProjects,
   normalizeSiteSettings
 } from '../src/worker.js';
 
@@ -21,9 +23,7 @@ test('parseCookies accepts a missing Cookie header', () => {
 
 test('parseCookies decodes valid values and preserves malformed encoding', () => {
   assert.deepEqual(parseCookies('theme=dark; display=Cloud%20Lab; broken=%E0%A4%A'), {
-    theme: 'dark',
-    display: 'Cloud Lab',
-    broken: '%E0%A4%A'
+    theme: 'dark', display: 'Cloud Lab', broken: '%E0%A4%A'
   });
 });
 
@@ -58,17 +58,7 @@ test('password hashes carry their work factor and legacy hashes remain valid', a
 });
 
 test('featured games are unique, known, ordered, and limited to six', () => {
-  const selected = normalizeFeaturedGames([
-    'launcher',
-    'cloud-hopper',
-    'launcher',
-    'not-a-game',
-    'cloudlab-clicker',
-    'snake',
-    'pong',
-    '2048',
-    'breakout'
-  ]);
+  const selected = normalizeFeaturedGames(['launcher','cloud-hopper','launcher','not-a-game','cloudlab-clicker','snake','pong','2048','breakout']);
   assert.deepEqual(selected, ['launcher', 'cloud-hopper', 'cloudlab-clicker', 'snake', 'pong', '2048']);
   assert.equal(selected.length, 6);
   selected.forEach((gameId) => assert.ok(FEATURED_GAME_IDS.includes(gameId)));
@@ -79,19 +69,39 @@ test('featured games are unique, known, ordered, and limited to six', () => {
   assert.equal(isValidFeaturedGameSelection(FEATURED_GAME_IDS.slice(0, 7)), false);
 });
 
-test('legacy or empty site settings receive the featured arcade defaults', () => {
+test('legacy or empty site settings receive safe defaults including profile artwork', () => {
   assert.deepEqual(normalizeFeaturedGames([]), [...DEFAULT_FEATURED_GAMES]);
   assert.deepEqual(normalizeFeaturedGames(null), [...DEFAULT_FEATURED_GAMES]);
   assert.deepEqual(normalizeSiteSettings({ forceSiteIntro: true }), {
     forceSiteIntro: true,
     featuredGames: [...DEFAULT_FEATURED_GAMES],
+    profileImage: DEFAULT_PROFILE_IMAGE,
     updatedAt: '',
     updatedBy: ''
   });
+  assert.equal(normalizeSiteSettings({ profileImage: 'javascript:alert(1)' }).profileImage, DEFAULT_PROFILE_IMAGE);
+  assert.equal(normalizeSiteSettings({ profileImage: '/assets/images/profile-managed/new.webp' }).profileImage, '/assets/images/profile-managed/new.webp');
 });
 
-test('assembled admin JavaScript parses and contains the Settings controls', () => {
+test('project normalization keeps safe presentation controls and rejects unsafe URLs', () => {
+  const projects = normalizeProjects([
+    { id:'cloudlab', title:'CloudLab', description:'Community project', url:'https://discord.com/invite/CloudLab', image:'/assets/images/optimized/cloudlab-logo-256.webp', accent:'gold', layout:'media-top', fit:'contain' },
+    { id:'unsafe', title:'Unsafe link', description:'This should not preserve a script URL.', url:'javascript:alert(1)', image:'../../secret.png' },
+    { id:'cloudlab', title:'Duplicate', description:'Duplicate ids are discarded.' }
+  ]);
+  assert.equal(projects.length, 2);
+  assert.equal(projects[0].url, 'https://discord.com/invite/CloudLab');
+  assert.equal(projects[0].image, '/assets/images/optimized/cloudlab-logo-256.webp');
+  assert.equal(projects[0].accent, 'gold');
+  assert.equal(projects[1].url, '');
+  assert.equal(projects[1].image, '');
+});
+
+test('assembled admin JavaScript parses and contains Settings, profile artwork, and Projects controls', () => {
   assert.doesNotThrow(() => new Function(ADMIN_JS));
   assert.match(ADMIN_JS, /<strong>Settings<\/strong>/);
   assert.match(ADMIN_JS, /Save featured games/);
+  assert.match(ADMIN_JS, /Profile Artwork/);
+  assert.match(ADMIN_JS, /<strong>Projects<\/strong>/);
+  assert.match(ADMIN_JS, /Save project/);
 });
