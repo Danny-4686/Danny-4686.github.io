@@ -5,6 +5,7 @@
   const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   const nav = header.querySelector('.nav-links');
   let resizeFrame = 0;
+  let allowInitialCorrection = true;
 
   function headerOffset() {
     const rect = header.getBoundingClientRect();
@@ -27,6 +28,15 @@
     return document.getElementById(id);
   }
 
+  function targetContentTop(target) {
+    const rect = target.getBoundingClientRect();
+    let top = window.scrollY + rect.top;
+    if (target.matches('section.section-shell')) {
+      top += Number.parseFloat(getComputedStyle(target).paddingTop) || 0;
+    }
+    return top;
+  }
+
   function keepNavLinkVisible(link) {
     if (!nav || !link || nav.scrollWidth <= nav.clientWidth) return;
     const left = link.offsetLeft - ((nav.clientWidth - link.offsetWidth) / 2);
@@ -38,7 +48,7 @@
     if (!target) return false;
     syncHeaderOffset();
     const offset = headerOffset();
-    const top = Math.max(0, window.scrollY + target.getBoundingClientRect().top - offset);
+    const top = Math.max(0, targetContentTop(target) - offset);
     window.scrollTo({ top, left: 0, behavior });
     return true;
   }
@@ -57,6 +67,7 @@
     const hash = link.getAttribute('href');
     if (!targetForHash(hash)) return;
 
+    allowInitialCorrection = false;
     event.preventDefault();
     writeHash(hash);
     scrollToHash(hash);
@@ -64,16 +75,21 @@
   }, true);
 
   window.addEventListener('hashchange', () => {
+    allowInitialCorrection = false;
     if (window.location.hash) scrollToHash(window.location.hash);
   });
 
   function correctInitialHash() {
     syncHeaderOffset();
-    if (!window.location.hash) return;
+    if (!allowInitialCorrection || !window.location.hash) return;
     scrollToHash(window.location.hash, 'auto');
     const active = nav?.querySelector(`a[href="${window.location.hash}"]`);
     keepNavLinkVisible(active);
   }
+
+  ['pointerdown', 'touchstart', 'wheel', 'keydown'].forEach((type) => {
+    window.addEventListener(type, () => { allowInitialCorrection = false; }, { passive: true, once: true });
+  });
 
   syncHeaderOffset();
   requestAnimationFrame(() => requestAnimationFrame(correctInitialHash));
@@ -85,7 +101,7 @@
   if (document.fonts?.ready) {
     document.fonts.ready.then(() => {
       syncHeaderOffset();
-      if (window.location.hash) correctInitialHash();
+      correctInitialHash();
     }).catch(() => {});
   }
 
