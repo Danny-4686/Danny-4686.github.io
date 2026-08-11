@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { addTransportSecurity, redirectToHttps } from '../src/transport-security.js';
-import { ADMIN_JS } from '../src/admin-assets.js';
+import { ADMIN_CSS, ADMIN_JS } from '../src/admin-assets.js';
 import { clearLegacyCookie, cookie } from '../src/community-api.js';
 import { hashPassword, verifyPassword } from '../src/community-store.js';
 import { parseCookies } from '../src/utils.js';
@@ -104,4 +104,14 @@ test('assembled admin JavaScript parses and contains Settings, profile artwork, 
   assert.match(ADMIN_JS, /Profile Artwork/);
   assert.match(ADMIN_JS, /<strong>Projects<\/strong>/);
   assert.match(ADMIN_JS, /Save project/);
+});
+
+test('assembled admin CSS ends with responsive text and tab corrections', () => {
+  const correction = ADMIN_CSS.lastIndexOf('Final corrective layer');
+  const projects = ADMIN_CSS.lastIndexOf('.projects-manager{');
+  assert.ok(correction > projects, 'responsive correction layer must load after section styles');
+  assert.match(ADMIN_CSS.slice(correction), /repeat\(auto-fit,minmax\(240px,1fr\)\)/);
+  assert.match(ADMIN_CSS.slice(correction), /\.project-option>span/);
+  assert.match(ADMIN_CSS.slice(correction), /\.profile-art-drop>span/);
+  assert.match(ADMIN_CSS.slice(correction), /@media\(max-width:620px\)/);
 });
