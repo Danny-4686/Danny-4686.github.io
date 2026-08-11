@@ -1,7 +1,13 @@
 /* Shared corrective layer: progressive enhancement, keyboard focus, and responsive safeguards. */
+:root{--site-header-offset:110px}
 :focus-visible{outline:3px solid rgba(104,208,223,.55);outline-offset:3px}
-html{scroll-padding-top:110px}
-[id]{scroll-margin-top:110px}
+html{max-width:100%;overflow-x:clip;scroll-padding-top:var(--site-header-offset)}
+body{max-width:100%;overflow-x:clip}
+[id]{scroll-margin-top:var(--site-header-offset)}
+img,video,svg{max-width:100%}
+.site-header,.hub-header,.account-header,.section-shell,.studio-strip,.page-shell,.account-shell,.account-footer,footer{max-width:100%}
+.site-header>*,.hub-header>*,.account-header>*,.section-shell>*,.page-shell>*,.account-shell>*{min-width:0}
+.destination-card,.gloss-card,.project-card,.connect-card,.game-card,.journal-card,.profile-setting-card{min-width:0;max-width:100%}
 
 /* Content stays readable when JavaScript is unavailable. */
 .reveal{opacity:1;transform:none}
@@ -14,7 +20,7 @@ html{scroll-padding-top:110px}
 .rocket-banner>img{position:static;width:100%;height:100%;object-fit:contain;transition:none}
 .rocket-banner:hover>img{transform:none;filter:none}
 
-.account-header-nav{overflow-x:auto;scrollbar-width:thin}
+.account-header-nav{min-width:0;max-width:100%;overflow-x:visible}
 .account-header-nav a:first-child{display:inline-flex}
 .profile-identity-copy,.profile-name-line{min-width:0}
 .profile-identity h1{overflow-wrap:anywhere}
@@ -34,7 +40,7 @@ html{scroll-padding-top:110px}
 .premium-game .game-panel::after{display:none}
 
 @media(max-width:620px){
-  .account-header-nav{max-width:48vw}
+  .account-header-nav{width:100%;max-width:100%;overflow-x:visible}
   .profile-identity{align-items:flex-start;flex-direction:column}
 }
 
@@ -42,11 +48,15 @@ html{scroll-padding-top:110px}
   .hub-header{grid-template-columns:minmax(0,1fr) auto!important;grid-template-rows:auto auto;gap:8px 12px}
   .hub-header .hub-brand{grid-column:1;grid-row:1;min-width:0}
   .hub-header .header-action{grid-column:2;grid-row:1}
-  .hub-header .hub-nav{grid-column:1/-1;grid-row:2;width:100%;display:flex!important;justify-content:flex-start;gap:20px;padding:1px 4px 3px;overflow-x:auto;overflow-y:hidden;white-space:nowrap;overscroll-behavior-inline:contain}
+  .hub-header .hub-nav{grid-column:1/-1;grid-row:2;width:100%;max-width:100%;display:flex!important;justify-content:flex-start;gap:20px;padding:1px 4px 3px;overflow-x:auto;overflow-y:hidden;white-space:nowrap;overscroll-behavior-inline:contain;scrollbar-width:none}
   .hub-header .hub-nav a{flex:0 0 auto;padding:7px 0;font-size:.82rem}
-  html body .site-header .nav-links,html body .hub-header .hub-nav{scrollbar-width:thin}
-  html body .site-header .nav-links::-webkit-scrollbar,html body .hub-header .hub-nav::-webkit-scrollbar{display:block!important;height:3px}
-  html body .site-header .nav-links::-webkit-scrollbar-thumb,html body .hub-header .hub-nav::-webkit-scrollbar-thumb{border-radius:999px;background:rgba(104,208,223,.35)}
+  html body .site-header .nav-links,html body .hub-header .hub-nav{scrollbar-width:none}
+  html body .site-header .nav-links::-webkit-scrollbar,html body .hub-header .hub-nav::-webkit-scrollbar{display:none!important}
+}
+
+@media(max-width:520px){
+  .section-shell,.studio-strip,.page-shell,footer{max-width:calc(100% - 20px)}
+  .connect-card,.destination-card,.gloss-card,.project-card{max-width:100%}
 }
 
 @media(prefers-reduced-motion:reduce){
