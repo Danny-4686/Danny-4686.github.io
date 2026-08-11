@@ -15,7 +15,9 @@
     "fit": "contain",
     "accent": "cyan",
     "layout": "media-left",
-    "draft": false
+    "draft": false,
+    "updatedAt": "",
+    "updatedBy": ""
   },
   {
     "id": "rocket-tycoon",
@@ -29,10 +31,12 @@
     "clickable": true,
     "newTab": true,
     "image": "/assets/images/optimized/rocket-tycoon-banner.webp",
-    "imageAlt": "Rocket Tycoon banner",
+    "imageAlt": "Rocket Tycoon project artwork",
     "fit": "cover",
     "accent": "gold",
     "layout": "media-top",
-    "draft": false
+    "draft": true,
+    "updatedAt": "2026-08-11T06:57:05.167Z",
+    "updatedBy": "Danny-4686"
   }
 ]
