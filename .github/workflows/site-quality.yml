@@ -21,6 +21,8 @@ jobs:
           package-manager-cache: false
       - name: Validate public site
         run: node scripts/validate-site.mjs
+      - name: Validate managed projects
+        run: node scripts/validate-projects.mjs
       - name: Validate HTML semantics
         run: npx --yes html-validate@10.4.0 index.html 404.html account/index.html login/index.html signup/index.html journal/index.html games/index.html games/*/index.html
       - name: Install Worker dependencies
