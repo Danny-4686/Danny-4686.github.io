@@ -3,39 +3,60 @@
   display: inline-flex !important;
 }
 
-/* Match the homepage mobile navigation to the Games and Journal header. */
+/* Match the homepage mobile navigation to the Games and Journal header without widening the page. */
 @media (max-width: 900px) {
   .site-header {
-    width: calc(100% - 14px) !important;
+    width: calc(100% - 16px) !important;
+    max-width: calc(100vw - 16px) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
     grid-template-columns: minmax(0, 1fr) auto !important;
     grid-template-rows: auto auto !important;
-    gap: 8px 12px !important;
+    gap: 8px 10px !important;
     padding: 9px 10px 8px !important;
     border-radius: 16px !important;
+    overflow: hidden;
   }
 
   .site-header .brand {
     grid-column: 1;
     grid-row: 1;
     min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .site-header .brand-copy {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .site-header .brand-copy strong,
+  .site-header .brand-copy small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .site-header .header-cta {
     grid-column: 2;
     grid-row: 1;
     justify-self: end;
+    min-width: 0;
+    white-space: nowrap;
   }
 
   .site-header .nav-links {
     grid-column: 1 / -1;
     grid-row: 2;
     width: 100%;
+    max-width: 100%;
     min-width: 0;
     display: flex !important;
     align-items: center;
-    justify-content: center;
-    gap: clamp(16px, 4vw, 28px);
-    padding: 1px 4px 2px;
+    justify-content: flex-start;
+    gap: clamp(18px, 4vw, 28px);
+    padding: 1px 2px 2px;
     overflow-x: auto;
     overflow-y: hidden;
     white-space: nowrap;
@@ -57,17 +78,25 @@
 }
 
 @media (max-width: 620px) {
+  .site-header {
+    width: calc(100% - 12px) !important;
+    max-width: calc(100vw - 12px) !important;
+    top: 6px !important;
+    margin-top: 6px !important;
+  }
+
   .site-header .brand-logo {
     width: 36px;
     height: 36px;
+    flex: 0 0 auto;
   }
 
+  /* Keep the first row from becoming wider than narrow phones. */
   .site-header .brand-copy small {
-    display: block !important;
+    display: none !important;
   }
 
   .site-header .nav-links {
-    justify-content: flex-start;
     gap: 20px;
   }
 
@@ -85,5 +114,9 @@
 
   .site-header .nav-links a {
     font-size: .79rem;
+  }
+
+  .site-header .header-cta {
+    padding-inline: 9px;
   }
 }

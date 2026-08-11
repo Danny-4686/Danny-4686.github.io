@@ -1,9 +1,10 @@
 export const ADMIN_TABS_CSS = String.raw`
 .admin-section-tabs {
   width: min(1540px, calc(100% - 28px));
+  max-width: 100%;
   margin: 14px auto 0;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 10px;
   padding: 7px;
   border: 1px solid var(--line);
@@ -15,6 +16,7 @@ export const ADMIN_TABS_CSS = String.raw`
 
 .admin-section-tab {
   min-width: 0;
+  max-width: 100%;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
@@ -27,6 +29,11 @@ export const ADMIN_TABS_CSS = String.raw`
   text-align: left;
   cursor: pointer;
   transition: transform .18s ease, color .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease;
+}
+
+.admin-section-tab > span:nth-child(2) {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .admin-section-tab:hover {
@@ -57,23 +64,26 @@ export const ADMIN_TABS_CSS = String.raw`
 .admin-section-tab strong,
 .admin-section-tab small {
   display: block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .admin-section-tab strong {
   color: inherit;
   font-size: .91rem;
+  line-height: 1.25;
 }
 
 .admin-section-tab small {
   margin-top: 3px;
-  overflow: hidden;
   color: var(--muted);
   font-size: .7rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.35;
+  white-space: normal;
 }
 
 .admin-section-tab-state {
+  flex: 0 0 auto;
   padding: 4px 8px;
   border: 1px solid rgba(139, 207, 155, .28);
   border-radius: 999px;
@@ -82,6 +92,7 @@ export const ADMIN_TABS_CSS = String.raw`
   font-size: .58rem;
   font-weight: 900;
   letter-spacing: .07em;
+  white-space: nowrap;
 }
 
 .admin-section-tab-state.is-off,
@@ -95,8 +106,13 @@ export const ADMIN_TABS_CSS = String.raw`
   grid-template-columns: minmax(0, 1fr);
 }
 
-.dashboard.is-abyss-view .workspace {
-  width: 100%;
+.dashboard.is-abyss-view .workspace,
+.workspace,
+.projects-manager,
+.site-intro-manager,
+#freshAbyssManager {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .dashboard > .sidebar[hidden],
@@ -116,6 +132,7 @@ export const ADMIN_TABS_CSS = String.raw`
   color: var(--muted);
   font-size: .74rem;
   line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 .abyss-preview img,
@@ -147,9 +164,16 @@ export const ADMIN_TABS_CSS = String.raw`
   content: "MEDIA COULD NOT LOAD";
 }
 
-@media (max-width: 700px) {
+@media (max-width: 1100px) {
+  .admin-section-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
   .admin-section-tabs {
     width: calc(100% - 14px);
+    grid-template-columns: minmax(0, 1fr);
     margin-top: 9px;
     gap: 6px;
     padding: 5px;
@@ -157,41 +181,39 @@ export const ADMIN_TABS_CSS = String.raw`
   }
 
   .admin-section-tab {
-    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-columns: auto minmax(0, 1fr) auto;
     gap: 8px;
     padding: 10px;
   }
 
   .admin-section-tab-state {
-    grid-column: 1 / -1;
-    justify-self: start;
-    margin-left: 44px;
+    grid-column: auto;
+    justify-self: end;
+    margin-left: 0;
   }
 
   .admin-section-tab-icon {
     width: 34px;
     height: 34px;
   }
-
-  .admin-section-tab small {
-    white-space: normal;
-    line-height: 1.35;
-  }
 }
 
-@media (max-width: 460px) {
+@media (max-width: 400px) {
   .admin-section-tab {
-    display: flex;
-    align-items: center;
-  }
-
-  .admin-section-tab small,
-  .admin-section-tab-state {
-    display: none;
+    padding: 9px;
   }
 
   .admin-section-tab strong {
-    font-size: .82rem;
+    font-size: .84rem;
+  }
+
+  .admin-section-tab small {
+    font-size: .65rem;
+  }
+
+  .admin-section-tab-state {
+    padding-inline: 6px;
+    font-size: .54rem;
   }
 }
 
