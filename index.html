@@ -38,7 +38,7 @@
   <link rel="stylesheet" href="/assets/css/home-additions.css?v=20260808">
   <link rel="stylesheet" href="/community/community.css?v=20260810.2">
   <link rel="stylesheet" href="/assets/css/home-mobile-nav.css?v=20260811.2">
-  <link rel="stylesheet" href="/assets/css/project-managed.css?v=20260811.2" data-managed-projects="true">
+  <link rel="stylesheet" href="/assets/css/project-managed.css?v=20260811.3" data-managed-projects="true">
   <link rel="stylesheet" href="/assets/css/site-quality.css?v=20260811.2">
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"CloudLab","alternateName":"Danny4686","url":"https://danny4686.com/","description":"Games, projects, journal updates, and community experiences from Danny4686 and CloudLab."}</script>
 </head>
@@ -174,38 +174,14 @@
       </div>
     </section>
 
-    <section class="section-shell" id="projects">
+    <section class="section-shell" id="projects" aria-busy="true" data-projects-state="loading">
       <div class="section-heading reveal">
         <p class="eyebrow">FEATURED WORK</p>
         <h2>Games and communities in progress.</h2>
         <p class="section-copy">The main projects I’m actively building, improving, and expanding.</p>
       </div>
 
-      <div class="project-grid">
-        <article class="project-card cloud-project reveal">
-          <div class="project-art cloudlab-art">
-            <div class="art-orbit" aria-hidden="true"></div>
-            <img src="assets/images/optimized/cloudlab-logo-256.webp" width="256" height="256" alt="CloudLab logo">
-          </div>
-          <div class="project-content">
-            <p class="project-kicker">COMMUNITY</p>
-            <h3>CloudLab</h3>
-            <p>A growing community built around friends, games, creative projects, and everything I’m building across platforms.</p>
-            <a class="project-button" href="https://discord.com/invite/CloudLab" target="_blank" rel="noopener noreferrer">Open CloudLab</a>
-          </div>
-        </article>
-
-        <article class="project-card rocket-project reveal">
-          <a class="rocket-banner" href="https://www.roblox.com/games/846133735/Rocket-Tycoon" target="_blank" rel="noopener noreferrer" aria-label="Play Rocket Tycoon on Roblox">
-            <img src="assets/images/optimized/rocket-tycoon-banner.webp" width="767" height="432" alt="Rocket Tycoon banner">
-          </a>
-          <div class="project-content">
-            <p class="project-kicker rocket-kicker">ROBLOX GAME</p>
-            <h3>Rocket Tycoon</h3>
-            <p>Rocket Tycoon is an idle/incremental Roblox tycoon game where players build a rocket factory, buy droppers and upgrades to generate resources, and repeatedly rebirth to stack multipliers for exponentially growing income, all supported by events, offline earnings, and ongoing upgrades.</p>
-          </div>
-        </article>
-      </div>
+      <div id="managedProjectGrid" class="project-grid" hidden></div>
     </section>
 
     <section class="section-shell" id="connect">
@@ -239,7 +215,7 @@
     <p>© <span id="year"></span> Danny4686.</p>
   </footer>
 
-  <script src="/assets/js/script.js?v=20260808"></script>
+  <script src="/assets/js/script.js?v=20260811.3"></script>
   <script src="/assets/js/hash-navigation.js?v=20260811.2"></script>
   <script src="/community/home-client.js?v=20260810.2"></script>
 </body>

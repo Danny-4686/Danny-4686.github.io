@@ -1,4 +1,8 @@
-/* Managed home-project cards. Loaded by assets/js/script.js so the existing page remains a safe fallback. */
+/* Managed home-project cards. The homepage starts empty and only renders explicitly published project records. */
+.project-grid[hidden] {
+  display: none !important;
+}
+
 .project-grid.is-managed {
   align-items: stretch;
   min-width: 0;

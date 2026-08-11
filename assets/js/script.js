@@ -178,7 +178,7 @@ function ensureManagedProjectStyles() {
   if (document.querySelector('link[data-managed-projects]')) return;
   const link = document.createElement('link');
   link.rel = 'stylesheet';
-  link.href = '/assets/css/project-managed.css?v=20260811';
+  link.href = '/assets/css/project-managed.css?v=20260811.3';
   link.dataset.managedProjects = 'true';
   document.head.append(link);
 }
@@ -306,24 +306,48 @@ function makeProjectCard(project, index) {
   return card;
 }
 
+function isPublishedProject(project) {
+  return Boolean(
+    project &&
+    project.draft === false &&
+    typeof project.title === 'string' && project.title.trim() &&
+    typeof project.description === 'string' && project.description.trim()
+  );
+}
+
 async function loadManagedProjects() {
-  const grid = document.querySelector('#projects .project-grid');
-  if (!grid) return;
+  const section = document.getElementById('projects');
+  const grid = document.getElementById('managedProjectGrid') || section?.querySelector('.project-grid');
+  if (!section || !grid) return;
+
   ensureManagedProjectStyles();
+  section.dataset.projectsState = 'loading';
+  section.setAttribute('aria-busy', 'true');
+  grid.hidden = true;
+  grid.replaceChildren();
+
   try {
     const response = await fetch('/projects/projects.json', { cache: 'no-store' });
     if (!response.ok) throw new Error(`Projects returned ${response.status}`);
     const data = await response.json();
     const published = (Array.isArray(data) ? data : [])
-      .filter((project) => project && !project.draft && project.title && project.description)
+      .filter(isPublishedProject)
       .slice(0, 50);
+
     const fragment = document.createDocumentFragment();
     published.forEach((project, index) => fragment.append(makeProjectCard(project, index)));
     grid.replaceChildren(fragment);
     grid.classList.add('is-managed');
     grid.hidden = published.length === 0;
+    section.dataset.projectsState = published.length ? 'ready' : 'empty';
   } catch (error) {
-    console.warn('Managed projects unavailable; keeping built-in projects.', error);
+    grid.replaceChildren();
+    grid.hidden = true;
+    section.dataset.projectsState = 'unavailable';
+    console.warn('Managed projects unavailable; project cards remain hidden.', error);
+  } finally {
+    section.removeAttribute('aria-busy');
+    requestNavigationUpdate();
   }
 }
 
