@@ -1,5 +1,21 @@
 [
   {
+    "slug": "cloudlab-arcade",
+    "title": "CloudLab Arcade",
+    "description": "Today I finished the first part of CloudLab Arcade, a collection of fun little games themed around CloudLab. The goal is to make simple games you can jump into whenever you have some downtime at the office, at home, or pretty much anywhere. Everything runs directly in your browser, so there’s nothing to download and th",
+    "date": "2026-08-12",
+    "displayDate": "August 12, 2026",
+    "tags": [
+      "Game"
+    ],
+    "mediaType": "image",
+    "thumbnail": "/assets/images/journal/cloudlab-arcade/image.png",
+    "fit": "cover",
+    "mode": "card",
+    "comingSoon": false,
+    "cardOnly": true
+  },
+  {
     "slug": "luck-incremental-get-them-all",
     "title": "Luck Incremental - Get Them All",
     "description": "After 10 days of pure playtime, I've locked in the best traits, ores, relics, auras, fish, rings, and gems in the game, and I'm not stopping there. Right now I'm grinding toward the best runes, with the Absolutum Rune as my current target, slowly building toward a loadout that stacks the highest multipliers the game!",
