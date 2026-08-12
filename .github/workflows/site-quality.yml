@@ -27,6 +27,8 @@ jobs:
         run: node scripts/validate-journal.mjs
       - name: Validate Fresh Abyss route state
         run: node scripts/validate-fresh-abyss.mjs
+      - name: Validate centered labels
+        run: node scripts/validate-centered-labels.mjs
       - name: Validate HTML semantics
         run: npx --yes html-validate@10.4.0 index.html 404.html account/index.html login/index.html signup/index.html journal/index.html games/index.html games/*/index.html
       - name: Install Worker dependencies
