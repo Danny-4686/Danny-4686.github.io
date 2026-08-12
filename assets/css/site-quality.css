@@ -5,6 +5,7 @@ html{max-width:100%;overflow-x:clip;scroll-padding-top:var(--site-header-offset)
 body{max-width:100%;overflow-x:clip}
 [id]{scroll-margin-top:var(--site-header-offset)}
 img,video,svg{max-width:100%}
+p.eyebrow{max-width:none}
 .site-header,.hub-header,.account-header,.section-shell,.studio-strip,.page-shell,.account-shell,.account-footer,footer{max-width:100%}
 .site-header>*,.hub-header>*,.account-header>*,.section-shell>*,.page-shell>*,.account-shell>*{min-width:0}
 .destination-card,.gloss-card,.project-card,.connect-card,.game-card,.journal-card,.profile-setting-card{min-width:0;max-width:100%}
