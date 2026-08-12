@@ -17,6 +17,12 @@ export const ADMIN_JS = String.raw`
   function publicUrl(path){if(!path)return '';if(/^https?:\/\//i.test(path))return path;return 'https://danny4686.com/'+String(path).replace(/^\/+/, '');}
   function clearPreviewObjectUrl(){if(previewObjectUrl){URL.revokeObjectURL(previewObjectUrl);previewObjectUrl='';}}
   function readableDate(value){if(!value)return 'Today';var date=new Date(value+'T12:00:00');return isNaN(date.getTime())?value:date.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
+  function cardSummary(value){
+    var normalized=String(value||'').replace(/\s+/g,' ').trim();
+    if(normalized.length<=320)return normalized;
+    var limit=319;var slice=normalized.slice(0,limit);var breakAt=slice.lastIndexOf(' ');var end=breakAt>=Math.floor(limit*.68)?breakAt:limit;
+    return slice.slice(0,end).trimEnd()+'…';
+  }
 
   async function api(url,options){
     options=options||{};
@@ -72,21 +78,31 @@ export const ADMIN_JS = String.raw`
   function updateModeUi(){
     var mode=modeValue();
     var isArticle=mode==='article';
+    var isCard=mode==='card';
+    var description=byId('description');
+    var descriptionLabel=byId('descriptionLabel');
     byId('articleFields').hidden=!isArticle;
     byId('heroUpload').classList.toggle('is-hidden',!isArticle);
-    byId('previewModeBadge').textContent=mode==='article'?'FULL POST':mode==='card'?'POST ONLY':'COMING SOON';
-    byId('cardPreviewAction').textContent=mode==='article'?'Read post →':mode==='card'?'Post':'Coming Soon';
-    byId('modeHelpTitle').textContent=mode==='article'?'Full Post':mode==='card'?'Post Only':'Coming Soon';
-    byId('modeHelpText').textContent=mode==='article'?'Readers can open the card and view the complete article.':mode==='card'?'The card stays in the Journal as the complete post. There is no second page to open.':'The card is visible but clearly marked as upcoming and cannot be opened.';
-    byId('publishButton').textContent=mode==='article'?'Publish full post':mode==='card'?'Publish post card':'Save coming soon';
+    if(description){
+      description.maxLength=isCard?20000:320;
+      description.rows=isCard?8:4;
+      description.placeholder=isCard?'Write the complete Post Only text here. A short Journal card preview is created automatically.':'A clean summary shown below the title.';
+    }
+    if(descriptionLabel)descriptionLabel.textContent=isCard?'Post text':'Short description';
+    byId('previewModeBadge').textContent=mode==='article'?'FULL POST':isCard?'POST ONLY':'COMING SOON';
+    byId('cardPreviewAction').textContent=mode==='article'?'Read post →':isCard?'Read More':'Coming Soon';
+    byId('modeHelpTitle').textContent=mode==='article'?'Full Post':isCard?'Post Only':'Coming Soon';
+    byId('modeHelpText').textContent=mode==='article'?'Readers can open the card and view the complete article.':isCard?'Write the complete post here. The Journal automatically creates a short card preview, while Read More shows the full saved text.':'The card is visible but clearly marked as upcoming and cannot be opened.';
+    byId('publishButton').textContent=mode==='article'?'Publish full post':isCard?'Publish post':'Save coming soon';
     updateLivePreview();
   }
 
   function updateLivePreview(){
     var title=byId('title').value.trim()||'Your post title';
-    var description=byId('description').value.trim()||'Your short description will appear here.';
-    var tags=byId('tags').value.split(',').map(function(tag){return tag.trim();}).filter(Boolean);
     var mode=modeValue();
+    var rawDescription=byId('description').value.trim();
+    var description=(mode==='card'?cardSummary(rawDescription):rawDescription)||'Your short description will appear here.';
+    var tags=byId('tags').value.split(',').map(function(tag){return tag.trim();}).filter(Boolean);
     byId('cardPreviewTitle').textContent=title;
     byId('cardPreviewDescription').textContent=description;
     byId('cardPreviewTag').textContent=mode==='coming-soon'?'COMING SOON':mode==='card'?'POST':(tags[0]||'JOURNAL').toUpperCase();
@@ -128,7 +144,7 @@ export const ADMIN_JS = String.raw`
   function renderPosts(){
     var query=byId('postSearch').value.trim().toLowerCase();
     postList.replaceChildren();
-    var filtered=posts.filter(function(post){return (post.title+' '+post.description+' '+(post.tags||[]).join(' ')).toLowerCase().indexOf(query)!==-1;});
+    var filtered=posts.filter(function(post){return (post.title+' '+post.description+' '+(post.body||'')+' '+(post.tags||[]).join(' ')).toLowerCase().indexOf(query)!==-1;});
     if(!filtered.length){var p=document.createElement('p');p.className='muted';p.textContent=query?'No matching posts.':'No posts yet.';postList.appendChild(p);return;}
     filtered.forEach(function(post){
       var mode=modeFromPost(post);
@@ -197,13 +213,16 @@ export const ADMIN_JS = String.raw`
     event.preventDefault();
     try{
       var mode=modeValue();
+      var text=byId('description').value.trim();
+      if(mode==='card'&&text.length>20000){setStatus('Post Only text must be 20,000 characters or less.',true);alert('Post Only text must be 20,000 characters or less.');return;}
+      if(mode!=='card'&&text.length>320){setStatus('Short descriptions must be 320 characters or less.',true);alert('Short descriptions for Full Post and Coming Soon must be 320 characters or less.');return;}
       setStatus(mode==='article'?'Publishing…':'Saving…');
       var data=new FormData();
       if(byId('thumbnail').files[0])data.append('thumbnail',byId('thumbnail').files[0]);
       if(mode==='article'&&byId('hero').files[0])data.append('hero',byId('hero').files[0]);
       data.append('metadata',JSON.stringify(collectMetadata(data)));
       var result=await api('/api/publish',{method:'POST',body:data});
-      setStatus(result.mode==='article'?'Published':result.mode==='card'?'Post card published':'Coming Soon saved');
+      setStatus(result.mode==='article'?'Published':result.mode==='card'?'Post published':'Coming Soon saved');
       localStorage.removeItem('cloudlab-journal-draft');
       await refreshPosts();
       var button=postList.querySelector('.post-item[data-slug="'+result.slug+'"]');
@@ -236,7 +255,8 @@ export const ADMIN_JS = String.raw`
     var badge=document.createElement('span');badge.textContent=mode==='coming-soon'?'COMING SOON':mode==='card'?'POST':(byId('tags').value.split(',')[0].trim()||'JOURNAL').toUpperCase();
     var date=document.createElement('time');date.textContent=readableDate(byId('date').value);meta.append(badge,date);
     var h1=document.createElement('h1');h1.textContent=byId('title').value||'Untitled post';
-    var lead=document.createElement('p');lead.textContent=byId('description').value||'Post description';
+    var rawLead=byId('description').value||'Post description';
+    var lead=document.createElement('p');lead.textContent=mode==='card'?cardSummary(rawLead):rawLead;
     copy.append(meta,h1,lead);intro.append(hero,copy);shell.appendChild(intro);
     if(mode==='article'){
       var divider=document.createElement('div');divider.className='preview-divider';divider.textContent='FULL POST';shell.appendChild(divider);
@@ -251,6 +271,11 @@ export const ADMIN_JS = String.raw`
         if(mediaItems.length){var media=document.createElement('div');media.className='preview-media'+(mediaItems.length===1?' single':'');mediaItems.forEach(function(node){media.appendChild(node);});section.appendChild(media);}
         if(section.children.length)shell.appendChild(section);
       });
+    }else if(mode==='card'){
+      var cardDivider=document.createElement('div');cardDivider.className='preview-divider';cardDivider.textContent='READ MORE';shell.appendChild(cardDivider);
+      var cardSection=document.createElement('section');cardSection.className='preview-section';
+      byId('description').value.trim().split(/\n\s*\n/).filter(Boolean).forEach(function(text){var p=document.createElement('p');p.textContent=text;cardSection.appendChild(p);});
+      if(cardSection.children.length)shell.appendChild(cardSection);
     }
     preview.appendChild(shell);byId('previewDialog').showModal();
   };

@@ -29,6 +29,8 @@ import {
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 const MAX_TOTAL_BYTES = 30 * 1024 * 1024;
+const MAX_CARD_BODY_CHARS = 20000;
+const CARD_SUMMARY_CHARS = 320;
 const POST_MODES = new Set(['article', 'card', 'coming-soon']);
 
 export default {
@@ -95,7 +97,16 @@ async function handleApi(request, env, session, path) {
     if (source) return json({ post: source });
     const listing = (await getPosts(env)).find((post) => post.slug === slug);
     if (!listing) return json({ error: 'Post not found.' }, 404);
-    return json({ post: { ...listing, mode: normalizeMode(listing), hero: listing.thumbnail, sections: [] } });
+    const mode = normalizeMode(listing);
+    return json({
+      post: {
+        ...listing,
+        description: mode === 'card' ? (listing.body || listing.description || '') : (listing.description || ''),
+        mode,
+        hero: listing.thumbnail,
+        sections: []
+      }
+    });
   }
 
   if (path === '/api/publish' && request.method === 'POST') {
@@ -205,6 +216,16 @@ function normalizeMode(value) {
   return 'article';
 }
 
+function buildCardSummary(value, maxLength = CARD_SUMMARY_CHARS) {
+  const normalized = String(value || '').replace(/\s+/g, ' ').trim();
+  if (normalized.length <= maxLength) return normalized;
+  const limit = Math.max(1, maxLength - 1);
+  const slice = normalized.slice(0, limit);
+  const breakAt = slice.lastIndexOf(' ');
+  const end = breakAt >= Math.floor(limit * 0.68) ? breakAt : limit;
+  return `${slice.slice(0, end).trimEnd()}…`;
+}
+
 async function publish(request, env, session) {
   requireEnv(env, ['GITHUB_TOKEN', 'GITHUB_OWNER', 'GITHUB_REPO']);
   const form = await request.formData();
@@ -215,7 +236,6 @@ async function publish(request, env, session) {
   try { input = JSON.parse(raw); } catch { return json({ error: 'Post information is invalid.' }, 400); }
 
   const title = cleanText(input.title, 140);
-  const description = cleanText(input.description, 320);
   const slug = slugify(input.slug || title);
   const date = validDate(input.date);
   const tags = normalizeTags(input.tags);
@@ -224,8 +244,12 @@ async function publish(request, env, session) {
   const isArticle = mode === 'article';
   const comingSoon = mode === 'coming-soon';
   const cardOnly = mode === 'card';
+  const body = cardOnly ? cleanMultiline(input.description, MAX_CARD_BODY_CHARS) : '';
+  const description = cardOnly ? buildCardSummary(body) : cleanText(input.description, CARD_SUMMARY_CHARS);
   const sections = isArticle ? normalizeSections(input.sections) : [];
-  if (!title || !description || !slug || !date) return json({ error: 'Title, description, date, and URL name are required.' }, 400);
+  if (!title || !description || !slug || !date || (cardOnly && !body)) {
+    return json({ error: cardOnly ? 'Title, post text, date, and URL name are required.' : 'Title, description, date, and URL name are required.' }, 400);
+  }
 
   const uploaded = [];
   for (const value of form.values()) if (value instanceof File && value.size > 0) uploaded.push(value);
@@ -273,7 +297,7 @@ async function publish(request, env, session) {
   }
 
   const post = {
-    slug, title, description, date, displayDate: displayDate(date), tags,
+    slug, title, description, body, date, displayDate: displayDate(date), tags,
     thumbnail, hero, fit, mode, comingSoon, cardOnly, sections: resolvedSections,
     updatedBy: session.login, updatedAt: new Date().toISOString(),
     mediaPaths: [...new Set([...(existingSource?.mediaPaths || []), ...newMediaPaths])]
@@ -281,7 +305,7 @@ async function publish(request, env, session) {
 
   const posts = await getPosts(env);
   const listing = {
-    slug, title, description, date, displayDate: post.displayDate, tags,
+    slug, title, description, ...(cardOnly ? { body } : {}), date, displayDate: post.displayDate, tags,
     mediaType: mediaType(thumbnail), thumbnail, fit, mode, comingSoon, cardOnly
   };
   const updated = [listing, ...posts.filter((item) => item.slug !== slug)]
