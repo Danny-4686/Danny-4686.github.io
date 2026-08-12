@@ -23,6 +23,16 @@
     return 'article';
   }
 
+  function readerText(post) {
+    if (postMode(post) === 'card') return String(post.body || post.description || '').trim();
+    return String(post.description || '').trim();
+  }
+
+  function hasExpandedReaderText(post) {
+    if (postMode(post) !== 'card') return false;
+    return readerText(post) !== String(post.description || '').trim();
+  }
+
   function createEarthLoader(label = '', compact = false) {
     const loader = document.createElement('div');
     loader.className = `journal-earth-loader${compact ? ' compact' : ''}`;
@@ -106,7 +116,7 @@
     const date = document.createElement('time'); date.dateTime = post.date || ''; date.textContent = post.displayDate || '';
     meta.append(badge, date);
     modal.querySelector('#journalReaderTitle').textContent = post.title || 'Journal post';
-    modal.querySelector('#journalReaderText').textContent = post.description || '';
+    modal.querySelector('#journalReaderText').textContent = readerText(post);
     media.replaceChildren();
     if (post.mediaType !== 'video' && post.thumbnail) {
       const image = document.createElement('img'); image.src = post.thumbnail; image.alt = `${post.title} thumbnail`;
@@ -143,7 +153,9 @@
     const button = card.querySelector('.journal-read-more');
     if (!description || !button) return;
     const overflow = description.scrollHeight > description.clientHeight + 2;
-    card.classList.toggle('has-overflow', overflow); button.hidden = !overflow;
+    const expanded = card._journalPost ? hasExpandedReaderText(card._journalPost) : false;
+    const showReadMore = overflow || expanded;
+    card.classList.toggle('has-overflow', showReadMore); button.hidden = !showReadMore;
   }
 
   function updateVisibleOverflows() { grid.querySelectorAll('.journal-card').forEach(updateOverflowForCard); }
@@ -152,6 +164,7 @@
     const mode = postMode(post), isArticle = mode === 'article', isComingSoon = mode === 'coming-soon', isCardOnly = mode === 'card';
     const card = document.createElement('article');
     card.className = `journal-card reveal${isArticle ? ' is-article' : ''}${isComingSoon ? ' coming-soon is-static' : ''}${isCardOnly ? ' post-only is-static' : ''}`;
+    card._journalPost = post;
     card.style.setProperty('--delay', `${Math.min(index, 3) * 55}ms`);
     card.append(createMedia(post));
     const body = document.createElement('div'); body.className = 'card-body';
@@ -206,7 +219,7 @@
 
   function renderPosts() {
     const query = search.value.trim().toLowerCase();
-    filteredPosts = posts.filter((post) => { const matchesTag = activeTag === 'all' || post.tags?.includes(activeTag); const searchable = `${post.title} ${post.description} ${(post.tags || []).join(' ')}`.toLowerCase(); return matchesTag && searchable.includes(query); });
+    filteredPosts = posts.filter((post) => { const matchesTag = activeTag === 'all' || post.tags?.includes(activeTag); const searchable = `${post.title} ${post.description} ${post.body || ''} ${(post.tags || []).join(' ')}`.toLowerCase(); return matchesTag && searchable.includes(query); });
     closeReaderModal(); videoObserver?.disconnect(); removeBatchSentinel(); renderedCount = 0; grid.replaceChildren();
     if (!filteredPosts.length) { const empty = document.createElement('div'); empty.className = 'empty-state'; empty.textContent = 'No journal posts match that search.'; grid.append(empty); return; }
     renderNextBatch();
