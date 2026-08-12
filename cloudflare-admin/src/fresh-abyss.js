@@ -60,26 +60,6 @@ function detectMediaType(source, mime = '') {
   return 'image';
 }
 
-function buildDisabledPage() {
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
-  <meta name="referrer" content="no-referrer">
-  <meta name="theme-color" content="#000000">
-  <title></title>
-  <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
-  <link rel="icon" href="/assets/icons/favicon-48x48.png" type="image/png" sizes="48x48">
-  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" sizes="180x180">
-  <style>*{box-sizing:border-box}html,body{width:100%;min-height:100%;margin:0;background:#000}body{min-height:100svh}</style>
-</head>
-<body aria-hidden="true"></body>
-</html>
-`;
-}
-
 function buildMediaElement(media, mediaType) {
   const source = escapeAttr(media);
   if (mediaType === 'video') {
@@ -206,7 +186,11 @@ export async function handleFreshAbyss(request, env, session) {
   };
 
   files.push({ path: CONFIG_PATH, text: `${JSON.stringify(config, null, 2)}\n` });
-  files.push({ path: PAGE_PATH, text: enabled ? buildEnabledPage(media, mediaType) : buildDisabledPage() });
+  if (enabled) {
+    files.push({ path: PAGE_PATH, text: buildEnabledPage(media, mediaType) });
+  } else if (current.enabled) {
+    files.push({ path: PAGE_PATH, delete: true });
+  }
 
   const mediaChanged = media !== current.media || mediaType !== current.mediaType;
   const commit = await commitFiles(
