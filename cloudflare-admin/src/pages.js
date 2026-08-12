@@ -52,7 +52,7 @@ export function dashboardPage(login) {
           <div class="card-heading"><div><p class="eyebrow">POST TYPE</p><h2>How should this appear?</h2></div><p>Change this at any time before publishing.</p></div>
           <div class="mode-picker" role="radiogroup" aria-label="Post type">
             <label class="mode-option"><input id="modeArticle" name="postMode" type="radio" value="article" checked><span><strong>Full Post</strong><small>Journal card plus a complete article page.</small></span></label>
-            <label class="mode-option"><input id="modeCard" name="postMode" type="radio" value="card"><span><strong>Post Only</strong><small>Show only the front card in the Journal.</small></span></label>
+            <label class="mode-option"><input id="modeCard" name="postMode" type="radio" value="card"><span><strong>Post Only</strong><small>Journal card with expandable full text, without a separate page.</small></span></label>
             <label class="mode-option"><input id="modeComingSoon" name="postMode" type="radio" value="coming-soon"><span><strong>Coming Soon</strong><small>Show a locked preview for something upcoming.</small></span></label>
           </div>
         </section>
@@ -62,7 +62,7 @@ export function dashboardPage(login) {
             <section class="editor-card">
               <div class="card-heading"><div><p class="eyebrow">BASICS</p><h2>Post information</h2></div><p>This information appears on the Journal card.</p></div>
               <div class="grid two"><label><span>Title</span><input id="title" maxlength="140" required placeholder="Post title"></label><label><span>URL name</span><input id="slug" maxlength="90" required placeholder="post-url-name"></label></div>
-              <label><span>Short description</span><textarea id="description" maxlength="320" required rows="4" placeholder="A clean summary shown below the title."></textarea></label>
+              <label><span id="descriptionLabel">Short description</span><textarea id="description" maxlength="320" required rows="4" placeholder="A clean summary shown below the title."></textarea></label>
               <div class="grid three"><label><span>Date</span><input id="date" type="date" required></label><label><span>Tags</span><input id="tags" placeholder="Website, CloudLab Studio"></label><label><span>Thumbnail fit</span><select id="fit"><option value="cover">Fill the frame</option><option value="contain">Show the whole image</option></select></label></div>
             </section>
 
