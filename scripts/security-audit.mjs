@@ -60,7 +60,7 @@ for (const token of ['.env', '.env.*', '.dev.vars', '.dev.vars.*']) requireToken
 
 const transport = read('cloudflare-admin/src/transport-security.js');
 for (const token of [
-  "Strict-Transport-Security', 'max-age=63072000; includeSubDomains'",
+  "Strict-Transport-Security', 'max-age=31536000; includeSubDomains'",
   "X-Content-Type-Options', 'nosniff'",
   "X-Frame-Options', 'DENY'",
   "Permissions-Policy'"
