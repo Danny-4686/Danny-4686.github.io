@@ -1,8 +1,13 @@
 import { DurableObject } from 'cloudflare:workers';
 import { CommunityStore as BaseCommunityStore, GAME_RULES } from './community-store.js';
+import { canonicalizeDeclaredMediaType, sniffMediaBytes } from './media-security.js';
+import { hashStrongPassword, passwordHashNeedsUpgrade } from './password-security.js';
 
 const PROFILE_BIO_MAX = 160;
 const PROFILE_STATUS_MAX = 20;
+const LOGIN_IP_LIMIT = 120;
+const LOGIN_ACCOUNT_LIMIT = 60;
+const LOGIN_WINDOW_SECONDS = 15 * 60;
 const PROFILE_BLOCKED = [
   'fuck', 'fucker', 'fucking', 'shit', 'bitch', 'cunt', 'dick', 'pussy', 'whore',
   'slut', 'retard', 'retarded', 'nazi', 'hitler', 'kkk', 'rape', 'rapist',
@@ -54,6 +59,28 @@ function cleanProfileText(value, maxLength, label) {
   return { text };
 }
 
+function loginAccountKey(value) {
+  const username = String(value || '').normalize('NFKC').trim().toLowerCase();
+  return /^[a-z0-9_]{3,20}$/.test(username) ? username : '';
+}
+
+function avatarSignatureIsValid(value) {
+  const data = String(value || '');
+  if (!data) return true;
+  const match = data.match(/^data:(image\/(?:png|jpeg|webp));base64,([A-Za-z0-9+/=]+)$/i);
+  if (!match) return false;
+
+  try {
+    const binary = atob(match[2]);
+    const prefix = new Uint8Array(Math.min(binary.length, 32));
+    for (let index = 0; index < prefix.length; index += 1) prefix[index] = binary.charCodeAt(index);
+    const canonical = canonicalizeDeclaredMediaType(match[1], sniffMediaBytes(prefix));
+    return Boolean(canonical && canonical.kind === 'image' && ['png', 'jpeg', 'webp'].includes(canonical.format));
+  } catch {
+    return false;
+  }
+}
+
 class CommunityStoreImplementation extends BaseCommunityStore {
   ensureProfilesTable() {
     this.sql.exec(`
@@ -86,6 +113,71 @@ class CommunityStoreImplementation extends BaseCommunityStore {
     }
 
     return super.fetch(request);
+  }
+
+  async strengthenPassword(userId, password, force = false) {
+    const row = this.sql.exec('SELECT password_hash FROM users WHERE id = ? AND status = ?', userId, 'active').toArray()[0];
+    if (!row || (!force && !passwordHashNeedsUpgrade(row.password_hash))) return false;
+    const upgraded = await hashStrongPassword(String(password || ''));
+    this.sql.exec(
+      'UPDATE users SET password_hash = ?, password_salt = ? WHERE id = ? AND status = ?',
+      upgraded.hash,
+      upgraded.salt,
+      userId,
+      'active'
+    );
+    return true;
+  }
+
+  async signup(body) {
+    const response = await super.signup(body);
+    if (!response.ok) return response;
+    const data = await response.clone().json().catch(() => ({}));
+    const userId = String(data?.user?.id || '');
+    if (!userId) return response;
+
+    try {
+      await this.strengthenPassword(userId, body.password, true);
+    } catch (error) {
+      console.error('Could not create the stronger password hash for a new account', error);
+      this.sql.exec('DELETE FROM users WHERE id = ?', userId);
+      return json({ error: 'The account could not be secured. Please try again.' }, 500);
+    }
+    return response;
+  }
+
+  async login(body) {
+    const ipKey = String(body?.ip || 'unknown').slice(0, 96);
+    if (!this.consumeRateLimit(`login-ip:${ipKey}`, LOGIN_IP_LIMIT, LOGIN_WINDOW_SECONDS)) {
+      return json({ error: 'Too many sign-in attempts from this connection. Please wait a few minutes and try again.' }, 429);
+    }
+
+    const accountKey = loginAccountKey(body?.username);
+    if (accountKey && !this.consumeRateLimit(`login-account:${accountKey}`, LOGIN_ACCOUNT_LIMIT, LOGIN_WINDOW_SECONDS)) {
+      return json({ error: 'Too many sign-in attempts. Please wait a few minutes and try again.' }, 429);
+    }
+
+    const response = await super.login(body);
+    if (!response.ok) return response;
+
+    if (accountKey) this.sql.exec('DELETE FROM rate_limits WHERE rate_key = ?', `login-account:${accountKey}`);
+    const data = await response.clone().json().catch(() => ({}));
+    const userId = String(data?.user?.id || '');
+    if (userId) {
+      try {
+        await this.strengthenPassword(userId, body.password);
+      } catch (error) {
+        console.error('Could not upgrade the password work factor after sign-in', error);
+      }
+    }
+    return response;
+  }
+
+  saveAvatar(body) {
+    if (!avatarSignatureIsValid(body?.avatarData)) {
+      return json({ error: 'That profile picture does not match a valid PNG, JPG, or WebP file.' }, 400);
+    }
+    return super.saveAvatar(body);
   }
 
   getPublicProfile(userIdValue) {
