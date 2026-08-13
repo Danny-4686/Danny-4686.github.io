@@ -1,4 +1,5 @@
 import worker from './worker.js';
+import { protectAdminRequest } from './request-security.js';
 import { addTransportSecurity, redirectToHttps } from './transport-security.js';
 export { CommunityStore } from './community-store-runtime.js';
 
@@ -33,8 +34,13 @@ function allowAdminMediaPreview(response, request) {
 export default {
   async fetch(request, env, ctx) {
     const redirect = redirectToHttps(request);
-    if (redirect) return redirect;
-    const response = allowAdminMediaPreview(await worker.fetch(request, env, ctx), request);
+    if (redirect) return addTransportSecurity(redirect);
+
+    const protection = await protectAdminRequest(request);
+    if (protection.response) return addTransportSecurity(protection.response);
+    const securedRequest = protection.request || request;
+
+    const response = allowAdminMediaPreview(await worker.fetch(securedRequest, env, ctx), securedRequest);
     return addTransportSecurity(response);
   }
 };
