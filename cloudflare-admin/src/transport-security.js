@@ -15,6 +15,13 @@ export function redirectToHttps(request) {
 export function addTransportSecurity(response) {
   const headers = new Headers(response.headers);
   headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  headers.set('X-Content-Type-Options', 'nosniff');
+  headers.set('X-Frame-Options', 'DENY');
+  headers.set('X-Permitted-Cross-Domain-Policies', 'none');
+  if (!headers.has('Referrer-Policy')) headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  if (!headers.has('Permissions-Policy')) {
+    headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=()');
+  }
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,

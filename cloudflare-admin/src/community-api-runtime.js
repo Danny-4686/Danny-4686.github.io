@@ -1,7 +1,10 @@
 import { handleCommunityApi as handleBaseCommunityApi } from './community-api.js';
 
 const API_PREFIX = '/v1';
-const COMMUNITY_BUILD = '2026-08-10.2';
+const COMMUNITY_BUILD = '2026-08-13.1';
+const AUTH_BODY_MAX_BYTES = 32768;
+const PROFILE_BODY_MAX_BYTES = 8192;
+const encoder = new TextEncoder();
 
 function allowedOrigins(env) {
   const configured = String(env.COMMUNITY_ALLOWED_ORIGINS || '')
@@ -101,11 +104,44 @@ async function publicProfile(request, env, userId) {
   return json(request, env, { profile: profileForApi(data.profile, request) });
 }
 
+function botProtectionConfigured(env) {
+  return Boolean(String(env.TURNSTILE_SECRET || '').trim() && String(env.TURNSTILE_SITE_KEY || '').trim());
+}
+
+async function readBoundedJson(request, maxBytes) {
+  const contentType = String(request.headers.get('Content-Type') || '').split(';')[0].trim().toLowerCase();
+  if (contentType !== 'application/json') return { error: 'This request must use JSON.', status: 415 };
+
+  const contentLength = Number(request.headers.get('Content-Length') || 0);
+  if (Number.isFinite(contentLength) && contentLength > maxBytes) return { error: 'Request is too large.', status: 413 };
+
+  const text = await request.text();
+  if (encoder.encode(text).byteLength > maxBytes) return { error: 'Request is too large.', status: 413 };
+  let body;
+  try { body = JSON.parse(text); } catch { return { error: 'Request is not valid JSON.', status: 400 }; }
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return { error: 'Request has an invalid shape.', status: 400 };
+  return { body, text };
+}
+
+function rebuildJsonRequest(request, text) {
+  const headers = new Headers(request.headers);
+  headers.set('Content-Type', 'application/json');
+  headers.delete('Content-Length');
+  return new Request(request.url, {
+    method: request.method,
+    headers,
+    body: text,
+    redirect: request.redirect,
+    signal: request.signal
+  });
+}
+
 export async function handleCommunityApi(request, env) {
   const url = new URL(request.url);
   const path = pathAfterPrefix(url.pathname);
+  const method = request.method.toUpperCase();
 
-  if (path === '/health' && request.method === 'GET') {
+  if (path === '/health' && method === 'GET') {
     const baseResponse = await handleBaseCommunityApi(request, env);
     const baseData = await baseResponse.json().catch(() => ({ ok: false }));
     const deep = url.searchParams.get('deep') === '1';
@@ -121,7 +157,7 @@ export async function handleCommunityApi(request, env) {
         storageReady,
         storageBackend: storageReady ? (storageData.storage || 'sqlite') : 'unavailable',
         storageResponseStatus: storageResponse.status,
-        accountFeaturesConfigured: Boolean(baseData.sessionsConfigured),
+        accountFeaturesConfigured: Boolean(baseData.sessionsConfigured && baseData.turnstileConfigured),
         storageResponse: storageReady ? undefined : storageData
       }, storageReady ? 200 : 503);
     } catch (error) {
@@ -137,12 +173,21 @@ export async function handleCommunityApi(request, env) {
     }
   }
 
+  if ((path === '/login' || path === '/signup') && method === 'POST') {
+    if (!botProtectionConfigured(env)) {
+      return json(request, env, { error: 'Account security is temporarily unavailable. Please try again later.' }, 503);
+    }
+    const parsed = await readBoundedJson(request, AUTH_BODY_MAX_BYTES);
+    if (parsed.error) return json(request, env, { error: parsed.error }, parsed.status);
+    request = rebuildJsonRequest(request, parsed.text);
+  }
+
   const publicProfileMatch = path.match(/^\/profiles\/([A-Za-z0-9-]+)$/);
-  if (publicProfileMatch && request.method === 'GET') {
+  if (publicProfileMatch && method === 'GET') {
     return publicProfile(request, env, publicProfileMatch[1]);
   }
 
-  if (path === '/profile' && request.method === 'GET') {
+  if (path === '/profile' && method === 'GET') {
     const session = await readCurrentSession(request, env);
     if (session.serviceUnavailable) {
       return json(request, env, { error: 'The community service is temporarily unavailable.' }, 503);
@@ -153,7 +198,7 @@ export async function handleCommunityApi(request, env) {
     return publicProfile(request, env, session.user.id);
   }
 
-  if (path === '/profile' && request.method === 'POST') {
+  if (path === '/profile' && method === 'POST') {
     const session = await readCurrentSession(request, env);
     if (session.serviceUnavailable) {
       return json(request, env, { error: 'The community service is temporarily unavailable.' }, 503);
@@ -165,9 +210,9 @@ export async function handleCommunityApi(request, env) {
       return json(request, env, { error: 'Security token expired. Refresh and try again.' }, 403);
     }
 
-    const contentLength = Number(request.headers.get('Content-Length') || 0);
-    if (contentLength > 8192) return json(request, env, { error: 'Profile update is too large.' }, 413);
-    const body = await request.json().catch(() => ({}));
+    const parsed = await readBoundedJson(request, PROFILE_BODY_MAX_BYTES);
+    if (parsed.error) return json(request, env, { error: parsed.error }, parsed.status);
+    const body = parsed.body;
     const response = await storeFetch(env, '/profile', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -183,7 +228,7 @@ export async function handleCommunityApi(request, env) {
   }
 
   const leaderboardMatch = path.match(/^\/leaderboards\/([a-z0-9-]+)$/);
-  if (leaderboardMatch && request.method === 'GET') {
+  if (leaderboardMatch && method === 'GET') {
     const response = await handleBaseCommunityApi(request, env);
     const data = await response.json().catch(() => ({}));
     if (!response.ok || !Array.isArray(data.entries)) return json(request, env, data, response.status);
