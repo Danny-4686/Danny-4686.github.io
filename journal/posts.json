@@ -1,5 +1,22 @@
 [
   {
+    "slug": "wonderland",
+    "title": "Wonderland",
+    "description": "Roblox Wonderland has officially dropped, and there’s already a lot to expect and a lot to say. The game itself is really fun, but it definitely feels like there’s still a lot that needs to be balanced and worked on. So far though, I’m loving it and can’t wait to see what the upcoming updates bring. Right now, level…",
+    "body": "Roblox Wonderland has officially dropped, and there’s already a lot to expect and a lot to say. The game itself is really fun, but it definitely feels like there’s still a lot that needs to be balanced and worked on. So far though, I’m loving it and can’t wait to see what the upcoming updates bring. Right now, level 11 is the farthest I’ve managed to make it. We’ll see how much further I can push!",
+    "date": "2026-08-15",
+    "displayDate": "August 15, 2026",
+    "tags": [
+      "Game"
+    ],
+    "mediaType": "image",
+    "thumbnail": "/assets/images/journal/wonderland/thumbnail.png",
+    "fit": "cover",
+    "mode": "card",
+    "comingSoon": false,
+    "cardOnly": true
+  },
+  {
     "slug": "cloudlab-arcade",
     "title": "CloudLab Arcade",
     "description": "Today I finished the first part of CloudLab Arcade, a collection of fun little games themed around CloudLab. The goal is to make simple games you can jump into whenever you have some downtime at the office, at home, or pretty much anywhere. Everything runs directly in your browser, so there’s nothing to download and…",
