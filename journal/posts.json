@@ -41,10 +41,10 @@
     "date": "2026-08-12",
     "displayDate": "August 12, 2026",
     "tags": [
-      "Game"
+      "Website"
     ],
     "mediaType": "image",
-    "thumbnail": "/assets/images/journal/cloudlab-arcade/image.png",
+    "thumbnail": "/assets/images/journal/cloudlab-arcade/thumbnail.png",
     "fit": "cover",
     "mode": "card",
     "comingSoon": false,
