@@ -18,6 +18,7 @@ const pages = read('cloudflare-admin/src/pages.js');
 const admin = read('cloudflare-admin/src/admin-script.js');
 const worker = read('cloudflare-admin/src/index.js');
 const journal = read('journal/journal.js');
+const journalCss = read('journal/journal-polish.css');
 const journalPage = read('journal/index.html');
 
 requireToken(pages, 'id="descriptionLabel"', 'Admin page');
@@ -33,7 +34,11 @@ requireToken(worker, '...(cardOnly ? { body } : {})', 'Journal publisher');
 requireToken(worker, "listing.body || listing.description || ''", 'Journal editor API');
 requireToken(journal, "post.body || post.description || ''", 'Journal reader');
 requireToken(journal, 'hasExpandedReaderText(card._journalPost)', 'Journal reader');
+requireToken(journal, "if (mode === 'article') { open.hidden = false;", 'Journal reader article action');
+requireToken(journal, 'else { open.hidden = true; open.removeAttribute(\'href\'); }', 'Journal reader Post Only action');
+requireToken(journalCss, '.journal-reader-open[hidden] { display: none !important; }', 'Journal reader hidden action');
 requireToken(journal, "${post.body || ''}", 'Journal search');
+requireToken(journalPage, 'journal-polish.css?v=20260817.1', 'Journal page styles');
 requireToken(journalPage, 'journal.js?v=20260812', 'Journal page');
 
 let posts;
@@ -68,4 +73,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log('Journal validation passed: Post Only full text, generated summaries, reader fallback, search, and editor limits are wired correctly.');
+console.log('Journal validation passed: Post Only full text, generated summaries, reader actions, search, and editor limits are wired correctly.');
