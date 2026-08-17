@@ -138,6 +138,7 @@ body.journal-modal-open { overflow: hidden; }
 .journal-reader-title { margin: 0 46px 15px 0; font-size: clamp(2rem, 5vw, 3.35rem); line-height: 1.02; letter-spacing: -.05em; }
 .journal-reader-text { margin: 0; white-space: pre-line; color: #c3d0d5; font-size: 1rem; line-height: 1.8; }
 .journal-reader-open { display: inline-flex; align-items: center; min-height: 44px; margin-top: 22px; padding: 10px 14px; border: 1px solid rgba(242,199,92,.46); border-radius: 12px; color: #09130d; background: var(--gold); font-weight: 900; }
+.journal-reader-open[hidden] { display: none !important; }
 .journal-reader-close { position: absolute; top: 15px; right: 15px; z-index: 3; width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.12); border-radius: 12px; color: var(--text); background: rgba(2,10,14,.78); font: inherit; font-size: 1.2rem; cursor: pointer; }
 
 @keyframes journalModalFade { from { opacity: 0; } }
