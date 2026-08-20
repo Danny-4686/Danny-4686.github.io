@@ -29,6 +29,7 @@
     #stage{position:fixed;inset:0;isolation:isolate;overflow:hidden;background:transparent}
     #globeViz{position:absolute;inset:0;opacity:0;transform:scale(.88);filter:blur(14px) brightness(1.9) saturate(.7);transition:opacity .7s ease,transform 1s cubic-bezier(.2,.8,.2,1),filter .9s ease;will-change:transform,filter,opacity}
     body.globe-ready #globeViz{opacity:1;transform:scale(1);filter:none}
+    body.render-paused #globeViz{opacity:.42}
     #globeViz canvas{display:block;width:100%;height:100%}
     .scanlines,.vignette,.grid-overlay,.glitch-flash{position:absolute;inset:0;pointer-events:none}
     .scanlines{z-index:10;opacity:.23;mix-blend-mode:screen;background:repeating-linear-gradient(to bottom,rgba(150,250,255,.028) 0,rgba(150,250,255,.028) 1px,transparent 1px,transparent 4px);animation:scanDrift 8s linear infinite}
@@ -56,6 +57,14 @@
     .type-cursor{display:inline-block;width:.58em;height:1.05em;margin-left:.14em;transform:translateY(.16em);background:var(--cyan);box-shadow:0 0 12px rgba(112,241,255,.62);opacity:0}body.typing .type-cursor{opacity:1;animation:cursorBlink .7s steps(1,end) infinite}.glitch-flash{z-index:45;opacity:0;background:rgba(199,250,255,.78);mix-blend-mode:screen}body.glitching .glitch-flash{animation:glitchFlash .24s steps(2,end) both}body.glitching #stage{animation:stageGlitch .24s steps(2,end) both}
     .sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}.fatal-card{display:none;position:absolute;z-index:60;left:50%;top:50%;width:min(520px,calc(100vw - 36px));transform:translate(-50%,-50%);padding:26px;border:1px solid rgba(112,241,255,.26);background:rgba(3,15,20,.92);box-shadow:0 24px 70px rgba(0,0,0,.55);text-align:center}body.fatal .fatal-card{display:block}body.fatal #bootLayer,body.fatal .hud{display:none}.fatal-card strong{display:block;color:var(--cyan);letter-spacing:.14em}.fatal-card p{margin:12px 0 0;color:var(--muted);line-height:1.65}
     @keyframes scanDrift{to{transform:translateY(16px)}}@keyframes statusBlink{0%,58%{opacity:1}59%,100%{opacity:.28}}@keyframes rotateRing{to{transform:rotate(360deg)}}@keyframes bootMeter{to{right:0}}@keyframes cursorBlink{0%,46%{opacity:1}47%,100%{opacity:.12}}@keyframes glitchFlash{0%{opacity:0}18%{opacity:.42}42%{opacity:.02}62%{opacity:.22}100%{opacity:0}}@keyframes stageGlitch{0%,100%{transform:translate(0);filter:none}24%{transform:translate(2px,-1px);filter:contrast(1.35) saturate(1.45)}48%{transform:translate(-3px,1px);filter:contrast(1.08) hue-rotate(7deg)}72%{transform:translate(1px,0);filter:contrast(1.2) saturate(1.2)}}
+
+    /* Mobile Safari/Chrome: avoid expensive full-screen filters and blur compositing over WebGL. */
+    @media(max-width:900px),(hover:none) and (pointer:coarse){
+      #globeViz{transform:scale(.96);filter:none;transition:opacity .55s ease,transform .75s cubic-bezier(.2,.8,.2,1);will-change:opacity,transform}
+      .hud-panel{backdrop-filter:none;-webkit-backdrop-filter:none;background:rgba(5,17,23,.82)}
+      .scanlines{opacity:.14;mix-blend-mode:normal}.grid-overlay{opacity:.055}
+      body.glitching #stage{animation:none}
+    }
     @media(max-width:720px){.hud-panel{min-width:0;width:calc(50vw - 20px);padding:10px 11px;font-size:.56rem}.hud-left{max-width:calc(56vw - 18px)}.hud-right{max-width:calc(44vw - 18px)}.hud-value{font-size:.92em}.privacy-chip{display:none}.phase-bar{bottom:var(--safe-bottom);gap:4px}.phase{height:24px;font-size:.5rem}#messageWrap{bottom:clamp(76px,13vh,116px)}}
     @media(max-width:420px){.hud-panel{width:auto;max-width:calc(50vw - 12px)}.hud-sub{display:none}.phase{letter-spacing:.05em}}
     @media(prefers-reduced-motion:reduce){.scanlines,.hud-kicker::before,.boot-reticle::before,.boot-reticle::after,.reticle-sweep,.type-cursor{animation:none!important}#globeViz,#bootLayer,.phase{transition-duration:.01ms!important}}
@@ -90,7 +99,11 @@
       - If the services fail or strongly disagree, the selector uses conservative local
         checks and ultimately falls back to Los Angeles rather than inventing precision.
 
-      Add ?lite=1 to force the low-cost rendering path for testing.
+      Rendering profiles:
+      - FULL: desktop-quality rendering.
+      - MOBILE: automatically selected on phones/tablets to avoid Safari/WebGL GPU spikes.
+      - LITE: forced with ?lite=1 or selected for constrained hardware.
+      - REDUCED: static final composition for prefers-reduced-motion.
     */
     import Globe from 'https://cdn.jsdelivr.net/npm/globe.gl@2.46.1/+esm';
     import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js';
@@ -110,9 +123,16 @@
     const els={mount:document.getElementById('globeViz'),bootStatus:document.getElementById('bootStatus'),systemState:document.getElementById('systemState'),renderMode:document.getElementById('renderMode'),originLabel:document.getElementById('originLabel'),originCoords:document.getElementById('originCoords'),message:document.getElementById('message'),srStatus:document.getElementById('screenReaderStatus'),phases:[...document.querySelectorAll('.phase')]};
     const reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const queryLite=new URLSearchParams(location.search).get('lite')==='1';
-    const lowPower=queryLite||(navigator.hardwareConcurrency||8)<=4||(navigator.deviceMemory||8)<=4;
-    const liteMode=lowPower||reducedMotion;
-    els.renderMode.textContent=`RENDER PROFILE // ${liteMode?'LITE':'FULL'}`;
+    const coarsePointer=window.matchMedia('(pointer:coarse)').matches;
+    const mobileViewport=Math.min(window.innerWidth||9999,window.innerHeight||9999)<=900;
+    const mobileMode=!reducedMotion&&(coarsePointer||mobileViewport);
+    const hardwareThreads=Number(navigator.hardwareConcurrency||0);
+    const deviceMemory=Number(navigator.deviceMemory||0);
+    const constrainedHardware=(hardwareThreads>0&&hardwareThreads<=4)||(deviceMemory>0&&deviceMemory<=4);
+    const liteMode=queryLite||constrainedHardware||reducedMotion;
+    const economyMode=liteMode||mobileMode;
+    const renderProfile=reducedMotion?'REDUCED':queryLite?'LITE':mobileMode?'MOBILE':constrainedHardware?'LITE':'FULL';
+    els.renderMode.textContent=`RENDER PROFILE // ${renderProfile}`;
 
     const sleep=(ms)=>new Promise((resolve)=>setTimeout(resolve,ms));
     const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
@@ -170,27 +190,12 @@
       const secondaryTz=browserTimezone&&secondary.timezone===browserTimezone;
       let selected=primary;
 
-      // When one provider agrees with the browser's own timezone and the other does not,
-      // use that as a local-only tie breaker. No extra network request is needed.
       if(primaryTz!==secondaryTz)selected=secondaryTz?secondary:primary;
       else if(secondary.metadataScore>primary.metadataScore)selected=secondary;
 
-      if(distance<=CONFIG.geo.agreeKm){
-        return{...selected,quality:'VERIFIED',agreementKm:distance};
-      }
-
-      if(sameRegion(primary,secondary)&&distance<=CONFIG.geo.regionAgreeKm){
-        return{...selected,quality:'REGION VERIFIED',agreementKm:distance};
-      }
-
-      if(sameCountry(primary,secondary)){
-        // A large city-level disagreement means the IP databases are not confident enough
-        // to claim a verified city. Keep the better-supported estimate but label it honestly.
-        return{...selected,quality:'APPROXIMATE',agreementKm:distance};
-      }
-
-      // Cross-country disagreement is too unreliable for the intended effect. Prefer a
-      // timezone-matching result only if one exists; otherwise fail closed to the fallback.
+      if(distance<=CONFIG.geo.agreeKm)return{...selected,quality:'VERIFIED',agreementKm:distance};
+      if(sameRegion(primary,secondary)&&distance<=CONFIG.geo.regionAgreeKm)return{...selected,quality:'REGION VERIFIED',agreementKm:distance};
+      if(sameCountry(primary,secondary))return{...selected,quality:'APPROXIMATE',agreementKm:distance};
       if(primaryTz!==secondaryTz)return{...selected,quality:'APPROXIMATE',agreementKm:distance};
       return{...CONFIG.fallback};
     }
@@ -201,46 +206,75 @@
         fetchGeo('https://ipwho.is/','ipwho')
       ]);
       const result=chooseConsensus(primary,secondary);
-      return{
-        ...result,
-        city:cleanLabel(result.city,CONFIG.fallback.city),
-        region:cleanLabel(result.region||result.country,CONFIG.fallback.region)
-      };
+      return{...result,city:cleanLabel(result.city,CONFIG.fallback.city),region:cleanLabel(result.region||result.country,CONFIG.fallback.region)};
     }
 
-    function hasWebGL(){try{const c=document.createElement('canvas');return!!(window.WebGLRenderingContext&&(c.getContext('webgl2')||c.getContext('webgl')))}catch{return false}}
+    function hasWebGL(){
+      try{
+        const canvas=document.createElement('canvas');
+        const context=window.WebGLRenderingContext&&(canvas.getContext('webgl2')||canvas.getContext('webgl'));
+        if(!context)return false;
+        context.getExtension('WEBGL_lose_context')?.loseContext();
+        return true;
+      }catch{return false}
+    }
 
     function initGlobe(){
-      const globe=new Globe(els.mount,{animateIn:false,rendererConfig:{antialias:!liteMode,alpha:true,powerPreference:liteMode?'low-power':'high-performance'}})
+      const globe=new Globe(els.mount,{animateIn:false,rendererConfig:{antialias:!economyMode,alpha:true,powerPreference:economyMode?'low-power':'high-performance'}})
         .backgroundColor('rgba(0,0,0,0)').showGlobe(true).showGraticules(true).showAtmosphere(true).atmosphereColor(CONFIG.colors.cyan).atmosphereAltitude(.16).enablePointerInteraction(false)
-        .pointsTransitionDuration(liteMode?0:280).ringsTransitionDuration(liteMode?0:220).arcsTransitionDuration(liteMode?0:300).arcCurveResolution(liteMode?32:64).arcCircularResolution(liteMode?4:6);
+        .pointsTransitionDuration(economyMode?0:280).ringsTransitionDuration(economyMode?0:220).arcsTransitionDuration(economyMode?0:300).arcCurveResolution(economyMode?24:64).arcCircularResolution(economyMode?3:6);
       const material=globe.globeMaterial();
       if(material){if(material.color?.set)material.color.set('#06131a');if(material.emissive?.set)material.emissive.set('#001118');material.emissiveIntensity=.72;material.shininess=8;material.transparent=false;material.needsUpdate=true}
       const controls=globe.controls();controls.enableZoom=false;controls.enablePan=false;controls.enableRotate=false;controls.autoRotate=false;controls.enableDamping=true;controls.dampingFactor=.08;
-      const renderer=globe.renderer();renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,liteMode?1.05:1.7));renderer.domElement.setAttribute('aria-hidden','true');
-      const size=()=>globe.width(Math.max(1,window.innerWidth)).height(Math.max(1,window.innerHeight));size();let resizeTimer;window.addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(size,90)},{passive:true});
+      const renderer=globe.renderer();
+      const rendererPixelRatio=mobileMode?1:liteMode?1.05:Math.min(window.devicePixelRatio||1,1.7);
+      renderer.setPixelRatio(rendererPixelRatio);renderer.domElement.setAttribute('aria-hidden','true');
+
+      let lastWidth=0,lastHeight=0,resizeTimer;
+      const readViewport=()=>({width:Math.max(1,Math.round(els.mount.clientWidth||document.documentElement.clientWidth||window.innerWidth||1)),height:Math.max(1,Math.round(els.mount.clientHeight||document.documentElement.clientHeight||window.innerHeight||1))});
+      const size=(force=false)=>{
+        const next=readViewport();
+        if(!force&&mobileMode&&next.width===lastWidth&&Math.abs(next.height-lastHeight)<96)return;
+        if(!force&&next.width===lastWidth&&next.height===lastHeight)return;
+        lastWidth=next.width;lastHeight=next.height;globe.width(next.width).height(next.height);
+      };
+      size(true);
+      window.addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>size(false),mobileMode?220:90)},{passive:true});
+      window.addEventListener('orientationchange',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>size(true),320)},{passive:true});
+
+      const restoreProfileLabel=()=>{els.renderMode.textContent=`RENDER PROFILE // ${renderProfile}`};
+      renderer.domElement.addEventListener('webglcontextlost',(event)=>{event.preventDefault();document.body.classList.add('render-paused');setSystemState('RENDER RECOVERY');els.renderMode.textContent='RENDER PROFILE // RECOVERING'},{passive:false});
+      renderer.domElement.addEventListener('webglcontextrestored',()=>{document.body.classList.remove('render-paused');setSystemState('RENDER RESTORED');restoreProfileLabel();setTimeout(()=>size(true),80)});
+
       globe.pointLat('lat').pointLng('lng').pointAltitude('altitude').pointRadius('radius').pointColor('color').ringLat('lat').ringLng('lng').ringAltitude('altitude').ringColor('color').ringMaxRadius('maxRadius').ringPropagationSpeed('speed').ringRepeatPeriod('repeat').arcStartLat('startLat').arcStartLng('startLng').arcEndLat('endLat').arcEndLng('endLng').arcColor('color').arcAltitude('altitude').arcStroke('stroke').arcDashLength('dashLength').arcDashGap('dashGap').arcDashInitialGap('dashInitialGap').arcDashAnimateTime('dashTime');
       return globe;
     }
 
-    async function addWireframeContinents(globe){try{const response=await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json',{cache:'force-cache',credentials:'omit',referrerPolicy:'no-referrer'});if(!response.ok)return;const world=await response.json();const countries=topoFeature(world,world.objects.countries).features;globe.polygonsData(countries).polygonAltitude(.006).polygonCapColor(()=>liteMode?'rgba(5,22,28,.34)':'rgba(4,24,31,.28)').polygonSideColor(()=>'rgba(20,175,195,.025)').polygonStrokeColor(()=>liteMode?'rgba(112,241,255,.32)':'rgba(112,241,255,.5)').polygonsTransitionDuration(liteMode?0:720)}catch{/* Graticules remain if the optional border dataset fails. */}}
+    async function addWireframeContinents(globe){
+      try{
+        const response=await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json',{cache:'force-cache',credentials:'omit',referrerPolicy:'no-referrer'});
+        if(!response.ok)return;
+        const world=await response.json();const countries=topoFeature(world,world.objects.countries).features;
+        globe.polygonsData(countries).polygonAltitude(.006).polygonCapColor(()=>economyMode?'rgba(5,22,28,.24)':'rgba(4,24,31,.28)').polygonSideColor(()=>'rgba(20,175,195,.025)').polygonStrokeColor(()=>economyMode?'rgba(112,241,255,.28)':'rgba(112,241,255,.5)').polygonsTransitionDuration(economyMode?0:720);
+      }catch{/* Graticules remain if the optional border dataset fails. */}
+    }
 
     const sourceMarker=(origin)=>({...origin,altitude:.012,radius:.34,color:CONFIG.colors.cyanHot,kind:'source'});
     const texasMarker=()=>({...CONFIG.target,altitude:.014,radius:.42,color:CONFIG.colors.amber,kind:'target'});
     const sourceRing=(origin)=>({...origin,altitude:.008,color:CONFIG.colors.cyan,maxRadius:3.2,speed:2.4,repeat:720});
     const texasRing=()=>({...CONFIG.target,altitude:.009,color:CONFIG.colors.amber,maxRadius:4.6,speed:2.1,repeat:620});
 
-    function arcLayers(origin){const base={startLat:origin.lat,startLng:origin.lng,endLat:CONFIG.target.lat,endLng:CONFIG.target.lng,altitude:CONFIG.arcAltitude};return[{...base,kind:'glow',color:['rgba(112,241,255,.08)','rgba(255,189,99,.13)'],stroke:liteMode?.42:.82,dashLength:1,dashGap:0,dashInitialGap:0,dashTime:0},{...base,kind:'signal',color:[CONFIG.colors.cyanHot,CONFIG.colors.amber],stroke:liteMode?.28:.44,dashLength:.12,dashGap:.88,dashInitialGap:0,dashTime:CONFIG.timing.signalMs}]}
+    function arcLayers(origin){const base={startLat:origin.lat,startLng:origin.lng,endLat:CONFIG.target.lat,endLng:CONFIG.target.lng,altitude:CONFIG.arcAltitude};return[{...base,kind:'glow',color:['rgba(112,241,255,.08)','rgba(255,189,99,.13)'],stroke:economyMode?.42:.82,dashLength:1,dashGap:0,dashInitialGap:0,dashTime:0},{...base,kind:'signal',color:[CONFIG.colors.cyanHot,CONFIG.colors.amber],stroke:economyMode?.28:.44,dashLength:.12,dashGap:.88,dashInitialGap:0,dashTime:CONFIG.timing.signalMs}]}
     function geoToUnit(lat,lng){const phi=THREE.MathUtils.degToRad(lat);const theta=THREE.MathUtils.degToRad(lng);const cosPhi=Math.cos(phi);return new THREE.Vector3(cosPhi*Math.cos(theta),Math.sin(phi),cosPhi*Math.sin(theta))}
     function unitToGeo(vector){const v=vector.clone().normalize();return{lat:THREE.MathUtils.radToDeg(Math.asin(clamp(v.y,-1,1))),lng:THREE.MathUtils.radToDeg(Math.atan2(v.z,v.x))}}
     function greatCirclePoint(start,end,t){const a=geoToUnit(start.lat,start.lng);const b=geoToUnit(end.lat,end.lng);const dot=clamp(a.dot(b),-1,1);const omega=Math.acos(dot);if(omega<1e-5)return unitToGeo(a);if(Math.PI-omega<1e-5){let axis=new THREE.Vector3(0,1,0).cross(a);if(axis.lengthSq()<1e-6)axis=new THREE.Vector3(1,0,0).cross(a);axis.normalize();return unitToGeo(a.clone().applyAxisAngle(axis,Math.PI*t))}const sinOmega=Math.sin(omega);return unitToGeo(a.multiplyScalar(Math.sin((1-t)*omega)/sinOmega).add(b.multiplyScalar(Math.sin(t*omega)/sinOmega)).normalize())}
 
     function createSignalTrail(globe){
-      const count=liteMode?8:20;const positions=new Float32Array(count*3);const alphas=new Float32Array(count);for(let i=0;i<count;i+=1)alphas[i]=Math.pow(1-i/count,1.45);
+      const count=mobileMode?10:liteMode?8:20;const positions=new Float32Array(count*3);const alphas=new Float32Array(count);for(let i=0;i<count;i+=1)alphas[i]=Math.pow(1-i/count,1.45);
       const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.BufferAttribute(positions,3));geometry.setAttribute('aAlpha',new THREE.BufferAttribute(alphas,1));
-      const material=new THREE.ShaderMaterial({transparent:true,depthWrite:false,depthTest:true,blending:THREE.AdditiveBlending,uniforms:{uColor:{value:new THREE.Color(CONFIG.colors.cyan)},uPixelRatio:{value:Math.min(window.devicePixelRatio||1,liteMode?1:1.6)}},vertexShader:`attribute float aAlpha;varying float vAlpha;uniform float uPixelRatio;void main(){vec4 mvPosition=modelViewMatrix*vec4(position,1.0);float depthScale=clamp(255.0/max(90.0,-mvPosition.z),0.55,2.1);gl_PointSize=(6.0+22.0*aAlpha)*uPixelRatio*depthScale;gl_Position=projectionMatrix*mvPosition;vAlpha=aAlpha;}`,fragmentShader:`varying float vAlpha;uniform vec3 uColor;void main(){vec2 p=gl_PointCoord-vec2(0.5);float d=length(p)*2.0;float halo=1.0-smoothstep(0.08,1.0,d);float core=1.0-smoothstep(0.0,0.24,d);float alpha=(halo*0.54+core*0.8)*vAlpha;if(alpha<0.012)discard;vec3 color=mix(uColor,vec3(1.0),core*0.6);gl_FragColor=vec4(color,alpha);}`});
+      const material=new THREE.ShaderMaterial({transparent:true,depthWrite:false,depthTest:true,blending:THREE.AdditiveBlending,uniforms:{uColor:{value:new THREE.Color(CONFIG.colors.cyan)},uPixelRatio:{value:mobileMode?1:Math.min(window.devicePixelRatio||1,liteMode?1:1.6)}},vertexShader:`attribute float aAlpha;varying float vAlpha;uniform float uPixelRatio;void main(){vec4 mvPosition=modelViewMatrix*vec4(position,1.0);float depthScale=clamp(255.0/max(90.0,-mvPosition.z),0.55,2.1);gl_PointSize=(6.0+22.0*aAlpha)*uPixelRatio*depthScale;gl_Position=projectionMatrix*mvPosition;vAlpha=aAlpha;}`,fragmentShader:`varying float vAlpha;uniform vec3 uColor;void main(){vec2 p=gl_PointCoord-vec2(0.5);float d=length(p)*2.0;float halo=1.0-smoothstep(0.08,1.0,d);float core=1.0-smoothstep(0.0,0.24,d);float alpha=(halo*0.54+core*0.8)*vAlpha;if(alpha<0.012)discard;vec3 color=mix(uColor,vec3(1.0),core*0.6);gl_FragColor=vec4(color,alpha);}`});
       const particles=new THREE.Points(geometry,material);particles.visible=false;particles.frustumCulled=false;particles.renderOrder=1000;globe.scene().add(particles);
-      return{show(){particles.visible=true},hide(){particles.visible=false},update(origin,progress){const attribute=geometry.getAttribute('position');for(let i=0;i<count;i+=1){const p=clamp(progress-i*(liteMode?.028:.014),0,1);const geo=greatCirclePoint(origin,CONFIG.target,p);const altitude=.015+Math.sin(Math.PI*p)*CONFIG.arcAltitude;const xyz=globe.getCoords(geo.lat,geo.lng,altitude);attribute.setXYZ(i,xyz.x,xyz.y,xyz.z)}attribute.needsUpdate=true},dispose(){globe.scene().remove(particles);geometry.dispose();material.dispose()}};
+      return{show(){particles.visible=true},hide(){particles.visible=false},update(origin,progress){const attribute=geometry.getAttribute('position');for(let i=0;i<count;i+=1){const p=clamp(progress-i*(economyMode?.026:.014),0,1);const geo=greatCirclePoint(origin,CONFIG.target,p);const altitude=.015+Math.sin(Math.PI*p)*CONFIG.arcAltitude;const xyz=globe.getCoords(geo.lat,geo.lng,altitude);attribute.setXYZ(i,xyz.x,xyz.y,xyz.z)}attribute.needsUpdate=true},dispose(){globe.scene().remove(particles);geometry.dispose();material.dispose()}};
     }
 
     function animateSignal(globe,trail,origin){return new Promise((resolve)=>{const started=performance.now();trail.show();const frame=(now)=>{const progress=clamp((now-started)/CONFIG.timing.signalMs,0,1);trail.update(origin,progress);if(progress<1)requestAnimationFrame(frame);else resolve()};requestAnimationFrame(frame)})}
@@ -260,13 +294,13 @@
       if(reducedMotion){await minimumBoot;await runReducedMotion(globe,origin);return}
       globe.pointOfView({lat:origin.lat,lng:origin.lng,altitude:CONFIG.camera.cityAltitude},0);globe.pointsData([sourceMarker(origin)]);globe.ringsData([sourceRing(origin)]);
       await minimumBoot;els.bootStatus.textContent=origin.quality==='VERIFIED'?'ORIGIN VERIFIED':'ORIGIN ACQUIRED';setSystemState(els.bootStatus.textContent);document.body.classList.add('globe-ready');await sleep(260);document.body.classList.add('boot-complete');await sleep(CONFIG.timing.revealHoldMs);
-      setPhase(1);setSystemState('ORBITAL PERSPECTIVE');const midpoint=greatCirclePoint(origin,CONFIG.target,.5);globe.pointOfView({lat:midpoint.lat,lng:midpoint.lng,altitude:liteMode?2.48:CONFIG.camera.orbitAltitude},CONFIG.timing.zoomOutMs);await sleep(CONFIG.timing.zoomOutMs);
+      setPhase(1);setSystemState('ORBITAL PERSPECTIVE');const midpoint=greatCirclePoint(origin,CONFIG.target,.5);globe.pointOfView({lat:midpoint.lat,lng:midpoint.lng,altitude:economyMode?2.48:CONFIG.camera.orbitAltitude},CONFIG.timing.zoomOutMs);await sleep(CONFIG.timing.zoomOutMs);
       setPhase(2);setSystemState('SIGNAL OUTBOUND');const arcs=arcLayers(origin);globe.arcsData(arcs);const trail=createSignalTrail(globe);await animateSignal(globe,trail,origin);trail.hide();
       globe.arcsData([arcs[0]]);globe.pointsData([sourceMarker(origin),texasMarker()]);globe.ringsData([texasRing()]);setPhase(3);setSystemState('SIGNAL RECEIVED');await sleep(CONFIG.timing.landingBeatMs);
       globe.pointOfView({lat:CONFIG.target.lat,lng:CONFIG.target.lng,altitude:CONFIG.camera.texasAltitude},CONFIG.timing.texasZoomMs);await Promise.all([sleep(CONFIG.timing.texasZoomMs),typeMessage(CONFIG.message)]);await glitchFinish();setSystemState('TEXAS LOCKED');globe.pointsData([texasMarker()]);globe.arcsData([]);globe.pointOfView({lat:CONFIG.target.lat,lng:CONFIG.target.lng,altitude:CONFIG.camera.finalAltitude},CONFIG.timing.finalSettleMs);await sleep(CONFIG.timing.finalSettleMs);trail.dispose();
     }
 
-    runSequence();
+    runSequence().catch(()=>{document.body.classList.add('fatal')});
   </script>
 </body>
 </html>
