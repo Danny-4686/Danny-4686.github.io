@@ -203,7 +203,7 @@
       if(typeof globe.arcsTransitionDuration==='function')globe.arcsTransitionDuration(economyMode?0:300);
 
       const material=globe.globeMaterial();
-      if(material){if(material.color?.set)material.color.set('#06131a');if(material.emissive?.set)material.emissive.set('#001118');material.emissiveIntensity=mobileMode?.63:.78;material.shininess=mobileMode?4:8;material.transparent=false;material.needsUpdate=true}
+      if(material){if(material.color?.set)material.color.set('#06131a');if(material.emissive?.set)material.emissive.set('#001118');material.emissiveIntensity=mobileMode ? .63 : .78;material.shininess=mobileMode?4:8;material.transparent=false;material.needsUpdate=true}
 
       const controls=globe.controls();controls.enableZoom=false;controls.enablePan=false;controls.enableRotate=false;controls.autoRotate=false;controls.enableDamping=!mobileMode;controls.dampingFactor=.08;
       const renderer=globe.renderer();renderer.setPixelRatio(mobileMode?1:liteMode?1.05:Math.min(window.devicePixelRatio||1,1.7));renderer.domElement.setAttribute('aria-hidden','true');
@@ -242,7 +242,7 @@
         const geometry=[...countries,...states];
 
         globe.polygonsData(geometry)
-          .polygonAltitude((d)=>d.properties?.__texas?.013:d.properties?.__layer==='state'?.009:.004)
+          .polygonAltitude((d)=>d.properties?.__texas ? .013 : d.properties?.__layer==='state' ? .009 : .004)
           .polygonCapColor((d)=>d.properties?.__texas?'rgba(255,189,99,.15)':d.properties?.__layer==='state'?'rgba(2,12,17,.015)':mobileMode?'rgba(4,26,34,.34)':'rgba(4,28,36,.42)')
           .polygonSideColor((d)=>d.properties?.__texas?'rgba(255,189,99,.06)':'rgba(20,175,195,.018)')
           .polygonStrokeColor((d)=>d.properties?.__texas?'rgba(255,189,99,.95)':d.properties?.__layer==='state'?(mobileMode?'rgba(112,241,255,.54)':'rgba(112,241,255,.68)'):(mobileMode?'rgba(112,241,255,.28)':'rgba(112,241,255,.38)'));
@@ -252,7 +252,7 @@
       }catch(error){els.mapDetail.textContent='MAP DETAIL // GRID FALLBACK';debug(`map detail unavailable: ${error?.message||error}`)}
     }
 
-    function landmarkPoints(){return LANDMARKS.map((item)=>({...item,altitude:.014,radius:mobileMode?.12:.13,color:'rgba(112,241,255,.9)'}))}
+    function landmarkPoints(){return LANDMARKS.map((item)=>({...item,altitude:.014,radius:mobileMode ? .12 : .13,color:'rgba(112,241,255,.9)'}))}
     const sourceMarker=(origin)=>({...origin,altitude:.014,radius:.34,color:CONFIG.colors.cyanHot,kind:'source'});
     const texasMarker=()=>({...CONFIG.target,altitude:.016,radius:.44,color:CONFIG.colors.amber,kind:'target'});
     const sourceRing=(origin)=>({...origin,altitude:.009,color:CONFIG.colors.cyan,maxRadius:3.2,speed:2.4,repeat:720});
@@ -267,8 +267,8 @@
       if(typeof globe.labelLat==='function')globe.labelLat('lat');
       if(typeof globe.labelLng==='function')globe.labelLng('lng');
       if(typeof globe.labelText==='function')globe.labelText('name');
-      if(typeof globe.labelAltitude==='function')globe.labelAltitude((d)=>d.kind==='target'||d.kind==='origin'?.026:.02);
-      if(typeof globe.labelSize==='function')globe.labelSize((d)=>d.kind==='stateLabel'?(mobileMode?.17:.2):d.kind==='landmark'?(mobileMode?.19:.23):mobileMode?.23:.28);
+      if(typeof globe.labelAltitude==='function')globe.labelAltitude((d)=>(d.kind==='target'||d.kind==='origin') ? .026 : .02);
+      if(typeof globe.labelSize==='function')globe.labelSize((d)=>d.kind==='stateLabel' ? (mobileMode ? .17 : .2) : d.kind==='landmark' ? (mobileMode ? .19 : .23) : (mobileMode ? .23 : .28));
       if(typeof globe.labelColor==='function')globe.labelColor((d)=>d.kind==='target'?CONFIG.colors.amber:d.kind==='origin'?CONFIG.colors.cyanHot:d.kind==='stateLabel'?'rgba(112,241,255,.52)':'rgba(212,251,255,.78)');
       if(typeof globe.labelDotRadius==='function')globe.labelDotRadius(0);
       if(typeof globe.labelIncludeDot==='function')globe.labelIncludeDot(false);
@@ -277,7 +277,7 @@
       debug(`labels ready count=${labels.length}`);
     }
 
-    function arcLayers(origin){const base={startLat:origin.lat,startLng:origin.lng,endLat:CONFIG.target.lat,endLng:CONFIG.target.lng,altitude:CONFIG.arcAltitude};return[{...base,kind:'glow',color:['rgba(112,241,255,.08)','rgba(255,189,99,.13)'],stroke:mobileMode?.32:economyMode?.42:.82,dashLength:1,dashGap:0,dashInitialGap:0,dashTime:0},{...base,kind:'signal',color:[CONFIG.colors.cyanHot,CONFIG.colors.amber],stroke:mobileMode?.22:economyMode?.28:.44,dashLength:.12,dashGap:.88,dashInitialGap:0,dashTime:CONFIG.timing.signalMs}]}
+    function arcLayers(origin){const base={startLat:origin.lat,startLng:origin.lng,endLat:CONFIG.target.lat,endLng:CONFIG.target.lng,altitude:CONFIG.arcAltitude};return[{...base,kind:'glow',color:['rgba(112,241,255,.08)','rgba(255,189,99,.13)'],stroke:mobileMode ? .32 : economyMode ? .42 : .82,dashLength:1,dashGap:0,dashInitialGap:0,dashTime:0},{...base,kind:'signal',color:[CONFIG.colors.cyanHot,CONFIG.colors.amber],stroke:mobileMode ? .22 : economyMode ? .28 : .44,dashLength:.12,dashGap:.88,dashInitialGap:0,dashTime:CONFIG.timing.signalMs}]}
 
     function toUnit(lat,lng){const phi=lat*Math.PI/180,theta=lng*Math.PI/180,c=Math.cos(phi);return{x:c*Math.cos(theta),y:Math.sin(phi),z:c*Math.sin(theta)}}
     function fromUnit(v){const length=Math.hypot(v.x,v.y,v.z)||1,x=v.x/length,y=v.y/length,z=v.z/length;return{lat:Math.asin(clamp(y,-1,1))*180/Math.PI,lng:Math.atan2(z,x)*180/Math.PI}}
@@ -292,7 +292,7 @@
         const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.BufferAttribute(positions,3));geometry.setAttribute('aAlpha',new THREE.BufferAttribute(alphas,1));
         const material=new THREE.ShaderMaterial({transparent:true,depthWrite:false,depthTest:true,blending:THREE.AdditiveBlending,uniforms:{uColor:{value:new THREE.Color(CONFIG.colors.cyan)},uPixelRatio:{value:Math.min(window.devicePixelRatio||1,liteMode?1:1.6)}},vertexShader:`attribute float aAlpha;varying float vAlpha;uniform float uPixelRatio;void main(){vec4 mvPosition=modelViewMatrix*vec4(position,1.0);float depthScale=clamp(255.0/max(90.0,-mvPosition.z),0.55,2.1);gl_PointSize=(6.0+22.0*aAlpha)*uPixelRatio*depthScale;gl_Position=projectionMatrix*mvPosition;vAlpha=aAlpha;}`,fragmentShader:`varying float vAlpha;uniform vec3 uColor;void main(){vec2 p=gl_PointCoord-vec2(0.5);float d=length(p)*2.0;float halo=1.0-smoothstep(0.08,1.0,d);float core=1.0-smoothstep(0.0,0.24,d);float alpha=(halo*0.54+core*0.8)*vAlpha;if(alpha<0.012)discard;vec3 color=mix(uColor,vec3(1.0),core*0.6);gl_FragColor=vec4(color,alpha);}`});
         const particles=new THREE.Points(geometry,material);particles.visible=false;particles.frustumCulled=false;particles.renderOrder=1000;globe.scene().add(particles);
-        return{show(){particles.visible=true},hide(){particles.visible=false},update(origin,progress){const attribute=geometry.getAttribute('position');for(let i=0;i<count;i+=1){const p=clamp(progress-i*(liteMode?.028:.014),0,1),geo=greatCirclePoint(origin,CONFIG.target,p),altitude=.015+Math.sin(Math.PI*p)*CONFIG.arcAltitude,xyz=globe.getCoords(geo.lat,geo.lng,altitude);attribute.setXYZ(i,xyz.x,xyz.y,xyz.z)}attribute.needsUpdate=true},dispose(){globe.scene().remove(particles);geometry.dispose();material.dispose()}};
+        return{show(){particles.visible=true},hide(){particles.visible=false},update(origin,progress){const attribute=geometry.getAttribute('position');for(let i=0;i<count;i+=1){const p=clamp(progress-i*(liteMode ? .028 : .014),0,1),geo=greatCirclePoint(origin,CONFIG.target,p),altitude=.015+Math.sin(Math.PI*p)*CONFIG.arcAltitude,xyz=globe.getCoords(geo.lat,geo.lng,altitude);attribute.setXYZ(i,xyz.x,xyz.y,xyz.z)}attribute.needsUpdate=true},dispose(){globe.scene().remove(particles);geometry.dispose();material.dispose()}};
       }catch{debug('desktop particle shader unavailable; native arc retained');return createNoopTrail()}
     }
 
