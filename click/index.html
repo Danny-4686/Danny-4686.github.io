@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#02070b">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="A cinematic CloudLab orbital signal sequence.">
+  <title>Signal | Danny4686</title>
+  <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="icon" href="/assets/icons/favicon-48x48.png" type="image/png" sizes="48x48">
+  <link rel="icon" href="/assets/icons/favicon-32x32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" sizes="180x180">
+  <link rel="manifest" href="/site.webmanifest">
+  <style>
+    /*
+      /click/ — standalone cinematic experience
+      ------------------------------------------------------------
+      Re-theme the whole sequence from these variables first.
+      This file intentionally imports no site CSS, fonts, images or audio.
+    */
+    :root {
+      --bg:#02070b;
+      --panel:rgba(5,17,23,.58);
+      --line:rgba(117,238,255,.24);
+      --cyan:#70f1ff;
+      --cyan-hot:#d4fbff;
+      --cyan-dim:#3b9eac;
+      --amber:#ffbd63;
+      --text:#d9f8fc;
+      --muted:#6b939b;
+      --safe-top:max(14px,env(safe-area-inset-top));
+      --safe-right:max(14px,env(safe-area-inset-right));
+      --safe-bottom:max(14px,env(safe-area-inset-bottom));
+      --safe-left:max(14px,env(safe-area-inset-left));
+      font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+      color-scheme:dark;
+    }
+    *{box-sizing:border-box}
+    html,body{width:100%;height:100%;margin:0;overflow:hidden;background:var(--bg)}
+    body{
+      min-height:100vh;min-height:100dvh;color:var(--text);
+      background:
+        radial-gradient(circle at 50% 42%,rgba(16,70,81,.19),transparent 36%),
+        radial-gradient(circle at 80% 15%,rgba(16,112,132,.08),transparent 24%),
+        #02070b;
+    }
+    body::before{
+      content:"";position:fixed;inset:0;pointer-events:none;opacity:.62;
+      background-image:
+        radial-gradient(circle,rgba(206,249,255,.78) 0 1px,transparent 1.2px),
+        radial-gradient(circle,rgba(112,241,255,.48) 0 .7px,transparent .9px),
+        radial-gradient(circle,rgba(255,255,255,.32) 0 .55px,transparent .8px);
+      background-size:137px 137px,89px 89px,53px 53px;
+      background-position:11px 29px,44px 7px,17px 41px;
+      -webkit-mask-image:radial-gradient(circle at center,#000 15%,transparent 78%);
+      mask-image:radial-gradient(circle at center,#000 15%,transparent 78%);
+    }
+    #stage{position:fixed;inset:0;isolation:isolate;overflow:hidden;background:transparent}
+    #globeViz{
+      position:absolute;inset:0;opacity:0;transform:scale(.88);
+      filter:blur(14px) brightness(1.9) saturate(.7);
+      transition:opacity .7s ease,transform 1s cubic-bezier(.2,.8,.2,1),filter .9s ease;
+      will-change:transform,filter,opacity;
+    }
+    body.globe-ready #globeViz{opacity:1;transform:scale(1);filter:none}
+    #globeViz canvas{display:block;width:100%;height:100%}
+    .scanlines,.vignette,.grid-overlay,.glitch-flash{position:absolute;inset:0;pointer-events:none}
+    .scanlines{
+      z-index:10;opacity:.23;mix-blend-mode:screen;
+      background:repeating-linear-gradient(to bottom,rgba(150,250,255,.028) 0,rgba(150,250,255,.028) 1px,transparent 1px,transparent 4px);
+      animation:scanDrift 8s linear infinite;
+    }
+    .grid-overlay{
+      z-index:9;opacity:.08;
+      background-image:linear-gradient(rgba(112,241,255,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(112,241,255,.12) 1px,transparent 1px);
+      background-size:72px 72px;
+      -webkit-mask-image:radial-gradient(circle at center,#000 0,rgba(0,0,0,.42) 46%,transparent 78%);
+      mask-image:radial-gradient(circle at center,#000 0,rgba(0,0,0,.42) 46%,transparent 78%);
+    }
+    .vignette{
+      z-index:11;
+      background:radial-gradient(circle at center,transparent 38%,rgba(0,6,9,.28) 68%,rgba(0,3,5,.86) 100%),linear-gradient(to bottom,rgba(0,9,13,.34),transparent 18%,transparent 82%,rgba(0,4,7,.5));
+    }
+    .hud{
+      position:absolute;z-index:20;inset:0;pointer-events:none;
+      padding:var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+      text-transform:uppercase;letter-spacing:.09em;font-size:clamp(.62rem,1vw,.78rem);
+    }
+    .hud-panel{
+      position:absolute;min-width:min(290px,calc(100vw - 28px));max-width:min(430px,calc(100vw - 28px));
+      padding:13px 14px;border:1px solid var(--line);
+      background:linear-gradient(135deg,rgba(6,26,33,.7),rgba(2,10,14,.24));
+      box-shadow:0 16px 40px rgba(0,0,0,.25),inset 0 1px rgba(255,255,255,.025);
+      backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+      clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,12px 100%,0 calc(100% - 12px));
+    }
+    .hud-panel::before,.hud-panel::after{content:"";position:absolute;height:1px;width:34px;background:var(--cyan);box-shadow:0 0 12px rgba(112,241,255,.7)}
+    .hud-panel::before{top:-1px;left:12px}.hud-panel::after{bottom:-1px;right:12px}
+    .hud-left{top:var(--safe-top);left:var(--safe-left)}
+    .hud-right{top:var(--safe-top);right:var(--safe-right);text-align:right}
+    .hud-kicker{display:flex;align-items:center;gap:8px;color:var(--cyan);font-weight:800}
+    .hud-right .hud-kicker{justify-content:flex-end}
+    .hud-kicker::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;box-shadow:0 0 12px currentColor;animation:statusBlink 1.1s steps(1,end) infinite}
+    .hud-value{margin-top:7px;color:var(--text);line-height:1.45;word-break:break-word}
+    .hud-sub{margin-top:4px;color:var(--muted);font-size:.78em;line-height:1.45}
+    .phase-bar{position:absolute;left:50%;bottom:var(--safe-bottom);width:min(620px,calc(100vw - 30px));transform:translateX(-50%);display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+    .phase{
+      position:relative;height:28px;display:grid;place-items:center;overflow:hidden;
+      border:1px solid rgba(112,241,255,.14);color:rgba(148,207,216,.44);background:rgba(2,11,15,.48);
+      font-size:.64rem;letter-spacing:.11em;transition:color .3s ease,border-color .3s ease,background .3s ease;
+    }
+    .phase::after{content:"";position:absolute;inset:auto 100% 0 0;height:2px;background:var(--cyan);box-shadow:0 0 12px rgba(112,241,255,.7);transition:right .5s ease}
+    .phase.active{color:var(--cyan-hot);border-color:rgba(112,241,255,.48);background:rgba(7,30,36,.66)}
+    .phase.active::after,.phase.done::after{right:0}.phase.done{color:rgba(112,241,255,.72);border-color:rgba(112,241,255,.24)}
+    .privacy-chip{position:absolute;left:var(--safe-left);bottom:calc(var(--safe-bottom) + 40px);color:rgba(137,185,193,.52);font-size:.56rem;letter-spacing:.08em}
+    #bootLayer{
+      position:absolute;z-index:30;inset:0;display:grid;place-items:center;padding:24px;
+      background:radial-gradient(circle at center,rgba(5,28,35,.26),rgba(1,6,9,.76) 72%);
+      transition:opacity .48s ease,visibility .48s ease;
+    }
+    body.boot-complete #bootLayer{opacity:0;visibility:hidden}
+    .boot-core{width:min(560px,92vw);text-align:center;filter:drop-shadow(0 0 18px rgba(112,241,255,.16))}
+    .boot-reticle{position:relative;width:clamp(118px,18vw,176px);aspect-ratio:1;margin:0 auto 25px;border:1px solid rgba(112,241,255,.36);border-radius:50%;box-shadow:0 0 42px rgba(112,241,255,.08),inset 0 0 34px rgba(112,241,255,.06)}
+    .boot-reticle::before,.boot-reticle::after{content:"";position:absolute;inset:12%;border:1px dashed rgba(112,241,255,.38);border-radius:50%;animation:rotateRing 7s linear infinite}
+    .boot-reticle::after{inset:31%;border-style:solid;border-color:rgba(255,189,99,.56);box-shadow:0 0 18px rgba(255,189,99,.16);animation-direction:reverse;animation-duration:4s}
+    .reticle-cross-x,.reticle-cross-y{position:absolute;background:rgba(112,241,255,.2)}
+    .reticle-cross-x{left:-18%;right:-18%;top:50%;height:1px}.reticle-cross-y{top:-18%;bottom:-18%;left:50%;width:1px}
+    .reticle-sweep{position:absolute;inset:3%;border-radius:50%;overflow:hidden;animation:rotateRing 1.8s linear infinite}
+    .reticle-sweep::before{content:"";position:absolute;left:50%;bottom:50%;width:50%;height:1px;transform-origin:left center;background:linear-gradient(90deg,var(--cyan),transparent);box-shadow:0 0 11px var(--cyan)}
+    .boot-title{margin:0;color:var(--cyan-hot);font-size:clamp(.78rem,1.8vw,1rem);font-weight:800;letter-spacing:.18em}
+    .boot-status{min-height:1.5em;margin:11px 0 0;color:var(--cyan-dim);font-size:clamp(.64rem,1.4vw,.78rem);letter-spacing:.12em}
+    .boot-meter{position:relative;width:min(340px,72vw);height:3px;margin:22px auto 0;overflow:hidden;background:rgba(112,241,255,.1)}
+    .boot-meter::after{content:"";position:absolute;inset:0 100% 0 0;background:linear-gradient(90deg,transparent,var(--cyan),var(--cyan-hot));box-shadow:0 0 14px var(--cyan);animation:bootMeter 1.9s cubic-bezier(.2,.8,.2,1) forwards}
+    #messageWrap{position:absolute;z-index:28;left:50%;bottom:clamp(92px,16vh,170px);width:min(900px,calc(100vw - 34px));transform:translateX(-50%);text-align:center;pointer-events:none}
+    #message{position:relative;display:inline;color:var(--cyan-hot);text-shadow:0 0 10px rgba(112,241,255,.28),0 0 32px rgba(112,241,255,.12);font-size:clamp(1.05rem,3.2vw,2.15rem);font-weight:720;line-height:1.35;letter-spacing:.02em}
+    #message::before,#message::after{content:attr(data-text);position:absolute;inset:0;opacity:0;pointer-events:none}
+    body.glitching #message::before{opacity:.84;color:#ff315d;transform:translate(-3px,1px);clip-path:inset(10% 0 52% 0)}
+    body.glitching #message::after{opacity:.82;color:#2afff2;transform:translate(3px,-1px);clip-path:inset(58% 0 6% 0)}
+    .type-cursor{display:inline-block;width:.58em;height:1.05em;margin-left:.14em;transform:translateY(.16em);background:var(--cyan);box-shadow:0 0 12px rgba(112,241,255,.62);opacity:0}
+    body.typing .type-cursor{opacity:1;animation:cursorBlink .7s steps(1,end) infinite}
+    .glitch-flash{z-index:45;opacity:0;background:rgba(199,250,255,.78);mix-blend-mode:screen}
+    body.glitching .glitch-flash{animation:glitchFlash .24s steps(2,end) both}
+    body.glitching #stage{animation:stageGlitch .24s steps(2,end) both}
+    .sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+    .fatal-card{display:none;position:absolute;z-index:60;left:50%;top:50%;width:min(520px,calc(100vw - 36px));transform:translate(-50%,-50%);padding:26px;border:1px solid rgba(112,241,255,.26);background:rgba(3,15,20,.92);box-shadow:0 24px 70px rgba(0,0,0,.55);text-align:center}
+    body.fatal .fatal-card{display:block}body.fatal #bootLayer,body.fatal .hud{display:none}.fatal-card strong{display:block;color:var(--cyan);letter-spacing:.14em}.fatal-card p{margin:12px 0 0;color:var(--muted);line-height:1.65}
+    @keyframes scanDrift{to{transform:translateY(16px)}}
+    @keyframes statusBlink{0%,58%{opacity:1}59%,100%{opacity:.28}}
+    @keyframes rotateRing{to{transform:rotate(360deg)}}
+    @keyframes bootMeter{to{right:0}}
+    @keyframes cursorBlink{0%,46%{opacity:1}47%,100%{opacity:.12}}
+    @keyframes glitchFlash{0%{opacity:0}18%{opacity:.42}42%{opacity:.02}62%{opacity:.22}100%{opacity:0}}
+    @keyframes stageGlitch{0%,100%{transform:translate(0);filter:none}24%{transform:translate(2px,-1px);filter:contrast(1.35) saturate(1.45)}48%{transform:translate(-3px,1px);filter:contrast(1.08) hue-rotate(7deg)}72%{transform:translate(1px,0);filter:contrast(1.2) saturate(1.2)}}
+    @media(max-width:720px){.hud-panel{min-width:0;width:calc(50vw - 20px);padding:10px 11px;font-size:.56rem}.hud-left{max-width:calc(56vw - 18px)}.hud-right{max-width:calc(44vw - 18px)}.hud-value{font-size:.92em}.privacy-chip{display:none}.phase-bar{bottom:var(--safe-bottom);gap:4px}.phase{height:24px;font-size:.5rem}#messageWrap{bottom:clamp(76px,13vh,116px)}}
+    @media(max-width:420px){.hud-panel{width:auto;max-width:calc(50vw - 12px)}.hud-sub{display:none}.phase{letter-spacing:.05em}}
+    @media(prefers-reduced-motion:reduce){.scanlines,.hud-kicker::before,.boot-reticle::before,.boot-reticle::after,.reticle-sweep,.type-cursor{animation:none!important}#globeViz,#bootLayer,.phase{transition-duration:.01ms!important}}
+  </style>
+</head>
+<body>
+  <main id="stage" aria-label="Orbital signal visualization">
+    <div id="globeViz" aria-hidden="true"></div>
+    <div class="grid-overlay" aria-hidden="true"></div>
+    <div class="scanlines" aria-hidden="true"></div>
+    <div class="vignette" aria-hidden="true"></div>
+    <div class="glitch-flash" aria-hidden="true"></div>
+
+    <div class="hud" aria-hidden="true">
+      <section class="hud-panel hud-left">
+        <div class="hud-kicker">ORBITAL NODE 4686</div>
+        <div id="systemState" class="hud-value">INITIALIZING</div>
+        <div id="renderMode" class="hud-sub">RENDER PROFILE // FULL</div>
+      </section>
+      <section class="hud-panel hud-right">
+        <div class="hud-kicker">ORIGIN</div>
+        <div id="originLabel" class="hud-value">RESOLVING…</div>
+        <div id="originCoords" class="hud-sub">APPROXIMATE NETWORK POSITION</div>
+      </section>
+      <div class="privacy-chip">NETWORK GEO // APPROXIMATE • MEMORY ONLY • NOT STORED</div>
+      <div class="phase-bar" id="phaseBar">
+        <div class="phase active" data-phase="0">BOOT</div>
+        <div class="phase" data-phase="1">ORBIT</div>
+        <div class="phase" data-phase="2">SIGNAL</div>
+        <div class="phase" data-phase="3">TEXAS</div>
+      </div>
+    </div>
+
+    <section id="bootLayer" aria-hidden="true">
+      <div class="boot-core">
+        <div class="boot-reticle">
+          <span class="reticle-cross-x"></span><span class="reticle-cross-y"></span><span class="reticle-sweep"></span>
+        </div>
+        <p class="boot-title">CLOUDLAB ORBITAL ARRAY</p>
+        <p id="bootStatus" class="boot-status">INITIALIZING VISUAL CORE</p>
+        <div class="boot-meter"></div>
+      </div>
+    </section>
+
+    <div id="messageWrap" aria-hidden="true"><span id="message" data-text=""></span><span class="type-cursor"></span></div>
+    <div id="screenReaderStatus" class="sr-only" aria-live="polite"></div>
+    <section class="fatal-card" role="status"><strong>SIGNAL OFFLINE</strong><p>This device could not initialize the 3D renderer.</p></section>
+  </main>
+
+  <noscript><div style="position:fixed;inset:0;display:grid;place-items:center;padding:24px;background:#02070b;color:#70f1ff;font:16px monospace;text-align:center">JavaScript is required for this sequence.</div></noscript>
+
+  <script type="module">
+    /*
+      Production notes
+      ------------------------------------------------------------
+      Globe.gl is used because its camera, polygon, ring and great-circle arc
+      layers are purpose-built for this sequence and keep the maintenance cost
+      much lower than hand-building the globe in raw Three.js.
+
+      Privacy: no browser geolocation permission is requested. The browser calls
+      ipapi.co directly; that third party necessarily sees the visitor's IP in
+      order to estimate a city. The returned city/coordinates remain in this page's
+      JavaScript memory only. They are never sent to danny4686.com, logged, stored,
+      written to cookies/localStorage/sessionStorage, or placed in a URL.
+
+      Add ?lite=1 to force the low-cost render path for testing.
+    */
+    import Globe from 'https://cdn.jsdelivr.net/npm/globe.gl@2.46.1/+esm';
+    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js';
+    import { feature as topoFeature } from 'https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/+esm';
+
+    const CONFIG={
+      fallback:{lat:34.0522,lng:-118.2437,city:'Los Angeles',region:'CA'},
+      target:{lat:30.2672,lng:-97.7431,city:'Texas',region:'USA'},
+      message:'Location found. I know where you are.',
+      colors:{cyan:'#70f1ff',cyanHot:'#d4fbff',amber:'#ffbd63'},
+      timing:{bootMs:1900,revealHoldMs:250,zoomOutMs:1800,signalMs:2500,landingBeatMs:360,texasZoomMs:1250,typeBaseMs:38,typePunctuationMs:105,glitchMs:250,finalSettleMs:850},
+      camera:{cityAltitude:.34,orbitAltitude:2.28,texasAltitude:.5,finalAltitude:.42},
+      arcAltitude:.2
+    };
+
+    const els={
+      mount:document.getElementById('globeViz'),bootStatus:document.getElementById('bootStatus'),systemState:document.getElementById('systemState'),
+      renderMode:document.getElementById('renderMode'),originLabel:document.getElementById('originLabel'),originCoords:document.getElementById('originCoords'),
+      message:document.getElementById('message'),srStatus:document.getElementById('screenReaderStatus'),phases:[...document.querySelectorAll('.phase')]
+    };
+    const reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const queryLite=new URLSearchParams(location.search).get('lite')==='1';
+    const lowPower=queryLite||(navigator.hardwareConcurrency||8)<=4||(navigator.deviceMemory||8)<=4;
+    const liteMode=lowPower||reducedMotion;
+    els.renderMode.textContent=`RENDER PROFILE // ${liteMode?'LITE':'FULL'}`;
+
+    const sleep=(ms)=>new Promise((resolve)=>setTimeout(resolve,ms));
+    const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
+    const cleanLabel=(value,fallback='')=>String(value||fallback).replace(/[\u0000-\u001f\u007f]/g,'').trim().slice(0,64);
+
+    function setPhase(index){els.phases.forEach((phase,i)=>{phase.classList.toggle('active',i===index);phase.classList.toggle('done',i<index)})}
+    function setSystemState(text){els.systemState.textContent=text}
+    function bootSequenceLabels(){[
+      [0,'INITIALIZING VISUAL CORE'],[360,'CALIBRATING LATITUDE GRID'],[760,'RESOLVING NETWORK POSITION'],[1180,'SYNCHRONIZING ORBITAL CAMERA'],[1550,'LOCKING ORIGIN VECTOR']
+    ].forEach(([delay,text])=>setTimeout(()=>{if(!document.body.classList.contains('boot-complete'))els.bootStatus.textContent=text},delay))}
+
+    async function resolveApproxLocation(){
+      const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),1550);
+      try{
+        const response=await fetch('https://ipapi.co/json/',{signal:controller.signal,cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer',headers:{Accept:'application/json'}});
+        if(!response.ok)throw new Error('location unavailable');
+        const data=await response.json();const lat=Number(data.latitude);const lng=Number(data.longitude);
+        if(!Number.isFinite(lat)||!Number.isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180)throw new Error('invalid coordinates');
+        return{lat,lng,city:cleanLabel(data.city,CONFIG.fallback.city),region:cleanLabel(data.region_code||data.region||data.country_code,CONFIG.fallback.region)};
+      }catch{return{...CONFIG.fallback}}finally{clearTimeout(timeout)}
+    }
+
+    function hasWebGL(){try{const c=document.createElement('canvas');return!!(window.WebGLRenderingContext&&(c.getContext('webgl2')||c.getContext('webgl')))}catch{return false}}
+
+    function initGlobe(){
+      const globe=new Globe(els.mount,{
+        animateIn:false,
+        rendererConfig:{antialias:!liteMode,alpha:true,powerPreference:liteMode?'low-power':'high-performance'}
+      })
+        .backgroundColor('rgba(0,0,0,0)').showGlobe(true).showGraticules(true).showAtmosphere(true)
+        .atmosphereColor(CONFIG.colors.cyan).atmosphereAltitude(.16).enablePointerInteraction(false)
+        .pointsTransitionDuration(liteMode?0:280).arcsTransitionDuration(liteMode?0:300)
+        .arcCurveResolution(liteMode?32:64).arcCircularResolution(liteMode?4:6);
+
+      const material=globe.globeMaterial();
+      if(material){
+        if(material.color?.set)material.color.set('#06131a');
+        if(material.emissive?.set)material.emissive.set('#001118');
+        material.emissiveIntensity=.72;material.shininess=8;material.transparent=false;material.needsUpdate=true;
+      }
+      const controls=globe.controls();
+      controls.enableZoom=false;controls.enablePan=false;controls.enableRotate=false;controls.autoRotate=false;controls.enableDamping=true;controls.dampingFactor=.08;
+      const renderer=globe.renderer();renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,liteMode?1.05:1.7));renderer.domElement.setAttribute('aria-hidden','true');
+      const size=()=>globe.width(Math.max(1,window.innerWidth)).height(Math.max(1,window.innerHeight));size();
+      let resizeTimer;window.addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(size,90)},{passive:true});
+
+      globe
+        .pointLat('lat').pointLng('lng').pointAltitude('altitude').pointRadius('radius').pointColor('color')
+        .ringLat('lat').ringLng('lng').ringAltitude('altitude').ringColor('color').ringMaxRadius('maxRadius').ringPropagationSpeed('speed').ringRepeatPeriod('repeat')
+        .arcStartLat('startLat').arcStartLng('startLng').arcEndLat('endLat').arcEndLng('endLng').arcColor('color').arcAltitude('altitude').arcStroke('stroke')
+        .arcDashLength('dashLength').arcDashGap('dashGap').arcDashInitialGap('dashInitialGap').arcDashAnimateTime('dashTime');
+      return globe;
+    }
+
+    async function addWireframeContinents(globe){
+      try{
+        const response=await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json',{cache:'force-cache',credentials:'omit',referrerPolicy:'no-referrer'});
+        if(!response.ok)return;
+        const world=await response.json();const countries=topoFeature(world,world.objects.countries).features;
+        globe.polygonsData(countries).polygonAltitude(.006)
+          .polygonCapColor(()=>liteMode?'rgba(5,22,28,.34)':'rgba(4,24,31,.28)')
+          .polygonSideColor(()=>'rgba(20,175,195,.025)')
+          .polygonStrokeColor(()=>liteMode?'rgba(112,241,255,.32)':'rgba(112,241,255,.5)')
+          .polygonsTransitionDuration(liteMode?0:720);
+      }catch{/* Graticules remain available if the optional border dataset fails. */}
+    }
+
+    const sourceMarker=(origin)=>({...origin,altitude:.012,radius:.34,color:CONFIG.colors.cyanHot,kind:'source'});
+    const texasMarker=()=>({...CONFIG.target,altitude:.014,radius:.42,color:CONFIG.colors.amber,kind:'target'});
+    const sourceRing=(origin)=>({...origin,altitude:.008,color:CONFIG.colors.cyan,maxRadius:3.2,speed:2.4,repeat:720});
+    const texasRing=()=>({...CONFIG.target,altitude:.009,color:CONFIG.colors.amber,maxRadius:4.6,speed:2.1,repeat:620});
+
+    function arcLayers(origin){
+      const base={startLat:origin.lat,startLng:origin.lng,endLat:CONFIG.target.lat,endLng:CONFIG.target.lng,altitude:CONFIG.arcAltitude};
+      return[
+        {...base,kind:'glow',color:['rgba(112,241,255,.08)','rgba(255,189,99,.13)'],stroke:liteMode?.42:.82,dashLength:1,dashGap:0,dashInitialGap:0,dashTime:0},
+        {...base,kind:'signal',color:[CONFIG.colors.cyanHot,CONFIG.colors.amber],stroke:liteMode?.28:.44,dashLength:.12,dashGap:.88,dashInitialGap:0,dashTime:CONFIG.timing.signalMs}
+      ];
+    }
+
+    function geoToUnit(lat,lng){const phi=THREE.MathUtils.degToRad(lat);const theta=THREE.MathUtils.degToRad(lng);const cosPhi=Math.cos(phi);return new THREE.Vector3(cosPhi*Math.cos(theta),Math.sin(phi),cosPhi*Math.sin(theta))}
+    function unitToGeo(vector){const v=vector.clone().normalize();return{lat:THREE.MathUtils.radToDeg(Math.asin(clamp(v.y,-1,1))),lng:THREE.MathUtils.radToDeg(Math.atan2(v.z,v.x))}}
+    function greatCirclePoint(start,end,t){
+      const a=geoToUnit(start.lat,start.lng);const b=geoToUnit(end.lat,end.lng);const dot=clamp(a.dot(b),-1,1);const omega=Math.acos(dot);
+      if(omega<1e-5)return unitToGeo(a);
+      if(Math.PI-omega<1e-5){
+        let axis=new THREE.Vector3(0,1,0).cross(a);if(axis.lengthSq()<1e-6)axis=new THREE.Vector3(1,0,0).cross(a);axis.normalize();
+        return unitToGeo(a.clone().applyAxisAngle(axis,Math.PI*t));
+      }
+      const sinOmega=Math.sin(omega);const vector=a.multiplyScalar(Math.sin((1-t)*omega)/sinOmega).add(b.multiplyScalar(Math.sin(t*omega)/sinOmega)).normalize();
+      return unitToGeo(vector);
+    }
+
+    function createSignalTrail(globe){
+      const count=liteMode?8:20;const positions=new Float32Array(count*3);const alphas=new Float32Array(count);
+      for(let i=0;i<count;i+=1)alphas[i]=Math.pow(1-i/count,1.45);
+      const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.BufferAttribute(positions,3));geometry.setAttribute('aAlpha',new THREE.BufferAttribute(alphas,1));
+      const material=new THREE.ShaderMaterial({
+        transparent:true,depthWrite:false,depthTest:true,blending:THREE.AdditiveBlending,
+        uniforms:{uColor:{value:new THREE.Color(CONFIG.colors.cyan)},uPixelRatio:{value:Math.min(window.devicePixelRatio||1,liteMode?1:1.6)}},
+        vertexShader:`attribute float aAlpha;varying float vAlpha;uniform float uPixelRatio;void main(){vec4 mvPosition=modelViewMatrix*vec4(position,1.0);float depthScale=clamp(255.0/max(90.0,-mvPosition.z),0.55,2.1);gl_PointSize=(6.0+22.0*aAlpha)*uPixelRatio*depthScale;gl_Position=projectionMatrix*mvPosition;vAlpha=aAlpha;}`,
+        fragmentShader:`varying float vAlpha;uniform vec3 uColor;void main(){vec2 p=gl_PointCoord-vec2(0.5);float d=length(p)*2.0;float halo=1.0-smoothstep(0.08,1.0,d);float core=1.0-smoothstep(0.0,0.24,d);float alpha=(halo*0.54+core*0.8)*vAlpha;if(alpha<0.012)discard;vec3 color=mix(uColor,vec3(1.0),core*0.6);gl_FragColor=vec4(color,alpha);}`
+      });
+      const particles=new THREE.Points(geometry,material);particles.visible=false;particles.frustumCulled=false;particles.renderOrder=1000;globe.scene().add(particles);
+      return{
+        show(){particles.visible=true},hide(){particles.visible=false},
+        update(origin,progress){
+          const attribute=geometry.getAttribute('position');
+          for(let i=0;i<count;i+=1){
+            const p=clamp(progress-i*(liteMode?.028:.014),0,1);const geo=greatCirclePoint(origin,CONFIG.target,p);const altitude=.015+Math.sin(Math.PI*p)*CONFIG.arcAltitude;const xyz=globe.getCoords(geo.lat,geo.lng,altitude);attribute.setXYZ(i,xyz.x,xyz.y,xyz.z);
+          }
+          attribute.needsUpdate=true;
+        },
+        dispose(){globe.scene().remove(particles);geometry.dispose();material.dispose()}
+      };
+    }
+
+    function animateSignal(globe,trail,origin){
+      return new Promise((resolve)=>{const started=performance.now();trail.show();const frame=(now)=>{const progress=clamp((now-started)/CONFIG.timing.signalMs,0,1);trail.update(origin,progress);if(progress<1)requestAnimationFrame(frame);else resolve()};requestAnimationFrame(frame)});
+    }
+
+    async function typeMessage(text){
+      els.message.textContent='';els.message.dataset.text='';document.body.classList.add('typing');
+      for(const character of text){els.message.textContent+=character;els.message.dataset.text=els.message.textContent;await sleep(CONFIG.timing.typeBaseMs+(/[.,!?]/.test(character)?CONFIG.timing.typePunctuationMs:0))}
+      document.body.classList.remove('typing');els.srStatus.textContent=text;
+    }
+    async function glitchFinish(){if(reducedMotion)return;document.body.classList.add('glitching');await sleep(CONFIG.timing.glitchMs);document.body.classList.remove('glitching')}
+
+    async function runReducedMotion(globe,origin){
+      els.originLabel.textContent=`${origin.city.toUpperCase()}, ${origin.region.toUpperCase()}`;els.originCoords.textContent=`${origin.lat.toFixed(2)}°, ${origin.lng.toFixed(2)}° // APPROX`;
+      globe.pointsData([texasMarker()]);globe.ringsData([texasRing()]);globe.pointOfView({lat:CONFIG.target.lat,lng:CONFIG.target.lng,altitude:CONFIG.camera.finalAltitude},0);
+      setPhase(3);setSystemState('TEXAS LOCKED');document.body.classList.add('globe-ready','boot-complete');els.message.textContent=CONFIG.message;els.message.dataset.text=CONFIG.message;els.srStatus.textContent=CONFIG.message;
+    }
+
+    async function runSequence(){
+      if(!hasWebGL()){document.body.classList.add('fatal');return}
+      bootSequenceLabels();const minimumBoot=sleep(CONFIG.timing.bootMs);const locationPromise=resolveApproxLocation();
+      let globe;try{globe=initGlobe()}catch{document.body.classList.add('fatal');return}
+      addWireframeContinents(globe);
+      const origin=await locationPromise;
+      els.originLabel.textContent=`${origin.city.toUpperCase()}, ${origin.region.toUpperCase()}`;els.originCoords.textContent=`${origin.lat.toFixed(2)}°, ${origin.lng.toFixed(2)}° // APPROX`;
+      if(reducedMotion){await minimumBoot;await runReducedMotion(globe,origin);return}
+
+      globe.pointOfView({lat:origin.lat,lng:origin.lng,altitude:CONFIG.camera.cityAltitude},0);globe.pointsData([sourceMarker(origin)]);globe.ringsData([sourceRing(origin)]);
+      await minimumBoot;els.bootStatus.textContent='ORIGIN ACQUIRED';setSystemState('ORIGIN ACQUIRED');document.body.classList.add('globe-ready');await sleep(260);document.body.classList.add('boot-complete');await sleep(CONFIG.timing.revealHoldMs);
+
+      setPhase(1);setSystemState('ORBITAL PERSPECTIVE');const midpoint=greatCirclePoint(origin,CONFIG.target,.5);
+      globe.pointOfView({lat:midpoint.lat,lng:midpoint.lng,altitude:liteMode?2.48:CONFIG.camera.orbitAltitude},CONFIG.timing.zoomOutMs);await sleep(CONFIG.timing.zoomOutMs);
+
+      setPhase(2);setSystemState('SIGNAL OUTBOUND');const arcs=arcLayers(origin);globe.arcsData(arcs);const trail=createSignalTrail(globe);await animateSignal(globe,trail,origin);trail.hide();
+
+      globe.arcsData([arcs[0]]);globe.pointsData([sourceMarker(origin),texasMarker()]);globe.ringsData([texasRing()]);setPhase(3);setSystemState('SIGNAL RECEIVED');
+      await sleep(CONFIG.timing.landingBeatMs);
+
+      globe.pointOfView({lat:CONFIG.target.lat,lng:CONFIG.target.lng,altitude:CONFIG.camera.texasAltitude},CONFIG.timing.texasZoomMs);
+      await Promise.all([sleep(CONFIG.timing.texasZoomMs),typeMessage(CONFIG.message)]);
+      await glitchFinish();setSystemState('TEXAS LOCKED');globe.pointsData([texasMarker()]);globe.arcsData([]);
+      globe.pointOfView({lat:CONFIG.target.lat,lng:CONFIG.target.lng,altitude:CONFIG.camera.finalAltitude},CONFIG.timing.finalSettleMs);await sleep(CONFIG.timing.finalSettleMs);
+      trail.dispose();
+    }
+
+    runSequence();
+  </script>
+</body>
+</html>
