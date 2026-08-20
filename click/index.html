@@ -197,8 +197,12 @@
       const rendererConfig=mobileMode?{antialias:false,alpha:true,preserveDrawingBuffer:false}:{antialias:!economyMode,alpha:true,powerPreference:'high-performance',preserveDrawingBuffer:false};
       const globe=new Globe(els.mount,{animateIn:false,rendererConfig})
         .backgroundColor('rgba(0,0,0,0)').showGlobe(true).showGraticules(true).showAtmosphere(!mobileMode).atmosphereColor(CONFIG.colors.cyan).atmosphereAltitude(.16).enablePointerInteraction(false)
-        .pointsTransitionDuration(economyMode?0:280).ringsTransitionDuration(economyMode?0:220).arcsTransitionDuration(economyMode?0:300)
         .arcCurveResolution(mobileMode?16:economyMode?24:64).arcCircularResolution(mobileMode?2:economyMode?3:6);
+
+      // Transition setters are convenience APIs and can vary across Globe.gl builds.
+      // Apply only supported setters so a missing optional method can never abort renderer startup.
+      if(typeof globe.pointsTransitionDuration==='function')globe.pointsTransitionDuration(economyMode?0:280);
+      if(typeof globe.arcsTransitionDuration==='function')globe.arcsTransitionDuration(economyMode?0:300);
 
       const material=globe.globeMaterial();if(material){if(material.color?.set)material.color.set('#06131a');if(material.emissive?.set)material.emissive.set('#001118');material.emissiveIntensity=mobileMode?.58:.72;material.shininess=mobileMode?4:8;material.transparent=false;material.needsUpdate=true}
       const controls=globe.controls();controls.enableZoom=false;controls.enablePan=false;controls.enableRotate=false;controls.autoRotate=false;controls.enableDamping=!mobileMode;controls.dampingFactor=.08;
