@@ -1,5 +1,22 @@
 [
   {
+    "slug": "roblox-20th-birthday",
+    "title": "Roblox 20th Birthday",
+    "description": "It’s hard to believe that Roblox has officially turned 20 years old. Looking back, it’s amazing to see how far the platform has come, growing from a small online game creation platform into one of the biggest gaming communities in the world. As someone who’s been developing on Roblox since 2016, it’s been incredible…",
+    "body": "It’s hard to believe that Roblox has officially turned 20 years old. Looking back, it’s amazing to see how far the platform has come, growing from a small online game creation platform into one of the biggest gaming communities in the world. As someone who’s been developing on Roblox since 2016, it’s been incredible watching the engine evolve with better graphics, improved tools, and countless new features that have made creating games easier than ever. At the same time, it’s been fun seeing the community continue to grow with millions of players and developers sharing their creativity every day. Happy 20th birthday, Roblox! Here’s to celebrating two decades of imagination, unforgettable memories, and the exciting future that still lies ahead.",
+    "date": "2026-09-01",
+    "displayDate": "September 1, 2026",
+    "tags": [
+      "News"
+    ],
+    "mediaType": "image",
+    "thumbnail": "/assets/images/journal/roblox-20th-birthday/thumbnail.webp",
+    "fit": "cover",
+    "mode": "card",
+    "comingSoon": false,
+    "cardOnly": true
+  },
+  {
     "slug": "clash-of-clans-update-log-1",
     "title": "Clash Of Clans - Update Log 1",
     "description": "Clash of Clans has kicked off another exciting season, bringing a variety of new content, events, and updates that have made the game feel fresh again. Over the past few weeks, I’ve slowly been getting back into the game after taking some time away, and I’ve really been enjoying the grind. My base is currently at…",
