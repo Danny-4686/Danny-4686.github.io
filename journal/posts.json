@@ -1,5 +1,22 @@
 [
   {
+    "slug": "back-to-working-on-rocket-tycoon",
+    "title": "Back to Working on Rocket Tycoon 🚀",
+    "description": "It’s been a pretty slow month for me, but I’ve finally started getting back into working on Rocket Tycoon 🚀. After taking some time away from the project, I wanted to give it another look and see what could be improved, what needs fixing, and what I can learn from everything I’ve built so far. I’ve been going…",
+    "body": "It’s been a pretty slow month for me, but I’ve finally started getting back into working on Rocket Tycoon 🚀. After taking some time away from the project, I wanted to give it another look and see what could be improved, what needs fixing, and what I can learn from everything I’ve built so far. I’ve been going through different parts of the game, experimenting with new ideas, improving existing features, and trying to make the overall experience feel more polished and enjoyable. One thing I’ve been thinking about is giving the game another proper launch once I’m happy with where it stands, hopefully getting it out there for more people to discover and play. I’m not expecting Rocket Tycoon to become some massive front-page Roblox game, and that’s never really been the goal. I’d much rather create something fun, rewarding, and enjoyable that players can come back to whenever they feel like it, whether that’s for a few minutes or a few hours. At the end of the day, this project is just as much about learning and improving my development skills as it is about making a successful game. There’s still plenty of work ahead, but I’m excited to see how much further I can take Rocket Tycoon and what I can turn it into with a little more time and effort! 🚀",
+    "date": "2026-10-03",
+    "displayDate": "October 3, 2026",
+    "tags": [
+      "Game"
+    ],
+    "mediaType": "image",
+    "thumbnail": "/assets/images/journal/back-to-working-on-rocket-tycoon/thumbnail.png",
+    "fit": "cover",
+    "mode": "card",
+    "comingSoon": false,
+    "cardOnly": true
+  },
+  {
     "slug": "roblox-20th-birthday",
     "title": "Roblox 20th Birthday",
     "description": "It’s hard to believe that Roblox has officially turned 20 years old. Looking back, it’s amazing to see how far the platform has come, growing from a small online game creation platform into one of the biggest gaming communities in the world. As someone who’s been developing on Roblox since 2016, it’s been incredible…",
