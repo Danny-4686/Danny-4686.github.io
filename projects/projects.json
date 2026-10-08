@@ -44,19 +44,19 @@
     "title": "Rocket Tycoon",
     "kicker": "ROBLOX GAME",
     "badge": "IN DEVELOPMENT",
-    "description": "Rocket Tycoon is an idle/incremental Roblox tycoon game where players build a rocket factory, buy droppers and upgrades to generate resources, and repeatedly rebirth to stack multipliers for exponentially growing income, all supported by events, offline earnings, and ongoing upgrades.",
+    "description": "is an idle/incremental Roblox tycoon game where players build and upgrade their rocket factory, hatch powerful pets, unlock new tools, and rebirth to earn bigger multipliers. With special events, offline earnings, leaderboards, and endless progression, players can compete with friends, grow their rocket empire, and keep coming back for more!",
     "url": "https://www.roblox.com/games/846133735/Rocket-Tycoon",
     "buttonLabel": "Play on Roblox",
     "showButton": true,
     "clickable": true,
     "newTab": true,
-    "image": "/assets/images/optimized/rocket-tycoon-banner.webp",
+    "image": "/assets/images/projects/rocket-tycoon/project-1791458357104.png",
     "imageAlt": "Rocket Tycoon project artwork",
     "fit": "cover",
     "accent": "gold",
     "layout": "media-top",
     "draft": true,
-    "updatedAt": "2026-08-11T06:57:05.167Z",
+    "updatedAt": "2026-10-08T11:19:17.104Z",
     "updatedBy": "Danny-4686"
   }
 ]
