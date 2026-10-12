@@ -23,6 +23,14 @@
     window.setTimeout(() => element.classList.remove(className), duration);
   }
 
+  // replay() toggles its own class, so observers that watch class changes must
+  // ignore those records or they re-trigger themselves forever.
+  function isRealChange(mutation, effectClass) {
+    if (mutation.type !== 'attributes') return true;
+    const classes = (value) => String(value || '').split(/\s+/).filter((name) => name && name !== effectClass).sort().join(' ');
+    return classes(mutation.oldValue) !== classes(mutation.target.getAttribute('class'));
+  }
+
   if (isLegacyGame) {
     document.body.classList.add('premium-game');
 
@@ -57,10 +65,11 @@
 
   if (path.startsWith('/games/tic-tac-toe/')) {
     document.querySelectorAll('[data-cell]').forEach((cell) => {
-      const observer = new MutationObserver(() => {
+      const observer = new MutationObserver((mutations) => {
+        if (!mutations.some((mutation) => isRealChange(mutation, 'premium-cell-pop'))) return;
         if (cell.textContent.trim() || cell.classList.contains('win')) replay(cell, 'premium-cell-pop', 430);
       });
-      observer.observe(cell, { childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+      observer.observe(cell, { childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ['class'], attributeOldValue: true });
     });
   }
 
@@ -70,6 +79,7 @@
       const observer = new MutationObserver((mutations) => {
         const changed = new Set();
         mutations.forEach((mutation) => {
+          if (!isRealChange(mutation, 'premium-cell-pop')) return;
           const cell = mutation.target.nodeType === Node.ELEMENT_NODE
             ? mutation.target.closest?.('.mine-cell')
             : mutation.target.parentElement?.closest('.mine-cell');
@@ -81,7 +91,7 @@
           }
         });
       });
-      observer.observe(board, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });
+      observer.observe(board, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'], attributeOldValue: true });
     }
   }
 

@@ -83,7 +83,6 @@
       button.type = 'button';
       button.className = 'mine-cell';
       button.dataset.index = String(cell.index);
-      button.setAttribute('role', 'gridcell');
       button.setAttribute('aria-label', `Hidden tile ${cell.row + 1}, ${cell.column + 1}`);
       cell.element = button;
       boardElement.append(button);

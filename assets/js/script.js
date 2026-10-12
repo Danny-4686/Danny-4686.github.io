@@ -178,7 +178,7 @@ function ensureManagedProjectStyles() {
   if (document.querySelector('link[data-managed-projects]')) return;
   const link = document.createElement('link');
   link.rel = 'stylesheet';
-  link.href = '/assets/css/project-managed.css?v=20260811.3';
+  link.href = '/assets/css/project-managed.css?v=20261012.1';
   link.dataset.managedProjects = 'true';
   document.head.append(link);
 }
@@ -243,21 +243,10 @@ function makeProjectCard(project, index) {
   const newTab = Boolean(project.newTab && /^https?:\/\//i.test(url));
   if (clickable) {
     card.classList.add('is-clickable');
-    card.tabIndex = 0;
-    card.setAttribute('role', 'link');
-    card.setAttribute('aria-label', `Open ${project.title}`);
-    const open = () => {
-      if (newTab) window.open(url, '_blank', 'noopener,noreferrer');
-      else window.location.href = url;
-    };
     card.addEventListener('click', (event) => {
       if (event.target.closest('a,button,input,select,textarea')) return;
-      open();
-    });
-    card.addEventListener('keydown', (event) => {
-      if (event.key !== 'Enter' && event.key !== ' ') return;
-      event.preventDefault();
-      open();
+      if (newTab) window.open(url, '_blank', 'noopener,noreferrer');
+      else window.location.href = url;
     });
   }
 
@@ -280,7 +269,19 @@ function makeProjectCard(project, index) {
   }
 
   const title = document.createElement('h3');
-  title.textContent = project.title;
+  if (clickable) {
+    const titleLink = document.createElement('a');
+    titleLink.className = 'managed-project-title-link';
+    titleLink.href = url;
+    titleLink.textContent = project.title;
+    if (newTab) {
+      titleLink.target = '_blank';
+      titleLink.rel = 'noopener noreferrer';
+    }
+    title.append(titleLink);
+  } else {
+    title.textContent = project.title;
+  }
   const description = document.createElement('p');
   description.className = 'managed-project-description';
   description.textContent = project.description;

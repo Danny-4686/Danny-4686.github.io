@@ -50,7 +50,12 @@
 }
 
 .project-card.managed-project.is-clickable { cursor: pointer; }
-.project-card.managed-project:focus-visible {
+.managed-project-title-link {
+  color: inherit;
+  text-decoration: none;
+  border-radius: 6px;
+}
+.managed-project-title-link:focus-visible {
   outline: 3px solid rgba(var(--project-accent-rgb), .42);
   outline-offset: 4px;
 }
