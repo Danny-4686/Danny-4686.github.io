@@ -384,6 +384,11 @@ export class CommunityStore {
           reserved_until INTEGER NOT NULL
         );
         CREATE INDEX IF NOT EXISTS idx_username_reservations_until ON username_reservations(reserved_until);
+        CREATE TABLE IF NOT EXISTS revoked_sessions (
+          session_id TEXT PRIMARY KEY,
+          expires_at INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_revoked_sessions_expires ON revoked_sessions(expires_at);
       `);
 
       const userColumns = new Set(
@@ -404,7 +409,10 @@ export class CommunityStore {
       if (url.pathname === '/username' && method === 'GET') return this.usernameAvailability(url.searchParams.get('name'));
       if (url.pathname === '/signup' && method === 'POST') return this.signup(body);
       if (url.pathname === '/login' && method === 'POST') return this.login(body);
-      if (url.pathname === '/user' && method === 'GET') return this.getUser(url.searchParams.get('id'));
+      if (url.pathname === '/user' && method === 'GET') {
+        return this.getUser(url.searchParams.get('id'), url.searchParams.get('sid'));
+      }
+      if (url.pathname === '/revoke-session' && method === 'POST') return this.revokeSession(body);
       if (url.pathname === '/avatar' && method === 'GET') return this.getAvatar(url.searchParams.get('id'));
       if (url.pathname === '/avatar' && method === 'POST') return this.saveAvatar(body);
       if (url.pathname === '/username-change' && method === 'POST') return this.changeUsername(body);
@@ -549,15 +557,31 @@ export class CommunityStore {
     return json({ ok: true, user: publicUser(user) });
   }
 
-  getUser(id) {
+  getUser(id, sessionIdValue = '') {
     const userId = String(id || '').slice(0, 80);
     if (!userId) return json({ user: null });
+    const sessionId = String(sessionIdValue || '').slice(0, 128);
+    if (sessionId && this.sql.exec('SELECT 1 FROM revoked_sessions WHERE session_id = ?', sessionId).toArray().length) {
+      return json({ user: null, revoked: true });
+    }
     const user = this.sql.exec(
       'SELECT id, username, created_at, avatar_updated_at, username_changed_at FROM users WHERE id = ? AND status = ?',
       userId,
       'active'
     ).toArray()[0];
     return json({ user: publicUser(user) });
+  }
+
+  revokeSession(body) {
+    const sessionId = String(body?.sessionId || '').slice(0, 128);
+    const expiresAt = Number(body?.expiresAt);
+    if (!sessionId || !Number.isSafeInteger(expiresAt)) return json({ error: 'Session could not be revoked.' }, 400);
+    const now = Math.floor(Date.now() / 1000);
+    this.sql.exec('DELETE FROM revoked_sessions WHERE expires_at < ?', now);
+    if (expiresAt >= now) {
+      this.sql.exec('INSERT OR IGNORE INTO revoked_sessions(session_id, expires_at) VALUES(?, ?)', sessionId, expiresAt);
+    }
+    return json({ ok: true });
   }
 
   getAvatar(id) {

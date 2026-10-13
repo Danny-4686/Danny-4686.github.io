@@ -349,6 +349,7 @@
         location.replace(`/login/?next=${encodeURIComponent('/account/')}`);
         return;
       }
+      document.body.dataset.accountState = 'ready';
       csrfToken = session.csrfToken;
       const logoutButton = document.getElementById('logoutButton');
       if (logoutButton) logoutButton.disabled = false;
@@ -375,7 +376,8 @@
         });
       }
     } catch (error) {
-      setFeedback(error.message, 'error');
+      if (document.body.dataset.accountState !== 'ready') document.body.dataset.accountState = 'error';
+      setFeedback(error instanceof TypeError ? 'Your account could not be reached right now. Check your connection and refresh to try again.' : error.message, 'error');
     }
   }
 

@@ -146,7 +146,7 @@ async function currentSession(request, env, verifyUser = true) {
   const session = await verifySessionToken(token, secret);
   if (!session || !verifyUser) return session;
 
-  const response = await storeFetch(env, `/user?id=${encodeURIComponent(session.uid)}`);
+  const response = await storeFetch(env, `/user?id=${encodeURIComponent(session.uid)}&sid=${encodeURIComponent(session.csrf)}`);
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error('Community account storage is unavailable.');
   if (!data.user) return null;
@@ -341,6 +341,16 @@ export async function handleCommunityApi(request, env) {
     if (path === '/logout' && request.method === 'POST') {
       const session = await currentSession(request, env, false);
       if (session && !validCsrf(request, session)) return json(request, env, { error: 'Security token expired. Refresh and try again.' }, 403);
+      if (session) {
+        // Session tokens are stateless, so record the sign-out server-side; otherwise a
+        // copied cookie would keep working until it expired.
+        const revoked = await storeFetch(env, '/revoke-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId: session.csrf, expiresAt: session.exp })
+        });
+        if (!revoked.ok) throw new Error('The session could not be revoked.');
+      }
       return json(request, env, { ok: true }, 200, { 'Set-Cookie': [cookie('', 0), clearLegacyCookie()] });
     }
 

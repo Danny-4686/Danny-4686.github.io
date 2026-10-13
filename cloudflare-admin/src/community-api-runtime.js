@@ -1,7 +1,7 @@
 import { handleCommunityApi as handleBaseCommunityApi } from './community-api.js';
 
 const API_PREFIX = '/v1';
-const COMMUNITY_BUILD = '2026-08-13.1';
+const COMMUNITY_BUILD = '2026-10-13.1';
 const AUTH_BODY_MAX_BYTES = 32768;
 const PROFILE_BODY_MAX_BYTES = 8192;
 const encoder = new TextEncoder();

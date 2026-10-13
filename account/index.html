@@ -21,12 +21,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/community/account.css?v=3">
+  <link rel="stylesheet" href="/community/account.css?v=4">
   <link rel="stylesheet" href="/community/profile-settings.css?v=3">
   <link rel="stylesheet" href="/community/account-nav.css?v=20260811.2">
   <link rel="stylesheet" href="/assets/css/site-quality.css?v=20260811.2">
 </head>
-<body data-account-page="account">
+<body data-account-page="account" data-account-state="checking">
   <header class="account-header">
     <a class="account-brand" href="/"><img src="/assets/images/optimized/cloudlab-logo-256.webp" width="256" height="256" alt="CloudLab logo"><span><strong>Danny4686</strong><small>CloudLab Account</small></span></a>
     <nav class="account-header-nav" aria-label="Site navigation">
@@ -42,6 +42,7 @@
   <main class="account-shell profile-shell">
     <section id="profileCard" class="account-card">
       <div id="authFeedback" class="auth-feedback" hidden role="status" aria-live="polite"></div>
+      <p id="accountGate" class="account-gate" role="status">Checking your sign-in…</p>
 
       <div class="profile-top">
         <div class="profile-identity">
@@ -134,7 +135,7 @@
 
   <footer class="account-footer"><span>© <span id="year"></span> Danny4686.</span><a href="/">Back to Danny4686.com</a></footer>
   <script>document.getElementById('year').textContent=new Date().getFullYear()</script>
-  <script src="/community/account.js?v=20260810"></script>
+  <script src="/community/account.js?v=20261013"></script>
   <script src="/community/profile-settings.js?v=20260808"></script>
 </body>
 </html>

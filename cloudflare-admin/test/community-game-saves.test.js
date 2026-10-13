@@ -343,3 +343,38 @@ test('game-save API rejects unknown fields and oversized bodies before durable s
   assert.equal(oversized.status, 413);
   assert.equal(calls.filter((call) => call.path === '/game-save' && call.init.method === 'POST').length, 0);
 });
+
+test('signing out revokes the session server-side so a copied cookie stops working', async () => {
+  const { store } = createStore();
+  const env = {
+    COMMUNITY_SESSION_SECRET: 'test-session-secret-that-is-long-enough',
+    COMMUNITY: {
+      idFromName: () => 'global-id',
+      get: () => ({
+        fetch(input, init = {}) {
+          if (new URL(input).pathname === '/login') {
+            return Response.json({ ok: true, user: { id: 'user-1', username: 'CloudPlayer', createdAt: Date.now() } });
+          }
+          return store.fetch(new Request(input, init));
+        }
+      })
+    }
+  };
+  const records = (cookie) => handleCommunityApi(new Request('https://api.danny4686.com/v1/records', {
+    headers: { Origin: 'https://danny4686.com', Cookie: cookie }
+  }), env);
+
+  const first = await login(env);
+  const second = await login(env);
+  assert.equal((await records(first.cookie)).status, 200);
+
+  const logout = await handleCommunityApi(new Request('https://api.danny4686.com/v1/logout', {
+    method: 'POST',
+    headers: { Origin: 'https://danny4686.com', Cookie: first.cookie, 'X-CloudLab-CSRF': first.csrf, 'Content-Type': 'application/json' },
+    body: '{}'
+  }), env);
+  assert.equal(logout.status, 200);
+
+  assert.equal((await records(first.cookie)).status, 401);
+  assert.equal((await records(second.cookie)).status, 200, 'other devices stay signed in');
+});
