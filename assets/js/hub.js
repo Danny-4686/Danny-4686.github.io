@@ -93,7 +93,7 @@
 
   if (!document.querySelector('script[data-premium-game-effects]')) {
     const gameScript = document.createElement('script');
-    gameScript.src = '/games/premium-game-effects.js?v=20260808';
+    gameScript.src = '/games/premium-game-effects.js?v=20261012';
     gameScript.dataset.premiumGameEffects = 'true';
     document.head.append(gameScript);
   }

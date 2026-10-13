@@ -71,6 +71,7 @@
     @media(max-width:720px){.hud-panel{min-width:0;width:calc(50vw - 20px);padding:10px 11px;font-size:.56rem}.hud-left{max-width:calc(56vw - 18px)}.hud-right{max-width:calc(44vw - 18px)}.hud-value{font-size:.92em}.privacy-chip,.telemetry{display:none}.phase-bar{bottom:var(--safe-bottom);gap:4px}.phase{height:25px;font-size:.5rem}#messageWrap{bottom:clamp(76px,13vh,116px)}#targetLock{right:var(--safe-right);bottom:calc(var(--safe-bottom) + 37px);min-width:0;width:min(230px,56vw);padding:9px 10px}}
     @media(max-width:420px){.hud-panel{width:auto;max-width:calc(50vw - 12px)}.hud-sub{display:none}.phase{letter-spacing:.05em}#targetLock span{display:none}}
     @media(prefers-reduced-motion:reduce){body::before,.scanlines,.scan-beam,.orbital-frame::before,.orbital-frame::after,.hud-kicker::before,.boot-reticle::before,.boot-reticle::after,.reticle-sweep,.type-cursor,.telemetry::after{animation:none!important}#globeViz,#bootLayer,.phase,#targetLock{transition-duration:.01ms!important}}
+    .noscript-notice{position:fixed;inset:0;display:grid;place-items:center;padding:24px;background:#02070b;color:#70f1ff;font:16px monospace;text-align:center}
   </style>
 </head>
 <body>
@@ -87,7 +88,7 @@
     <div id="messageWrap" aria-hidden="true"><span id="message" data-text=""></span><span class="type-cursor"></span></div><div id="screenReaderStatus" class="sr-only" aria-live="polite"></div>
     <section class="fatal-card" role="status"><strong>SIGNAL OFFLINE</strong><p id="fatalText">This device could not initialize the 3D renderer.</p></section><pre id="debugPanel" aria-hidden="true"></pre>
   </main>
-  <noscript><div style="position:fixed;inset:0;display:grid;place-items:center;padding:24px;background:#02070b;color:#70f1ff;font:16px monospace;text-align:center">JavaScript is required for this sequence.</div></noscript>
+  <noscript><div class="noscript-notice">JavaScript is required for this sequence.</div></noscript>
   <script type="module">
     import Globe from 'https://cdn.jsdelivr.net/npm/globe.gl@2.46.1/+esm';
     import { feature as topoFeature } from 'https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/+esm';

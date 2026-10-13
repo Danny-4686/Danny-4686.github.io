@@ -279,7 +279,7 @@
         const key = cellKey(rowIndex, columnIndex);
         const tile = document.createElement('div');
         tile.className = 'tile-2048';
-        tile.setAttribute('role', 'gridcell');
+        tile.setAttribute('role', 'img');
         tile.dataset.value = value ? String(value) : '0';
         if (value > 2048) tile.dataset.large = 'true';
         if (mergedSet.has(key)) tile.classList.add('is-merged');

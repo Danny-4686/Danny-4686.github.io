@@ -38,7 +38,7 @@
       <div class="connect-shell">
         <div class="turn-banner"><span class="turn-dot" id="turnDot"></span><span id="turnText">Cyan moves first</span></div>
         <div class="column-buttons" id="columnButtons" role="group" aria-label="Choose a column"></div>
-        <div class="connect-board" id="board" role="grid" aria-label="Connect Four board"></div>
+        <div class="connect-board" id="board" role="group" aria-label="Connect Four board"></div>
       </div>
       <div class="game-toolbar"><button class="game-button primary" id="newRound" type="button">New Round</button><button class="game-button" id="resetScores" type="button">Reset Scores</button><select class="difficulty-select" id="mode" aria-label="Game mode"><option value="cpu">Vs CPU</option><option value="two">Two Players</option></select><select class="difficulty-select" id="difficulty" aria-label="CPU difficulty"><option value="easy">Easy CPU</option><option value="normal" selected>Normal CPU</option><option value="hard">Hard CPU</option></select></div>
       <p class="control-note">Tap a column arrow or any open space in that column. Cyan always starts a new round.</p>
@@ -109,7 +109,6 @@
           cell.className = 'connect-cell';
           cell.dataset.row = row;
           cell.dataset.col = col;
-          cell.setAttribute('role', 'gridcell');
           cell.setAttribute('aria-label', `Row ${row + 1}, column ${col + 1}`);
           cell.addEventListener('click', () => playColumn(col));
           boardEl.appendChild(cell);
