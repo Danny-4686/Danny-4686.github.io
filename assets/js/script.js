@@ -202,7 +202,7 @@ function applyManagedProfileImage(settings) {
   const path = safeImagePath(settings?.profileImage);
   if (!path) return;
   const stamp = typeof settings?.updatedAt === 'string' && settings.updatedAt ? `?v=${encodeURIComponent(settings.updatedAt)}` : '';
-  document.querySelectorAll('.hero-profile, .connect-identity img').forEach((image) => {
+  document.querySelectorAll('.hero-profile:not(.hero-roblox-render), .connect-identity img').forEach((image) => {
     image.src = `${path}${stamp}`;
   });
 }

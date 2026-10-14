@@ -1,18 +1,8 @@
-.hero-avatar-3d {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  cursor: grab;
-  touch-action: pan-y;
-}
-.hero-avatar-3d:active { cursor: grabbing; }
-.hero-avatar-3d[hidden],
 .hero-portrait .hero-profile[hidden] { display: none !important; }
-.hero-avatar-3d canvas {
-  display: block;
-  width: 100% !important;
-  height: 100% !important;
-  filter: drop-shadow(0 22px 22px rgba(0, 0, 0, 0.26));
+.hero-portrait .hero-roblox-render {
+  width: min(430px, 100%);
+  max-height: 440px;
+  aspect-ratio: 1;
 }
 
 .hero-portrait .profile-label,
@@ -31,7 +21,7 @@
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
 }
 .portrait-view-toggle button {
-  min-width: 52px;
+  min-width: 58px;
   min-height: 32px;
   padding: 5px 11px;
   border: 0;
@@ -68,6 +58,7 @@
 .hero-avatar-status[hidden] { display: none; }
 
 @media (max-width: 620px) {
+  .hero-portrait .hero-roblox-render { max-height: 390px; }
   .portrait-view-toggle { top: 12px; right: 12px; }
   .hero-avatar-status { top: 56px; right: 12px; }
 }

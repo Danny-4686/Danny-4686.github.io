@@ -2,7 +2,7 @@ import { handleCommunityApi as handleBaseCommunityApi } from './community-api.js
 import { handleRobloxAvatar } from './roblox-avatar.js';
 
 const API_PREFIX = '/v1';
-const COMMUNITY_BUILD = '2026-10-14.2';
+const COMMUNITY_BUILD = '2026-10-14.3';
 const AUTH_BODY_MAX_BYTES = 32768;
 const PROFILE_BODY_MAX_BYTES = 8192;
 const encoder = new TextEncoder();
