@@ -123,3 +123,16 @@ jobs:
           cat /tmp/avatar.json; echo
           IMAGE_URL="$(python -c 'import json; d = json.load(open("/tmp/avatar.json")); assert d.get("available") is True, d; print(d["imageUrl"])')"
           curl -sS --max-time 30 -o /dev/null -w 'render: HTTP %{http_code} %{content_type} %{size_download} bytes\n' "$IMAGE_URL"
+      - name: Check emergency-close status
+        working-directory: .
+        run: |
+          for ATTEMPT in 1 2 3 4 5 6; do
+            if curl -sS --max-time 20 -D /tmp/status-headers.txt -o /tmp/site-status.json 'https://api.danny4686.com/v1/site-status' \
+              && python -c 'import json; d = json.load(open("/tmp/site-status.json")); assert isinstance(d.get("open"), bool), d'; then
+              break
+            fi
+            sleep 8
+          done
+          cat /tmp/site-status.json; echo
+          grep -i '^access-control-allow-origin: \*' /tmp/status-headers.txt
+          python -c 'import json; d = json.load(open("/tmp/site-status.json")); assert isinstance(d.get("open"), bool), d; print("Website is", "OPEN" if d["open"] else "CLOSED -> " + str(d.get("redirect")))'
