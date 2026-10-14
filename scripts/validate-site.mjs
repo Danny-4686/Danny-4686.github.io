@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, extname, join, normalize, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { SITE_GATE_PATH, SITE_GATE_TAG, buildSiteGateScript } from '../cloudflare-admin/src/site-gate.js';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const ignored = new Set(['.git', 'node_modules', '.wrangler']);
@@ -43,6 +44,12 @@ for (const page of filesUnder(root, '.html')) {
   requiredIconTokens.forEach((token) => {
     if (!html.includes(token)) fail(page, `missing favicon token ${token}`);
   });
+  // The emergency-close gate must run before anything else on the page.
+  const head = html.slice(0, html.search(/<\/head>/i));
+  const gateAt = head.indexOf(SITE_GATE_TAG);
+  const firstScript = head.search(/<script\b/i);
+  if (gateAt < 0) fail(page, `missing emergency-close gate ${SITE_GATE_TAG} in <head>`);
+  else if (firstScript !== gateAt) fail(page, 'the emergency-close gate must be the first script in <head>');
 
   const ids = [...html.matchAll(/\sid=["']([^"']+)["']/gi)].map((match) => match[1]);
   const duplicates = [...new Set(ids.filter((id, index) => ids.indexOf(id) !== index))];
@@ -99,6 +106,10 @@ for (const template of [
   for (const token of ['favicon.ico', 'favicon-48x48.png', 'apple-touch-icon.png']) {
     if (!source.includes(token)) fail(template, `generated pages are missing ${token}`);
   }
+}
+
+for (const template of ['post-template.js', 'fresh-abyss.js'].map((name) => join(root, 'cloudflare-admin', 'src', name))) {
+  if (!readFileSync(template, 'utf8').includes(SITE_GATE_TAG)) fail(template, 'generated public pages are missing the emergency-close gate');
 }
 
 const postTemplatePath = join(root, 'cloudflare-admin', 'src', 'post-template.js');
@@ -209,6 +220,11 @@ try {
   if (settings.profileView !== undefined && !['image', 'roblox'].includes(settings.profileView)) {
     fail(settingsPath, 'profileView must be "image" or "roblox"');
   }
+  if (settings.siteClosed !== undefined && typeof settings.siteClosed !== 'boolean') fail(settingsPath, 'siteClosed must be true or false');
+  const gatePath = join(root, SITE_GATE_PATH);
+  const expectedGate = buildSiteGateScript({ closed: settings.siteClosed === true, redirect: settings.closedRedirect });
+  if (!existsSync(gatePath)) fail(gatePath, 'emergency-close gate script is missing');
+  else if (readFileSync(gatePath, 'utf8') !== expectedGate) fail(gatePath, 'gate script does not match siteClosed/closedRedirect in site-settings.json; regenerate it with buildSiteGateScript');
 } catch (error) {
   fail(settingsPath, `invalid settings JSON: ${error.message}`);
 }

@@ -73,11 +73,12 @@ function buildEnabledPage(media, mediaType) {
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <script src="/assets/js/site-gate.js"></script>
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
   <meta name="referrer" content="no-referrer">
   <meta name="theme-color" content="#020507">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self' https: data:; media-src 'self' https: blob:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; connect-src https://api.danny4686.com; img-src 'self' https: data:; media-src 'self' https: blob:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
   <title>Fresh Abyss</title>
   <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
   <link rel="icon" href="/assets/icons/favicon-48x48.png" type="image/png" sizes="48x48">

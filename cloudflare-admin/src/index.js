@@ -68,7 +68,7 @@ export default {
 
       if (path === '/' || path === '/admin') {
         const csp = session
-          ? "default-src 'none'; style-src 'self'; script-src 'self'; img-src https://danny4686.com data: blob:; media-src https://danny4686.com blob:; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'"
+          ? "default-src 'none'; style-src 'self'; script-src 'self'; img-src https: data: blob:; media-src https: blob:; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'"
           : "default-src 'none'; style-src 'unsafe-inline'; img-src https://danny4686.com; form-action 'self' https://github.com; frame-ancestors 'none'; base-uri 'none'";
         return html(session ? dashboardPage(session.login) : loginPage(), 200, { 'Content-Security-Policy': csp });
       }

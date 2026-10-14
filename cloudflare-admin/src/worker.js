@@ -2,7 +2,8 @@ import app from './index.js';
 import { handleCommunityApi } from './community-api-runtime.js';
 import { handleFreshAbyss } from './fresh-abyss.js';
 import { loginPage } from './admin-login-page.js';
-import { commitFiles, readJsonFile } from './github.js';
+import { commitFiles, listRecentCommits, readJsonFile } from './github.js';
+import { DEFAULT_CLOSED_REDIRECT, SITE_GATE_PATH, buildSiteGateScript, normalizeRedirectUrl, normalizeSiteStatus } from './site-gate.js';
 import { lookupRobloxAvatar } from './roblox-avatar.js';
 import {
   CSRF_COOKIE,
@@ -32,8 +33,11 @@ export const FEATURED_GAME_IDS = Object.freeze(['breakout','connect-four','cloud
 export const DEFAULT_FEATURED_GAMES = Object.freeze(['cloud-hopper', 'cloudlab-clicker', 'launcher']);
 const FEATURED_GAME_ID_SET = new Set(FEATURED_GAME_IDS);
 let siteSettingsCache = null;
+let liveStatusCache = null;
+let liveStatusCacheUntil = 0;
 let siteSettingsCacheUntil = 0;
 
+const ADMIN_ROUTES = new Set(['/api/fresh-abyss','/api/site-intro','/api/profile-art','/api/projects','/api/site-status','/api/activity','/api/live-check']);
 function missingSettings(env, names) { return names.filter((name) => !env[name]); }
 function configurationStatus(env) { return { oauthConfigured:Boolean(env.GITHUB_CLIENT_ID&&env.GITHUB_CLIENT_SECRET), sessionConfigured:Boolean(env.SESSION_SECRET), publisherConfigured:Boolean(env.GITHUB_TOKEN&&env.GITHUB_OWNER&&env.GITHUB_REPO), accountRestrictionConfigured:Boolean(env.ALLOWED_GITHUB_LOGIN&&env.ALLOWED_GITHUB_ID), communityConfigured:Boolean(env.COMMUNITY&&env.SESSION_SECRET) }; }
 function loginNoticePage(status = 500, requestId = '') { return html(loginPage('retry'), status, {'X-CloudLab-Request-ID':requestId||'not-generated'}); }
@@ -94,12 +98,12 @@ export function normalizeFeaturedGames(value) {
 }
 
 export function isValidFeaturedGameSelection(value) { return Array.isArray(value) && value.length>=1 && value.length<=6 && new Set(value).size===value.length && value.every((gameId)=>typeof gameId==='string'&&FEATURED_GAME_ID_SET.has(gameId)); }
-export function normalizeSiteSettings(value) { return { forceSiteIntro:Boolean(value?.forceSiteIntro), featuredGames:normalizeFeaturedGames(value?.featuredGames), profileImage:normalizeLocalAssetPath(value?.profileImage)||DEFAULT_PROFILE_IMAGE, profileView:PROFILE_VIEWS.has(value?.profileView)?value.profileView:'image', updatedAt:typeof value?.updatedAt==='string'?value.updatedAt:'', updatedBy:typeof value?.updatedBy==='string'?value.updatedBy:'' }; }
+export function normalizeSiteSettings(value) { return { forceSiteIntro:Boolean(value?.forceSiteIntro), featuredGames:normalizeFeaturedGames(value?.featuredGames), profileImage:normalizeLocalAssetPath(value?.profileImage)||DEFAULT_PROFILE_IMAGE, profileView:PROFILE_VIEWS.has(value?.profileView)?value.profileView:'image', siteClosed:value?.siteClosed===true, closedRedirect:normalizeRedirectUrl(value?.closedRedirect)||DEFAULT_CLOSED_REDIRECT, updatedAt:typeof value?.updatedAt==='string'?value.updatedAt:'', updatedBy:typeof value?.updatedBy==='string'?value.updatedBy:'' }; }
 
 async function readSiteSettings(env, forceRefresh = false) {
   const now = Date.now();
   if (!forceRefresh && siteSettingsCache && now < siteSettingsCacheUntil) return siteSettingsCache;
-  const value = await readJsonFile(env, SITE_SETTINGS_PATH, {forceSiteIntro:false,featuredGames:[...DEFAULT_FEATURED_GAMES],profileImage:DEFAULT_PROFILE_IMAGE,profileView:'image'});
+  const value = await readJsonFile(env, SITE_SETTINGS_PATH, {forceSiteIntro:false,featuredGames:[...DEFAULT_FEATURED_GAMES],profileImage:DEFAULT_PROFILE_IMAGE,profileView:'image',siteClosed:false,closedRedirect:DEFAULT_CLOSED_REDIRECT});
   siteSettingsCache = normalizeSiteSettings(value); siteSettingsCacheUntil = now + 5000; return siteSettingsCache;
 }
 
@@ -123,6 +127,95 @@ async function handleSiteIntroAdmin(request, env, session) {
   const current=await readSiteSettings(env,true);const settings={...current,forceSiteIntro:hasForceSetting?body.forceSiteIntro:current.forceSiteIntro,featuredGames:hasFeaturedSetting?normalizeFeaturedGames(body.featuredGames):current.featuredGames,updatedAt:new Date().toISOString(),updatedBy:session.login};
   const message=hasForceSetting&&hasFeaturedSetting?'Update site settings':hasFeaturedSetting?'Update featured arcade games':settings.forceSiteIntro?'Site intro: force animation on':'Site intro: restore hourly animation';
   const saved=await writeSiteSettings(env,settings,message);return json({ok:true,...saved.settings,commit:saved.commit});
+}
+
+function communityStore(env){if(!env.COMMUNITY)throw new Error('COMMUNITY Durable Object binding is missing.');return env.COMMUNITY.get(env.COMMUNITY.idFromName('cloudlab-community-global'));}
+
+// Live emergency-close state. The Durable Object answers instantly; site-settings.json is the
+// committed backup used when the Durable Object has no state or cannot be reached.
+export async function readLiveSiteStatus(env, fresh = false) {
+  const now = Date.now();
+  if (!fresh && liveStatusCache && now < liveStatusCacheUntil) return liveStatusCache;
+  let status = null, storeEmpty = false;
+  try {
+    const response = await communityStore(env).fetch('https://community.internal/site-status');
+    const data = await response.json().catch(() => ({}));
+    if (response.ok && data.status) status = { ...normalizeSiteStatus(data.status), source: 'live' };
+    storeEmpty = response.ok && !data.status;
+  } catch (error) { console.error('Live site status unavailable', error); }
+  if (!status) {
+    const settings = await readSiteSettings(env, fresh);
+    status = { ...normalizeSiteStatus({ open: !settings.siteClosed, redirect: settings.closedRedirect, changedAt: settings.updatedAt, changedBy: settings.updatedBy }), source: 'repository' };
+    // Seed the Durable Object once so page views stop reading GitHub.
+    if (storeEmpty) await communityStore(env).fetch('https://community.internal/site-status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(status) }).catch(() => {});
+  }
+  liveStatusCache = status; liveStatusCacheUntil = now + 5000;
+  return status;
+}
+
+function publicSiteStatusJson(data, status = 200) { return new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Access-Control-Allow-Origin': '*', 'X-Content-Type-Options': 'nosniff' } }); }
+async function publicSiteStatus(env) {
+  try { const status = await readLiveSiteStatus(env); return publicSiteStatusJson({ open: status.open, redirect: status.open ? null : status.redirect }); }
+  catch (error) { console.error('Could not read site status', error); return publicSiteStatusJson({ error: 'Site status unavailable.' }, 503); }
+}
+
+async function handleSiteStatusAdmin(request, env, session) {
+  if (request.method === 'GET') {
+    const [status, settings] = await Promise.all([readLiveSiteStatus(env, true), readSiteSettings(env, true)]);
+    return json({ ok: true, ...status, repositoryOpen: !settings.siteClosed });
+  }
+  if (request.method !== 'POST') return json({ error: 'Method not allowed.' }, 405);
+  const body = await request.json().catch(() => null);
+  if (!body || typeof body.open !== 'boolean') return json({ error: 'Choose whether the website is open or closed.' }, 400);
+  const current = await readSiteSettings(env, true);
+  let redirect = current.closedRedirect;
+  if (Object.prototype.hasOwnProperty.call(body, 'redirect')) {
+    redirect = normalizeRedirectUrl(body.redirect);
+    if (!redirect) return json({ error: 'The redirect must be a full https:// link to another website.' }, 400);
+  }
+  const status = { open: body.open, redirect, changedAt: new Date().toISOString(), changedBy: session.login };
+
+  let live = false;
+  try {
+    const response = await communityStore(env).fetch('https://community.internal/site-status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(status) });
+    live = response.ok;
+  } catch (error) { console.error('Could not store live site status', error); }
+  liveStatusCache = live ? { ...status, source: 'live' } : null; liveStatusCacheUntil = Date.now() + 5000;
+
+  let commit = null, persistError = '';
+  const changed = current.siteClosed === body.open || current.closedRedirect !== redirect;
+  if (changed) {
+    try {
+      const message = body.open === current.siteClosed ? (body.open ? 'Reopen the website' : 'Emergency close: redirect visitors to Roblox') : 'Update the closed-site redirect';
+      const saved = await writeSiteSettings(env, { ...current, siteClosed: !body.open, closedRedirect: redirect, updatedAt: status.changedAt, updatedBy: session.login }, message, [{ path: SITE_GATE_PATH, text: buildSiteGateScript({ closed: !body.open, redirect }) }]);
+      commit = saved.commit;
+    } catch (error) { console.error('Could not commit site status', error); persistError = error.message || 'GitHub did not accept the change.'; }
+  }
+  if (!live && (persistError || !changed)) return json({ error: persistError ? `The website status was not changed: ${persistError}` : 'The live status service is unavailable. Try again.' }, 502);
+  return json({ ok: true, ...status, live, persisted: changed ? !persistError : true, commit, warning: persistError ? `Applied instantly, but the GitHub backup failed: ${persistError}` : (!live ? 'Saved to GitHub. It takes effect once the website deploy finishes (about a minute).' : '') });
+}
+
+const LIVE_CHECK_PATH = /^[A-Za-z0-9_][A-Za-z0-9_./-]{0,300}$/;
+async function gitBlobSha(bytes) {
+  const header = new TextEncoder().encode(`blob ${bytes.byteLength}\0`);
+  const joined = new Uint8Array(header.byteLength + bytes.byteLength);
+  joined.set(header, 0); joined.set(bytes, header.byteLength);
+  const digest = new Uint8Array(await crypto.subtle.digest('SHA-1', joined));
+  return [...digest].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+// Confirms a committed file is being served by GitHub Pages, so the admin can show "Live".
+async function handleLiveCheck(request) {
+  const url = new URL(request.url);
+  const path = String(url.searchParams.get('path') || '');
+  const blob = String(url.searchParams.get('blob') || '').toLowerCase();
+  const deleted = url.searchParams.get('deleted') === '1';
+  if (!LIVE_CHECK_PATH.test(path) || path.includes('..') || (!deleted && !/^[0-9a-f]{40}$/.test(blob))) return json({ error: 'Invalid live check.' }, 400);
+  const response = await fetch(`https://danny4686.com/${path.split('/').map(encodeURIComponent).join('/')}?live=${Date.now()}`, { redirect: 'manual', headers: { 'Cache-Control': 'no-cache' } });
+  if (deleted) return json({ live: response.status === 404, status: response.status });
+  if (!response.ok) return json({ live: false, status: response.status });
+  const sha = await gitBlobSha(new Uint8Array(await response.arrayBuffer()));
+  return json({ live: sha === blob, status: response.status });
 }
 
 async function handleProfileArtAdmin(request, env, session) {
@@ -168,22 +261,21 @@ async function handleProjectsAdmin(request, env, session) {
   const projects=current?existing.map((item)=>item.id===current.id?project:item):[...existing,project],saved=await saveProjects(env,projects,files,`${current?'Update':'Add'} project: ${title}`);return json({ok:true,project,projects:saved.projects,commit:saved.commit});
 }
 
-function allowExternalImagePreviews(response,path){if(path!=='/'&&path!=='/admin')return response;const contentType=response.headers.get('Content-Type')||'';if(!contentType.includes('text/html'))return response;const headers=new Headers(response.headers),csp=headers.get('Content-Security-Policy');if(csp)headers.set('Content-Security-Policy',csp.replace('img-src https://danny4686.com data: blob:','img-src https: data: blob:'));return new Response(response.body,{status:response.status,statusText:response.statusText,headers});}
 async function replaceAdminAuthFailure(response,path){if(!path.startsWith('/auth/')||response.status<400)return response;const contentType=response.headers.get('Content-Type')||'';if(!contentType.includes('text/html'))return response;return loginNoticePage(response.status,response.headers.get('X-CloudLab-Request-ID')||'');}
 
 export default { async fetch(request, env, ctx) {
   const url=new URL(request.url),path=url.pathname.length>1&&url.pathname.endsWith('/')?url.pathname.slice(0,-1):url.pathname,requestId=crypto.randomUUID(),communityHost=url.hostname.toLowerCase()==='api.danny4686.com';
-  if(communityHost){if(path==='/v1/site-settings'&&request.method==='GET')return publicSiteSettings(env);if(path==='/')return Response.redirect('https://danny4686.com/account/',302);if(!path.startsWith('/v1'))return json({error:'Community API route not found.'},404);return handleCommunityApi(request,env);}
+  if(communityHost){if(path==='/v1/site-settings'&&request.method==='GET')return publicSiteSettings(env);if(path==='/v1/site-status'){if(request.method==='OPTIONS')return new Response(null,{status:204,headers:{'Access-Control-Allow-Origin':'*','Access-Control-Allow-Methods':'GET','Access-Control-Max-Age':'86400'}});if(request.method==='GET')return publicSiteStatus(env);}if(path==='/')return Response.redirect('https://danny4686.com/account/',302);if(!path.startsWith('/v1'))return json({error:'Community API route not found.'},404);return handleCommunityApi(request,env);}
   if(path==='/health')return json({ok:true,service:'cloudlab-journal-admin',...configurationStatus(env)});
   if(path==='/auth/login'&&missingSettings(env,['GITHUB_CLIENT_ID']).length)return loginNoticePage(503,requestId);
   if(path==='/auth/callback'&&missingSettings(env,['GITHUB_CLIENT_ID','GITHUB_CLIENT_SECRET','SESSION_SECRET','ALLOWED_GITHUB_LOGIN','ALLOWED_GITHUB_ID']).length)return loginNoticePage(503,requestId);
   try {
     if(path==='/'||path==='/admin'){const session=await getSession(request,env);if(!session){const csp="default-src 'none'; style-src 'unsafe-inline'; img-src https://danny4686.com; form-action 'self' https://github.com; frame-ancestors 'none'; base-uri 'none'";return html(loginPage(),200,{'Content-Security-Policy':csp});}}
-    if(path==='/api/fresh-abyss'||path==='/api/site-intro'||path==='/api/profile-art'||path==='/api/projects'){
+    if(ADMIN_ROUTES.has(path)){
       const session=await getSession(request,env);if(!session)return json({error:'Authentication required.'},401);if(request.method!=='GET'&&!validCsrf(request,session))return json({error:'Security token expired. Refresh the dashboard and try again.'},403);
-      if(path==='/api/fresh-abyss')return handleFreshAbyss(request,env,session);if(path==='/api/site-intro')return handleSiteIntroAdmin(request,env,session);if(path==='/api/profile-art')return handleProfileArtAdmin(request,env,session);return handleProjectsAdmin(request,env,session);
+      if(path==='/api/fresh-abyss')return handleFreshAbyss(request,env,session);if(path==='/api/site-intro')return handleSiteIntroAdmin(request,env,session);if(path==='/api/profile-art')return handleProfileArtAdmin(request,env,session);if(path==='/api/site-status')return handleSiteStatusAdmin(request,env,session);if(path==='/api/activity')return request.method==='GET'?json({ok:true,commits:await listRecentCommits(env,12)}):json({error:'Method not allowed.'},405);if(path==='/api/live-check')return request.method==='GET'?handleLiveCheck(request):json({error:'Method not allowed.'},405);return handleProjectsAdmin(request,env,session);
     }
-    const rawResponse=await app.fetch(request,env,ctx),replacedResponse=await replaceAdminAuthFailure(rawResponse,path),response=allowExternalImagePreviews(replacedResponse,path);if(response.status<500)return response;
+    const rawResponse=await app.fetch(request,env,ctx),replacedResponse=await replaceAdminAuthFailure(rawResponse,path),response=replacedResponse;if(response.status<500)return response;
     if(path==='/'||path==='/admin'||path.startsWith('/auth/'))return loginNoticePage(500,requestId);return response;
   } catch(error){console.error('Unhandled CloudLab admin error',requestId,error);if(path==='/'||path==='/admin'||path.startsWith('/auth/'))return loginNoticePage(500,requestId);return json({error:'Unexpected server error.',requestId},500);}
 }};

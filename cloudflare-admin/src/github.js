@@ -42,12 +42,16 @@ export async function commitFiles(env, files, message) {
   if (!parentResponse.ok) throw new Error(`Could not read current commit: ${parent.message || parentResponse.status}`);
 
   const tree = [];
+  // The last text file written (or the last deletion) lets the admin panel confirm
+  // when the change is actually being served by GitHub Pages.
+  let verify = null;
   for (const file of files) {
     const path = String(file.path || '').replace(/^\/+/, '');
     if (!path || path.includes('..')) throw new Error('Invalid repository path.');
 
     if (file.delete) {
       tree.push({ path, mode: '100644', type: 'blob', sha: null });
+      if (!verify || verify.deleted) verify = { path, deleted: true };
       continue;
     }
 
@@ -59,6 +63,7 @@ export async function commitFiles(env, files, message) {
     const blob = await blobResponse.json();
     if (!blobResponse.ok) throw new Error(`Could not create ${path}: ${blob.message || blobResponse.status}`);
     tree.push({ path, mode: '100644', type: 'blob', sha: blob.sha });
+    if (!file.bytes) verify = { path, blob: blob.sha };
   }
 
   const treeResponse = await api(env, `${prefix}/git/trees`, {
@@ -84,6 +89,23 @@ export async function commitFiles(env, files, message) {
 
   return {
     sha: commit.sha,
-    url: `https://github.com/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/commit/${commit.sha}`
+    url: `https://github.com/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/commit/${commit.sha}`,
+    verify
   };
+}
+
+export async function listRecentCommits(env, limit = 12) {
+  const owner = encodeURIComponent(env.GITHUB_OWNER);
+  const repo = encodeURIComponent(env.GITHUB_REPO);
+  const branch = encodeURIComponent(env.GITHUB_BRANCH || 'main');
+  const response = await api(env, `/repos/${owner}/${repo}/commits?sha=${branch}&per_page=${Math.min(30, Math.max(1, limit))}`);
+  const data = await response.json();
+  if (!response.ok) throw new Error(`GitHub history failed: ${data.message || response.status}`);
+  return data.map((item) => ({
+    sha: item.sha,
+    message: String(item.commit?.message || '').split('\n')[0].slice(0, 160),
+    date: item.commit?.author?.date || item.commit?.committer?.date || '',
+    author: item.author?.login || item.commit?.author?.name || '',
+    url: item.html_url
+  }));
 }

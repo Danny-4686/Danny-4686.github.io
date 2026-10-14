@@ -15,18 +15,18 @@ function requireToken(source, token, label) {
 }
 
 const pages = read('cloudflare-admin/src/pages.js');
-const admin = read('cloudflare-admin/src/admin-script.js');
+const admin = read('cloudflare-admin/src/admin-app.js');
 const worker = read('cloudflare-admin/src/index.js');
 const journal = read('journal/journal.js');
 const journalCss = read('journal/journal-polish.css');
 const journalPage = read('journal/index.html');
 
 requireToken(pages, 'id="descriptionLabel"', 'Admin page');
-requireToken(pages, 'expandable full text', 'Admin page');
-requireToken(admin, "description.maxLength=isCard?20000:320", 'Admin editor');
-requireToken(admin, "descriptionLabel.textContent=isCard?'Post text':'Short description'", 'Admin editor');
-requireToken(admin, "isCard?'Read More':'Coming Soon'", 'Admin editor');
-requireToken(admin, 'cardSummary(rawDescription)', 'Admin editor');
+requireToken(pages, 'A card that expands to show the full text.', 'Admin page');
+requireToken(admin, 'description.maxLength = isCard ? 20000 : 320', 'Admin editor');
+requireToken(admin, "$('descriptionLabel').textContent = isCard ? 'Post text' : 'Short description'", 'Admin editor');
+requireToken(admin, "isCard ? 'Read more' : 'Coming soon'", 'Admin editor');
+requireToken(admin, "mode === 'card' ? cardSummary(raw) : raw", 'Admin editor');
 requireToken(worker, 'MAX_CARD_BODY_CHARS = 20000', 'Journal publisher');
 requireToken(worker, 'const body = cardOnly ? cleanMultiline(input.description, MAX_CARD_BODY_CHARS)', 'Journal publisher');
 requireToken(worker, 'const description = cardOnly ? buildCardSummary(body)', 'Journal publisher');

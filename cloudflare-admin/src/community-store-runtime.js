@@ -103,6 +103,24 @@ class CommunityStoreImplementation extends BaseCommunityStore {
       return json({ ok: check.ready === 1, storage: 'sqlite' });
     }
 
+    // Live emergency-close state; written by the admin panel, read on every page view.
+    if (url.pathname === '/site-status' && method === 'GET') {
+      return json({ status: (await this.ctx.storage.get('siteStatus')) || null });
+    }
+
+    if (url.pathname === '/site-status' && method === 'POST') {
+      const body = await request.json().catch(() => null);
+      if (!body || typeof body.open !== 'boolean') return json({ error: 'Invalid site status.' }, 400);
+      const status = {
+        open: body.open,
+        redirect: String(body.redirect || '').slice(0, 500),
+        changedAt: String(body.changedAt || '').slice(0, 40),
+        changedBy: String(body.changedBy || '').slice(0, 80)
+      };
+      await this.ctx.storage.put('siteStatus', status);
+      return json({ status });
+    }
+
     if (url.pathname === '/public-profile' && method === 'GET') {
       return this.getPublicProfile(url.searchParams.get('userId'));
     }

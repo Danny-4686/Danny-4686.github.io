@@ -45,6 +45,7 @@ export function buildPostHtml(post) {
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <script src="/assets/js/site-gate.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="${escapeAttr(post.description)}">
   <meta name="author" content="Danny4686">

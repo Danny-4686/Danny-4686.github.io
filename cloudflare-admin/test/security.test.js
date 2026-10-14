@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import { addTransportSecurity, redirectToHttps } from '../src/transport-security.js';
 import { ADMIN_CSS, ADMIN_JS } from '../src/admin-assets.js';
+import { dashboardPage } from '../src/pages.js';
 import { clearLegacyCookie, cookie } from '../src/community-api.js';
 import { hashPassword, verifyPassword } from '../src/community-store.js';
 import { parseCookies } from '../src/utils.js';
@@ -77,6 +78,8 @@ test('legacy or empty site settings receive safe defaults including profile artw
     featuredGames: [...DEFAULT_FEATURED_GAMES],
     profileImage: DEFAULT_PROFILE_IMAGE,
     profileView: 'image',
+    siteClosed: false,
+    closedRedirect: 'https://www.roblox.com/users/178415120/profile',
     updatedAt: '',
     updatedBy: ''
   });
@@ -100,21 +103,24 @@ test('project normalization keeps safe presentation controls and rejects unsafe 
   assert.equal(projects[1].image, '');
 });
 
-test('assembled admin JavaScript parses and contains Settings, profile artwork, and Projects controls', () => {
+test('admin dashboard JavaScript parses and includes every section', () => {
   assert.doesNotThrow(() => new Function(ADMIN_JS));
-  assert.match(ADMIN_JS, /<strong>Settings<\/strong>/);
-  assert.match(ADMIN_JS, /Save featured games/);
-  assert.match(ADMIN_JS, /Profile Artwork/);
-  assert.match(ADMIN_JS, /<strong>Projects<\/strong>/);
-  assert.match(ADMIN_JS, /Save project/);
+  assert.doesNotMatch(ADMIN_JS, /\$\{/);
+  for (const view of ['overview', 'journal', 'projects', 'homepage', 'arcade', 'abyss', 'site']) {
+    assert.match(ADMIN_JS, new RegExp(`views\\.${view} = \\{`));
+  }
+  assert.match(ADMIN_JS, /\/api\/site-status/);
+  assert.match(ADMIN_JS, /\/api\/live-check/);
 });
 
-test('assembled admin CSS ends with responsive text and tab corrections', () => {
-  const correction = ADMIN_CSS.lastIndexOf('Final corrective layer');
-  const projects = ADMIN_CSS.lastIndexOf('.projects-manager{');
-  assert.ok(correction > projects, 'responsive correction layer must load after section styles');
-  assert.match(ADMIN_CSS.slice(correction), /repeat\(auto-fit,minmax\(240px,1fr\)\)/);
-  assert.match(ADMIN_CSS.slice(correction), /\.project-option>span/);
-  assert.match(ADMIN_CSS.slice(correction), /\.profile-art-drop>span/);
-  assert.match(ADMIN_CSS.slice(correction), /@media\(max-width:620px\)/);
+test('admin dashboard page has a view for every section and no inline styles', () => {
+  const page = dashboardPage('Danny-4686');
+  for (const view of ['overview', 'journal', 'projects', 'homepage', 'arcade', 'abyss', 'site']) {
+    assert.match(page, new RegExp(`data-view="${view}"`));
+    assert.match(page, new RegExp(`data-nav="${view}"`));
+  }
+  assert.doesNotMatch(page, /style="/);
+  assert.match(page, /data-action="close-site"/);
+  assert.match(ADMIN_CSS, /@container \(min-width:700px\)/);
+  assert.match(ADMIN_CSS, /@media \(max-width:640px\)/);
 });
