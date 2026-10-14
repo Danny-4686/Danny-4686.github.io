@@ -66,8 +66,8 @@ if (portrait && artwork) {
     viewer?.pause();
   }
 
-  async function showThreeD() {
-    showStatus('Loading Roblox avatar…');
+  async function showThreeD({ announce = false } = {}) {
+    if (announce) showStatus('Loading Roblox avatar…');
     try {
       viewerPromise ||= createViewer(stage);
       viewer = await viewerPromise;
@@ -81,10 +81,17 @@ if (portrait && artwork) {
       viewerPromise = null;
       if (currentView !== '3d') return;
       currentView = 'image';
+      buttons['3d'].disabled = true;
+      buttons['3d'].title = 'The 3D Roblox avatar is unavailable right now.';
       renderToggle();
       showImage();
-      showStatus('3D avatar is unavailable right now.');
-      window.setTimeout(() => showStatus(''), 4000);
+      // Only explain the fallback to someone who just asked for 3D.
+      if (announce) {
+        showStatus('3D avatar is unavailable right now.');
+        window.setTimeout(() => showStatus(''), 4000);
+      } else {
+        showStatus('');
+      }
     }
   }
 
@@ -92,7 +99,7 @@ if (portrait && artwork) {
     currentView = view;
     if (remember) savePreference(view);
     renderToggle();
-    if (view === '3d') showThreeD();
+    if (view === '3d') showThreeD({ announce: remember });
     else {
       showStatus('');
       showImage();

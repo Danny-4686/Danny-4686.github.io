@@ -97,7 +97,11 @@ async function timedFetch(url) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
-    return await fetch(url, { signal: controller.signal, headers: { Accept: '*/*' }, redirect: 'follow' });
+    return await fetch(url, {
+      signal: controller.signal,
+      headers: { Accept: 'application/json, */*', 'User-Agent': 'Mozilla/5.0 (compatible; CloudLabAvatar/1.0; +https://danny4686.com)' },
+      redirect: 'follow'
+    });
   } finally {
     clearTimeout(timer);
   }
@@ -125,7 +129,9 @@ async function cached(cacheKey, ttl, produce) {
 
 async function loadManifest(assetBase) {
   const thumbResponse = await timedFetch(THUMBNAILS_API);
-  if (!thumbResponse.ok) return { status: 502, data: { available: false, error: 'Roblox did not return the avatar.' } };
+  if (!thumbResponse.ok) {
+    return { status: 502, data: { available: false, error: 'Roblox did not return the avatar.', upstreamStatus: thumbResponse.status } };
+  }
   const thumb = await thumbResponse.json().catch(() => ({}));
   if (thumb.state !== 'Completed' || !thumb.imageUrl) {
     return { status: 200, ttl: PENDING_TTL_SECONDS, data: { available: false, state: String(thumb.state || 'Unavailable') } };
@@ -136,7 +142,9 @@ async function loadManifest(assetBase) {
     return { status: 502, data: { available: false, error: 'Roblox returned an unexpected avatar location.' } };
   }
   const metadataResponse = await timedFetch(metadataUrl.toString());
-  if (!metadataResponse.ok) return { status: 502, data: { available: false, error: 'Roblox did not return the avatar model.' } };
+  if (!metadataResponse.ok) {
+    return { status: 502, data: { available: false, error: 'Roblox did not return the avatar model.', upstreamStatus: metadataResponse.status } };
+  }
   const manifest = normalizeAvatarManifest(await metadataResponse.json().catch(() => null), assetBase);
   if (!manifest) return { status: 502, data: { available: false, error: 'The avatar model was incomplete.' } };
   return { status: 200, ttl: MANIFEST_TTL_SECONDS, data: { ...manifest, userId: ROBLOX_AVATAR_USER_ID, version: String(thumb.version || '') } };

@@ -118,6 +118,9 @@ jobs:
         continue-on-error: true
         working-directory: .
         run: |
+          echo "Direct from the runner:"
+          curl -sS --max-time 20 -w '\nHTTP %{http_code}\n' 'https://thumbnails.roblox.com/v1/users/avatar-3d?userId=178415120' || true
+          echo "Through the Worker:"
           curl -sS --retry 3 --retry-delay 3 --retry-all-errors --max-time 30 -H 'Origin: https://danny4686.com' -D /tmp/avatar-headers.txt -o /tmp/avatar.json 'https://api.danny4686.com/v1/roblox-avatar'
           grep -i '^access-control-allow-origin' /tmp/avatar-headers.txt
           cat /tmp/avatar.json; echo
