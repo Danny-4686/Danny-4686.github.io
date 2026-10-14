@@ -1,7 +1,8 @@
 import { handleCommunityApi as handleBaseCommunityApi } from './community-api.js';
+import { handleRobloxAvatar } from './roblox-avatar.js';
 
 const API_PREFIX = '/v1';
-const COMMUNITY_BUILD = '2026-10-13.1';
+const COMMUNITY_BUILD = '2026-10-14.1';
 const AUTH_BODY_MAX_BYTES = 32768;
 const PROFILE_BODY_MAX_BYTES = 8192;
 const encoder = new TextEncoder();
@@ -225,6 +226,11 @@ export async function handleCommunityApi(request, env) {
     const data = await response.json().catch(() => ({}));
     if (!response.ok || !data.profile) return json(request, env, data, response.status);
     return json(request, env, { ok: true, profile: profileForApi(data.profile, request) });
+  }
+
+  if (path === '/roblox-avatar' || path.startsWith('/roblox-avatar/')) {
+    if (method === 'OPTIONS') return new Response(null, { status: 204, headers: responseHeaders(request, env) });
+    return handleRobloxAvatar(request, env, path, allowedOrigins(env));
   }
 
   const leaderboardMatch = path.match(/^\/leaderboards\/([a-z0-9-]+)$/);

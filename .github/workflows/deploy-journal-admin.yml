@@ -113,3 +113,24 @@ jobs:
 
           cat /tmp/community-smoke.json
           test "$SMOKE_OK" -eq 1
+      - name: Check live Roblox avatar proxy
+        # Roblox outages must not block deploys; this reports the live 3D avatar state.
+        continue-on-error: true
+        working-directory: .
+        run: |
+          curl -sS --retry 3 --retry-delay 3 --retry-all-errors --max-time 30 -H 'Origin: https://danny4686.com' -D /tmp/avatar-headers.txt -o /tmp/avatar.json 'https://api.danny4686.com/v1/roblox-avatar'
+          grep -i '^access-control-allow-origin' /tmp/avatar-headers.txt
+          cat /tmp/avatar.json; echo
+          python - <<'PY'
+          import json, urllib.request
+          data = json.load(open("/tmp/avatar.json"))
+          assert data.get("available") is True, f"avatar unavailable: {data}"
+          for label, url in [("obj", data["obj"]), ("mtl", data["mtl"])] + [("texture", url) for url in data.get("textures", [])[:2]]:
+              request = urllib.request.Request(url, headers={"Origin": "https://danny4686.com", "User-Agent": "cloudlab-deploy-check"})
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  body = response.read()
+                  print(f"{label}: {response.status} {response.headers.get('Content-Type')} {len(body)} bytes")
+                  if label == "mtl":
+                      print(body.decode("utf-8", "replace")[:600])
+                  assert response.status == 200 and body, label
+          PY
