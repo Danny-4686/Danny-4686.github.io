@@ -58,5 +58,25 @@
     "draft": true,
     "updatedAt": "2026-10-08T11:21:29.154Z",
     "updatedBy": "Danny-4686"
+  },
+  {
+    "id": "what-is-that",
+    "title": "What is THAT!",
+    "kicker": "ROBLOX GAME",
+    "badge": "IN DEVELOPMENT",
+    "description": "is an interactive kids’ learning game where young explorers build early literacy skills through fun, hands-on challenges! Players can trace and draw letters, spell out new words, and test their vocabulary in the playful \"Drag to Match\" image game. Packed with vibrant visuals, positive audio feedback, and intuitive drag and drop mechanics, kids can master handwriting, phonics, and object recognition, all while having a blast!",
+    "url": "https://www.roblox.com/games/848811477/What-is-THAT",
+    "buttonLabel": "Play on Roblox",
+    "showButton": true,
+    "clickable": true,
+    "newTab": true,
+    "image": "/assets/images/projects/what-is-that/project-1791946563141.png",
+    "imageAlt": "What is THAT! project artwork",
+    "fit": "cover",
+    "accent": "gold",
+    "layout": "media-top",
+    "draft": false,
+    "updatedAt": "2026-10-14T02:56:03.141Z",
+    "updatedBy": "Danny-4686"
   }
 ]
