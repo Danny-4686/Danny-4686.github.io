@@ -1,6 +1,6 @@
 /* CloudLab site gate. Managed by the admin panel (Site controls); do not edit by hand. */
 (function () {
-  var CLOSED = false;
+  var CLOSED = true;
   var REDIRECT = "https://www.roblox.com/users/178415120/profile";
   var STATUS = "https://api.danny4686.com/v1/site-status";
   var root = document.documentElement;
