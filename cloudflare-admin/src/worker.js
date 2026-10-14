@@ -3,6 +3,7 @@ import { handleCommunityApi } from './community-api-runtime.js';
 import { handleFreshAbyss } from './fresh-abyss.js';
 import { loginPage } from './admin-login-page.js';
 import { commitFiles, readJsonFile } from './github.js';
+import { lookupRobloxAvatar } from './roblox-avatar.js';
 import {
   CSRF_COOKIE,
   SESSION_COOKIE,
@@ -19,6 +20,8 @@ import {
 const SITE_SETTINGS_PATH = 'site-settings.json';
 const PROJECTS_PATH = 'projects/projects.json';
 export const DEFAULT_PROFILE_IMAGE = '/assets/images/optimized/profile-600.webp';
+// What the homepage portrait shows: the uploaded artwork, or Danny4686's live Roblox avatar render.
+const PROFILE_VIEWS = new Set(['image', 'roblox']);
 const MAX_MANAGED_IMAGE_BYTES = 8 * 1024 * 1024;
 const MANAGED_IMAGE_TYPES = new Map([['image/png', 'png'], ['image/jpeg', 'jpg'], ['image/webp', 'webp']]);
 const PROJECT_ACCENTS = new Set(['cyan', 'gold', 'mint', 'orange']);
@@ -91,17 +94,17 @@ export function normalizeFeaturedGames(value) {
 }
 
 export function isValidFeaturedGameSelection(value) { return Array.isArray(value) && value.length>=1 && value.length<=6 && new Set(value).size===value.length && value.every((gameId)=>typeof gameId==='string'&&FEATURED_GAME_ID_SET.has(gameId)); }
-export function normalizeSiteSettings(value) { return { forceSiteIntro:Boolean(value?.forceSiteIntro), featuredGames:normalizeFeaturedGames(value?.featuredGames), profileImage:normalizeLocalAssetPath(value?.profileImage)||DEFAULT_PROFILE_IMAGE, updatedAt:typeof value?.updatedAt==='string'?value.updatedAt:'', updatedBy:typeof value?.updatedBy==='string'?value.updatedBy:'' }; }
+export function normalizeSiteSettings(value) { return { forceSiteIntro:Boolean(value?.forceSiteIntro), featuredGames:normalizeFeaturedGames(value?.featuredGames), profileImage:normalizeLocalAssetPath(value?.profileImage)||DEFAULT_PROFILE_IMAGE, profileView:PROFILE_VIEWS.has(value?.profileView)?value.profileView:'image', updatedAt:typeof value?.updatedAt==='string'?value.updatedAt:'', updatedBy:typeof value?.updatedBy==='string'?value.updatedBy:'' }; }
 
 async function readSiteSettings(env, forceRefresh = false) {
   const now = Date.now();
   if (!forceRefresh && siteSettingsCache && now < siteSettingsCacheUntil) return siteSettingsCache;
-  const value = await readJsonFile(env, SITE_SETTINGS_PATH, {forceSiteIntro:false,featuredGames:[...DEFAULT_FEATURED_GAMES],profileImage:DEFAULT_PROFILE_IMAGE});
+  const value = await readJsonFile(env, SITE_SETTINGS_PATH, {forceSiteIntro:false,featuredGames:[...DEFAULT_FEATURED_GAMES],profileImage:DEFAULT_PROFILE_IMAGE,profileView:'image'});
   siteSettingsCache = normalizeSiteSettings(value); siteSettingsCacheUntil = now + 5000; return siteSettingsCache;
 }
 
 function publicSiteSettingsJson(data,status=200){return new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','Access-Control-Allow-Origin':'*','X-Content-Type-Options':'nosniff'}});}
-async function publicSiteSettings(env){try{const settings=await readSiteSettings(env);return publicSiteSettingsJson({ok:true,forceSiteIntro:settings.forceSiteIntro,featuredGames:settings.featuredGames,profileImage:settings.profileImage,updatedAt:settings.updatedAt||null});}catch(error){console.error('Could not read public site settings',error);return publicSiteSettingsJson({ok:false,forceSiteIntro:false,featuredGames:[...DEFAULT_FEATURED_GAMES],profileImage:DEFAULT_PROFILE_IMAGE,updatedAt:null});}}
+async function publicSiteSettings(env){try{const settings=await readSiteSettings(env);return publicSiteSettingsJson({ok:true,forceSiteIntro:settings.forceSiteIntro,featuredGames:settings.featuredGames,profileImage:settings.profileImage,profileView:settings.profileView,updatedAt:settings.updatedAt||null});}catch(error){console.error('Could not read public site settings',error);return publicSiteSettingsJson({ok:false,forceSiteIntro:false,featuredGames:[...DEFAULT_FEATURED_GAMES],profileImage:DEFAULT_PROFILE_IMAGE,profileView:'image',updatedAt:null});}}
 
 async function writeSiteSettings(env, settings, message, additionalFiles = []) {
   const normalized = normalizeSiteSettings(settings);
@@ -123,14 +126,16 @@ async function handleSiteIntroAdmin(request, env, session) {
 }
 
 async function handleProfileArtAdmin(request, env, session) {
-  if(request.method==='GET'){const settings=await readSiteSettings(env,true);return json({ok:true,profileImage:settings.profileImage,updatedAt:settings.updatedAt||null});}
+  if(request.method==='GET'){const [settings,roblox]=await Promise.all([readSiteSettings(env,true),lookupRobloxAvatar().then((result)=>result.data,()=>({available:false}))]);return json({ok:true,profileImage:settings.profileImage,profileView:settings.profileView,robloxAvatar:roblox.available?roblox.imageUrl:null,updatedAt:settings.updatedAt||null});}
   if(request.method!=='POST')return json({error:'Method not allowed.'},405);
   const current=await readSiteSettings(env,true);const contentType=request.headers.get('Content-Type')||'';const additionalFiles=[];let profileImage=current.profileImage;let message='Update profile artwork';
-  if(contentType.includes('application/json')){const body=await request.json().catch(()=>({}));if(body?.reset!==true)return json({error:'No profile artwork change was provided.'},400);profileImage=DEFAULT_PROFILE_IMAGE;message='Restore original profile artwork';}
+  if(contentType.includes('application/json')){const body=await request.json().catch(()=>({}));
+    if(body&&Object.prototype.hasOwnProperty.call(body,'profileView')){if(!PROFILE_VIEWS.has(body.profileView))return json({error:'Choose the profile image or the Roblox avatar.'},400);const saved=await writeSiteSettings(env,{...current,profileView:body.profileView,updatedAt:new Date().toISOString(),updatedBy:session.login},body.profileView==='roblox'?'Homepage portrait: show live Roblox avatar':'Homepage portrait: show profile image');return json({ok:true,profileImage:saved.settings.profileImage,profileView:saved.settings.profileView,updatedAt:saved.settings.updatedAt,commit:saved.commit});}
+    if(body?.reset!==true)return json({error:'No profile artwork change was provided.'},400);profileImage=DEFAULT_PROFILE_IMAGE;message='Restore original profile artwork';}
   else if(contentType.includes('multipart/form-data')){const form=await request.formData();const image=form.get('image');const validation=validateManagedImage(image);if(validation.error)return json({error:validation.error},400);const path=`assets/images/profile-managed/profile-${Date.now()}.${validation.extension}`;additionalFiles.push({path,bytes:new Uint8Array(await image.arrayBuffer())});profileImage=`/${path}`;}
   else return json({error:'Upload an image or restore the original artwork.'},415);
   if(current.profileImage.startsWith('/assets/images/profile-managed/')&&current.profileImage!==profileImage)additionalFiles.push({path:current.profileImage.replace(/^\//,''),delete:true});
-  const saved=await writeSiteSettings(env,{...current,profileImage,updatedAt:new Date().toISOString(),updatedBy:session.login},message,additionalFiles);return json({ok:true,profileImage:saved.settings.profileImage,updatedAt:saved.settings.updatedAt,commit:saved.commit});
+  const saved=await writeSiteSettings(env,{...current,profileImage,updatedAt:new Date().toISOString(),updatedBy:session.login},message,additionalFiles);return json({ok:true,profileImage:saved.settings.profileImage,profileView:saved.settings.profileView,updatedAt:saved.settings.updatedAt,commit:saved.commit});
 }
 
 function normalizeProjectRecord(value, fallbackId = '') {

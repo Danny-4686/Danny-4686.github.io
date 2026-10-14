@@ -178,7 +178,7 @@ function ensureManagedProjectStyles() {
   if (document.querySelector('link[data-managed-projects]')) return;
   const link = document.createElement('link');
   link.rel = 'stylesheet';
-  link.href = '/assets/css/project-managed.css?v=20261012.1';
+  link.href = '/assets/css/project-managed.css?v=20261014.1';
   link.dataset.managedProjects = 'true';
   document.head.append(link);
 }
@@ -207,7 +207,7 @@ function applyManagedProfileImage(settings) {
   });
 }
 
-function createProjectMedia(project) {
+function createProjectMedia(project, index = 0) {
   const media = document.createElement('div');
   media.className = 'managed-project-media';
   media.dataset.fit = project.fit === 'contain' ? 'contain' : 'cover';
@@ -216,7 +216,8 @@ function createProjectMedia(project) {
     const image = document.createElement('img');
     image.src = imagePath;
     image.alt = project.imageAlt || `${project.title} project artwork`;
-    image.loading = 'lazy';
+    // The first few slides are visible or peeking at once, so they load up front.
+    image.loading = index < 3 ? 'eager' : 'lazy';
     image.decoding = 'async';
     image.className = project.fit === 'contain' ? 'is-contain' : '';
     media.append(image);
@@ -250,7 +251,7 @@ function makeProjectCard(project, index) {
     });
   }
 
-  card.append(createProjectMedia(project));
+  card.append(createProjectMedia(project, index));
 
   const content = document.createElement('div');
   content.className = 'project-content managed-project-content';
@@ -307,6 +308,157 @@ function makeProjectCard(project, index) {
   return card;
 }
 
+// Projects scroll left to right. Native scrolling handles touch and trackpads;
+// the arrows, dots, arrow keys, and mouse dragging are layered on top.
+function setupProjectSlider(track) {
+  // Cards scrolled out of view sideways would never trigger their own reveal,
+  // so the whole row fades in together once the slider is on screen.
+  if (revealObserver) {
+    const items = [...track.children];
+    items.forEach((card) => revealObserver.unobserve(card));
+    const rowObserver = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return;
+      items.forEach((card) => card.classList.add('visible'));
+      rowObserver.disconnect();
+    }, { threshold: 0.12, rootMargin: '0px 0px -6% 0px' });
+    rowObserver.observe(track);
+  }
+  if (track.dataset.slider === 'true') {
+    track.dispatchEvent(new Event('scroll'));
+    return;
+  }
+  track.dataset.slider = 'true';
+  track.classList.add('project-track');
+  track.tabIndex = 0;
+  track.setAttribute('role', 'region');
+  track.setAttribute('aria-roledescription', 'carousel');
+  track.setAttribute('aria-label', 'Projects');
+
+  const controls = document.createElement('div');
+  controls.className = 'project-slider-controls';
+  const makeArrow = (direction, label, path) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `project-slider-arrow is-${direction}`;
+    button.setAttribute('aria-label', label);
+    button.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${path}"/></svg>`;
+    return button;
+  };
+  const prev = makeArrow('prev', 'Previous project', 'M15 5l-7 7 7 7');
+  const next = makeArrow('next', 'Next project', 'M9 5l7 7-7 7');
+  const dots = document.createElement('div');
+  dots.className = 'project-slider-dots';
+  controls.append(prev, dots, next);
+  track.after(controls);
+
+  const cards = () => [...track.children];
+  const behavior = () => (reducedMotion ? 'auto' : 'smooth');
+  const cardOffset = (card) => card.offsetLeft - track.offsetLeft - parseFloat(getComputedStyle(track).paddingLeft || 0);
+  const currentIndex = () => {
+    const items = cards();
+    let best = 0;
+    items.forEach((card, index) => {
+      if (Math.abs(cardOffset(card) - track.scrollLeft) < Math.abs(cardOffset(items[best]) - track.scrollLeft)) best = index;
+    });
+    return best;
+  };
+  const goTo = (index) => {
+    const items = cards();
+    const target = items[Math.max(0, Math.min(items.length - 1, index))];
+    if (target) track.scrollTo({ left: cardOffset(target), behavior: behavior() });
+  };
+
+  function update() {
+    const items = cards();
+    const maxScroll = track.scrollWidth - track.clientWidth;
+    const scrollable = maxScroll > 2;
+    controls.hidden = !scrollable;
+    track.classList.toggle('is-scrollable', scrollable);
+    prev.disabled = track.scrollLeft <= 2;
+    next.disabled = track.scrollLeft >= maxScroll - 2;
+    if (dots.childElementCount !== items.length) {
+      dots.replaceChildren(...items.map((card, index) => {
+        const dot = document.createElement('button');
+        dot.type = 'button';
+        dot.className = 'project-slider-dot';
+        const title = card.querySelector('h3')?.textContent?.trim();
+        dot.setAttribute('aria-label', title ? `Show ${title}` : `Show project ${index + 1}`);
+        dot.addEventListener('click', () => goTo(index));
+        return dot;
+      }));
+    }
+    // At the far right the last card can't snap to the start, so treat "at the end" as the last card.
+    const active = next.disabled && scrollable ? items.length - 1 : currentIndex();
+    [...dots.children].forEach((dot, index) => dot.setAttribute('aria-current', String(index === active)));
+  }
+
+  let frame = 0;
+  const requestUpdate = () => {
+    if (frame) return;
+    frame = requestAnimationFrame(() => { frame = 0; update(); });
+  };
+  track.addEventListener('scroll', requestUpdate, { passive: true });
+  window.addEventListener('resize', requestUpdate);
+  prev.addEventListener('click', () => goTo(currentIndex() - 1));
+  next.addEventListener('click', () => goTo(currentIndex() + 1));
+  track.addEventListener('keydown', (event) => {
+    if (event.target !== track) return;
+    const moves = { ArrowLeft: -1, ArrowRight: 1 };
+    if (event.key in moves) {
+      event.preventDefault();
+      goTo(currentIndex() + moves[event.key]);
+    } else if (event.key === 'Home' || event.key === 'End') {
+      event.preventDefault();
+      goTo(event.key === 'Home' ? 0 : cards().length - 1);
+    }
+  });
+
+  // Mouse drag to slide. A drag must not also count as a click on the card.
+  let drag = null;
+  let suppressClick = false;
+  track.addEventListener('pointerdown', (event) => {
+    if (event.pointerType !== 'mouse' || event.button !== 0 || !track.classList.contains('is-scrollable')) return;
+    drag = { x: event.clientX, left: track.scrollLeft, moved: false, id: event.pointerId };
+  });
+  track.addEventListener('pointermove', (event) => {
+    if (!drag || event.pointerId !== drag.id) return;
+    if (!(event.buttons & 1)) {
+      drag = null;
+      track.classList.remove('is-dragging');
+      return;
+    }
+    const dx = event.clientX - drag.x;
+    if (!drag.moved && Math.abs(dx) < 6) return;
+    if (!drag.moved) {
+      drag.moved = true;
+      track.setPointerCapture(event.pointerId);
+      track.classList.add('is-dragging');
+    }
+    track.scrollLeft = drag.left - dx;
+  });
+  const endDrag = (event) => {
+    if (!drag || event.pointerId !== drag.id) return;
+    const moved = drag.moved;
+    drag = null;
+    if (!moved) return;
+    suppressClick = true;
+    setTimeout(() => { suppressClick = false; }, 0);
+    track.classList.remove('is-dragging');
+    goTo(currentIndex());
+  };
+  track.addEventListener('pointerup', endDrag);
+  track.addEventListener('pointercancel', endDrag);
+  track.addEventListener('click', (event) => {
+    if (!suppressClick) return;
+    event.preventDefault();
+    event.stopPropagation();
+  }, true);
+  track.addEventListener('dragstart', (event) => event.preventDefault());
+
+  update();
+  window.addEventListener('load', requestUpdate, { once: true });
+}
+
 function isPublishedProject(project) {
   return Boolean(
     project &&
@@ -341,6 +493,7 @@ async function loadManagedProjects() {
     grid.classList.add('is-managed');
     grid.hidden = published.length === 0;
     section.dataset.projectsState = published.length ? 'ready' : 'empty';
+    if (published.length) setupProjectSlider(grid);
   } catch (error) {
     grid.replaceChildren();
     grid.hidden = true;

@@ -60,6 +60,15 @@ export const PROFILE_ART_ADMIN_CSS = String.raw`
 .profile-art-actions button:disabled{opacity:.4;cursor:not-allowed;transform:none}
 .profile-art-note{margin:13px 0 0;color:var(--muted);font-size:.65rem;line-height:1.5;overflow-wrap:anywhere}
 .profile-art-card.is-saving{opacity:.72;pointer-events:none}
+.profile-view-setting{margin-bottom:16px;padding:12px 13px;border:1px solid var(--line);border-radius:13px;background:rgba(255,255,255,.02)}
+.profile-view-setting strong{display:block;font-size:.76rem}
+.profile-view-setting small{display:block;margin-top:8px;color:var(--muted);font-size:.65rem;line-height:1.45;overflow-wrap:anywhere}
+.profile-view-options{margin-top:9px;display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border:1px solid var(--line);border-radius:12px;background:#07151b}
+.profile-view-options button{min-height:38px;padding:8px 10px;border:0;border-radius:9px;color:var(--muted);background:transparent;font:inherit;font-size:.7rem;font-weight:900;cursor:pointer}
+.profile-view-options button:hover:not(:disabled){color:var(--text)}
+.profile-view-options button[aria-pressed="true"]{color:#06151b;background:linear-gradient(135deg,#dffbff,#74d5e2)}
+.profile-view-options button:disabled{cursor:wait}
+.profile-view-options button:focus-visible{outline:2px solid rgba(104,208,223,.7);outline-offset:2px}
 @media(max-width:780px){.profile-art-layout{grid-template-columns:minmax(0,1fr)}.profile-art-preview{min-height:320px}}
 @media(max-width:620px){.profile-art-card{padding:16px}.profile-art-head{flex-direction:column}.profile-art-preview{min-height:280px}.profile-art-actions{flex-direction:column}.profile-art-actions button{width:100%}}
 @media(max-width:420px){.profile-art-controls{padding:14px}.profile-art-preview{min-height:250px}.profile-art-preview::after{width:270px;height:270px}}

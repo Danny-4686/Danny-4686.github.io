@@ -36,7 +36,7 @@ function jsonResponse(request, allowedOrigins, data, status, maxAge = 0) {
   return new Response(JSON.stringify(data), { status, headers });
 }
 
-async function lookupAvatar() {
+export async function lookupRobloxAvatar() {
   const cache = typeof caches !== 'undefined' && caches.default ? caches.default : null;
   const cacheKey = new Request('https://roblox-avatar.internal/render');
   const hit = cache && await cache.match(cacheKey);
@@ -77,7 +77,7 @@ export async function handleRobloxAvatar(request, env, path, allowedOrigins) {
     return jsonResponse(request, allowedOrigins, { error: 'Method not allowed.' }, 405);
   }
   try {
-    const result = await lookupAvatar();
+    const result = await lookupRobloxAvatar();
     return jsonResponse(request, allowedOrigins, result.data, result.status, result.status === 200 ? result.ttl : 0);
   } catch (error) {
     console.error('Roblox avatar lookup failed', error);

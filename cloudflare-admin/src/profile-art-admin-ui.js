@@ -12,11 +12,18 @@ export const PROFILE_ART_ADMIN_JS = String.raw`
   card.className='profile-art-card';
   card.id='profileArtAdminCard';
   card.innerHTML=''
-    +'<div class="settings-section-label"><span>03</span><div><strong>Profile Artwork</strong><small>Preview and replace the character image used whenever the homepage displays Danny4686.</small></div></div>'
-    +'<div class="profile-art-head"><div><p class="eyebrow">HOMEPAGE IDENTITY</p><h2>Displayed profile image</h2><p>Upload one image here and the homepage hero plus the Connect section will automatically use it after the site deploys.</p></div></div>'
+    +'<div class="settings-section-label"><span>03</span><div><strong>Profile Artwork</strong><small>Choose what the homepage portrait shows, and preview or replace the character artwork.</small></div></div>'
+    +'<div class="profile-art-head"><div><p class="eyebrow">HOMEPAGE IDENTITY</p><h2>Displayed profile image</h2><p>Show your uploaded artwork or your live Roblox avatar in the homepage portrait. The Connect section always uses the artwork.</p></div></div>'
     +'<div class="profile-art-layout">'
       +'<div class="profile-art-preview"><img id="profileArtPreview" alt="Current Danny4686 profile artwork"></div>'
       +'<div class="profile-art-controls">'
+        +'<div class="profile-view-setting"><strong id="profileViewLabel">Homepage portrait shows</strong>'
+          +'<div class="profile-view-options" role="group" aria-labelledby="profileViewLabel">'
+            +'<button type="button" data-profile-view="image" aria-pressed="false">Profile image</button>'
+            +'<button type="button" data-profile-view="roblox" aria-pressed="false">Roblox avatar</button>'
+          +'</div>'
+          +'<small id="profileViewHint">Loading…</small>'
+        +'</div>'
         +'<div class="profile-art-current"><strong>Current image</strong><small id="profileArtCurrentPath">Loading…</small></div>'
         +'<input id="profileArtInput" type="file" accept="image/png,image/jpeg,image/webp" hidden>'
         +'<label class="profile-art-drop" id="profileArtDrop" for="profileArtInput"><span><strong>Choose a new image</strong><small>PNG, JPG, or WebP · up to 8 MB<br>Transparent artwork works best.</small></span></label>'
@@ -38,7 +45,11 @@ export const PROFILE_ART_ADMIN_JS = String.raw`
   var reset=document.getElementById('profileArtReset');
   var drop=document.getElementById('profileArtDrop');
   var note=document.getElementById('profileArtNote');
+  var viewButtons=[].slice.call(card.querySelectorAll('[data-profile-view]'));
+  var viewHint=document.getElementById('profileViewHint');
   var csrf='';
+  var liveView='image';
+  var robloxAvatar='';
   var livePath='/assets/images/optimized/profile-600.webp';
   var objectUrl='';
   var busy=false;
@@ -49,7 +60,7 @@ export const PROFILE_ART_ADMIN_JS = String.raw`
     return 'https://danny4686.com/'+String(path).replace(/^\/+/, '');
   }
   function clearObject(){if(objectUrl){URL.revokeObjectURL(objectUrl);objectUrl='';}}
-  function setBusy(value){busy=value;card.classList.toggle('is-saving',value);save.disabled=value||!input.files[0];clear.disabled=value||!input.files[0];reset.disabled=value;}
+  function setBusy(value){busy=value;card.classList.toggle('is-saving',value);save.disabled=value||!input.files[0];clear.disabled=value||!input.files[0];reset.disabled=value;viewButtons.forEach(function(button){button.disabled=value;});}
   function setNote(text,error){note.textContent=text;note.style.color=error?'#ffaaa6':'';}
   async function request(url,options){
     options=options||{};options.headers=options.headers||{};
@@ -63,7 +74,18 @@ export const PROFILE_ART_ADMIN_JS = String.raw`
     currentPath.textContent=livePath;
     preview.src=publicUrl(livePath)+'?preview='+(Date.now());
     preview.hidden=false;
-    setNote('This is the image currently used on the homepage.');
+    setNote(liveView==='roblox'?'Your uploaded artwork is still used in the Connect section, and in the portrait whenever the Roblox avatar is switched off or unavailable.':'This is the image currently used on the homepage.');
+  }
+  function showView(view){
+    liveView=view==='roblox'?'roblox':'image';
+    viewButtons.forEach(function(button){button.setAttribute('aria-pressed',String(button.getAttribute('data-profile-view')===liveView));});
+    if(liveView==='roblox'){
+      viewHint.textContent=robloxAvatar?'The portrait shows your current Roblox avatar and updates within a few minutes when it changes. Preview below.':'Roblox is not returning your avatar right now, so visitors see the artwork until it is back.';
+      if(robloxAvatar&&!objectUrl){preview.src=robloxAvatar;currentPath.textContent='Live Roblox avatar (Danny4686)';}
+    }else{
+      viewHint.textContent='The portrait shows the artwork below. Your Roblox avatar is not displayed anywhere.';
+      if(!objectUrl){preview.src=publicUrl(livePath)+'?preview='+(Date.now());currentPath.textContent=livePath;}
+    }
   }
   function useSelected(file){
     if(!file)return;
@@ -79,6 +101,16 @@ export const PROFILE_ART_ADMIN_JS = String.raw`
   ['dragleave','drop'].forEach(function(type){drop.addEventListener(type,function(event){event.preventDefault();drop.classList.remove('is-dragging');});});
   drop.addEventListener('drop',function(event){var file=event.dataTransfer&&event.dataTransfer.files&&event.dataTransfer.files[0];if(!file)return;var transfer=new DataTransfer();transfer.items.add(file);input.files=transfer.files;useSelected(file);});
   clear.addEventListener('click',clearSelection);
+
+  viewButtons.forEach(function(button){button.addEventListener('click',async function(){
+    var view=button.getAttribute('data-profile-view');if(busy||view===liveView)return;
+    setBusy(true);setNote(view==='roblox'?'Switching the portrait to your Roblox avatar…':'Switching the portrait to the profile image…');
+    try{
+      var data=await request('/api/profile-art',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({profileView:view})});
+      showView(data.profileView);setNote('Saved. The homepage will switch as soon as the website deployment finishes (about a minute).');
+    }catch(error){setNote(error.message,true);}
+    finally{setBusy(false);}
+  });});
 
   save.addEventListener('click',async function(){
     var file=input.files[0];if(!file||busy)return;
@@ -104,8 +136,8 @@ export const PROFILE_ART_ADMIN_JS = String.raw`
   async function load(){
     try{
       var session=await fetch('/api/session').then(function(response){return response.json();});csrf=session.csrfToken||'';
-      var data=await request('/api/profile-art');showLive(data.profileImage);
-    }catch(error){currentPath.textContent='Unavailable';setNote(error.message,true);}
+      var data=await request('/api/profile-art');robloxAvatar=data.robloxAvatar||'';liveView=data.profileView==='roblox'?'roblox':'image';showLive(data.profileImage);showView(liveView);
+    }catch(error){currentPath.textContent='Unavailable';viewHint.textContent='Unavailable';setNote(error.message,true);}
   }
   load();
 })();

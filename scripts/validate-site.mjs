@@ -206,6 +206,9 @@ try {
     if (unknown.length) fail(settingsPath, `unknown featured games: ${[...new Set(unknown)].join(', ')}`);
     if (duplicate.length) fail(settingsPath, `duplicate featured games: ${[...new Set(duplicate)].join(', ')}`);
   }
+  if (settings.profileView !== undefined && !['image', 'roblox'].includes(settings.profileView)) {
+    fail(settingsPath, 'profileView must be "image" or "roblox"');
+  }
 } catch (error) {
   fail(settingsPath, `invalid settings JSON: ${error.message}`);
 }

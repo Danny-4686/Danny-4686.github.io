@@ -8,6 +8,117 @@
   min-width: 0;
 }
 
+/* Left-to-right project slider. Cards keep a fixed width and the row scrolls. */
+.project-grid.project-track {
+  display: flex;
+  gap: 18px;
+  /* Room for the hover lift and shadows, which the scroll area would otherwise clip. */
+  margin: -10px -12px -26px;
+  padding: 10px 12px 26px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 12px;
+  scrollbar-width: none;
+  border-radius: 24px;
+}
+.project-grid.project-track::-webkit-scrollbar { display: none; }
+.project-grid.project-track:focus-visible {
+  outline: 2px solid rgba(104, 208, 223, .55);
+  outline-offset: -2px;
+}
+.project-grid.project-track.is-scrollable { cursor: grab; }
+.project-grid.project-track.is-dragging {
+  cursor: grabbing;
+  scroll-snap-type: none;
+  user-select: none;
+}
+.project-grid.project-track.is-dragging .project-card { pointer-events: none; }
+.project-grid.project-track > .project-card.managed-project {
+  flex: 0 0 min(460px, calc(100% - 56px));
+  width: auto;
+  scroll-snap-align: start;
+}
+/* Slides are narrow, so every layout stacks the artwork above the text. */
+.project-grid.project-track > .project-card.managed-project,
+.project-grid.project-track > .project-card.managed-project[data-layout] {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+}
+.project-grid.project-track > .project-card.managed-project .managed-project-media {
+  min-height: 0;
+  aspect-ratio: 16 / 9;
+  border-right: 0;
+  border-bottom: 1px solid rgba(var(--project-accent-rgb), .17);
+}
+.project-grid.project-track > .project-card.managed-project[data-layout="compact"] .managed-project-media { aspect-ratio: 16 / 7; }
+.project-grid.project-track > .project-card.managed-project .managed-project-media img { min-height: 0; }
+.project-grid.project-track .managed-project-content {
+  justify-content: flex-start;
+  padding: clamp(22px, 3vw, 30px);
+}
+.project-grid.project-track .managed-project-content h3 { font-size: clamp(1.8rem, 3vw, 2.4rem); }
+.project-grid.project-track .managed-project-actions { margin-top: auto; padding-top: 23px; }
+
+.project-slider-controls {
+  margin-top: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+.project-slider-controls[hidden] { display: none; }
+.project-slider-arrow {
+  width: 44px;
+  height: 44px;
+  padding: 11px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-strong, rgba(147, 207, 220, .32));
+  border-radius: 14px;
+  color: var(--text, #f6fafb);
+  background: rgba(13, 27, 36, .9);
+  box-shadow: var(--shadow-soft, 0 12px 30px rgba(0,0,0,.2));
+  cursor: pointer;
+  transition: transform .18s ease, border-color .18s ease, background .18s ease, opacity .18s ease;
+}
+.project-slider-arrow svg { width: 20px; height: 20px; stroke-width: 2.4; }
+.project-slider-arrow:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: rgba(104, 208, 223, .48);
+  background: var(--surface-raised, #11232e);
+}
+.project-slider-arrow:disabled { opacity: .35; cursor: default; }
+.project-slider-arrow:focus-visible,
+.project-slider-dot:focus-visible {
+  outline: 2px solid rgba(104, 208, 223, .7);
+  outline-offset: 3px;
+}
+.project-slider-dots { display: flex; align-items: center; gap: 4px; }
+.project-slider-dot {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.project-slider-dot::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(159, 178, 186, .38);
+  transition: width .22s ease, background .22s ease;
+}
+.project-slider-dot[aria-current="true"]::before {
+  width: 22px;
+  background: var(--cyan, #68d0df);
+}
+
 .project-card.managed-project {
   --project-accent: var(--cyan);
   --project-accent-rgb: 104, 208, 223;
@@ -242,6 +353,8 @@
 }
 
 @media (max-width: 520px) {
+  .project-grid.project-track { gap: 12px; }
+  .project-grid.project-track > .project-card.managed-project { flex-basis: calc(100% - 34px); }
   .managed-project-content { padding: 21px 19px 22px; }
   .managed-project-content h3 { font-size: clamp(1.85rem, 9vw, 2.2rem); }
   .managed-project-meta { align-items: flex-start; flex-direction: column; }
@@ -257,6 +370,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .project-slider-arrow,
+  .project-slider-dot::before,
   .project-card.managed-project,
   .managed-project-media img,
   .managed-project-button { transition: none; }

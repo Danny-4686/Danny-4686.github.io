@@ -76,10 +76,13 @@ test('legacy or empty site settings receive safe defaults including profile artw
     forceSiteIntro: true,
     featuredGames: [...DEFAULT_FEATURED_GAMES],
     profileImage: DEFAULT_PROFILE_IMAGE,
+    profileView: 'image',
     updatedAt: '',
     updatedBy: ''
   });
   assert.equal(normalizeSiteSettings({ profileImage: 'javascript:alert(1)' }).profileImage, DEFAULT_PROFILE_IMAGE);
+  assert.equal(normalizeSiteSettings({ profileView: 'roblox' }).profileView, 'roblox');
+  assert.equal(normalizeSiteSettings({ profileView: '3d' }).profileView, 'image');
   assert.equal(normalizeSiteSettings({ profileImage: '/assets/images/profile-managed/new.webp' }).profileImage, '/assets/images/profile-managed/new.webp');
 });
 
