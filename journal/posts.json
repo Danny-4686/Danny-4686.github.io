@@ -1,5 +1,22 @@
 [
   {
+    "slug": "what-is-that-development",
+    "title": "What is THAT Development",
+    "description": "I built What is THAT! to step away from the aggressive ads and heavy monetization that have become the norm in kids' mobile apps today. What started as a small, heartfelt project for my niece has grown into an ad-free educational space for any child to jump in and learn the basics. Leveraging Roblox's newer tools…",
+    "body": "I built What is THAT! to step away from the aggressive ads and heavy monetization that have become the norm in kids' mobile apps today. What started as a small, heartfelt project for my niece has grown into an ad-free educational space for any child to jump in and learn the basics. Leveraging Roblox's newer tools allows me to meet kids where they already are, creating a purely educational experience focused 100% on learning rather than pushing sales, and proving that even a small project can do a lot of good.",
+    "date": "2026-10-14",
+    "displayDate": "October 14, 2026",
+    "tags": [
+      "Game"
+    ],
+    "mediaType": "image",
+    "thumbnail": "/assets/images/journal/what-is-that-development/thumbnail.png",
+    "fit": "cover",
+    "mode": "card",
+    "comingSoon": false,
+    "cardOnly": true
+  },
+  {
     "slug": "back-to-working-on-rocket-tycoon",
     "title": "Back to Working on Rocket Tycoon 🚀",
     "description": "It’s been a pretty slow month for me, but I’ve finally started getting back into working on Rocket Tycoon 🚀. After taking some time away from the project, I wanted to give it another look and see what could be improved, what needs fixing, and what I can learn from everything I’ve built so far. I’ve been going…",
