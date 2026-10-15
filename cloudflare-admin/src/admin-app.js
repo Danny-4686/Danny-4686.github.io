@@ -109,6 +109,37 @@ export const ADMIN_JS = String.raw`
     return node;
   }
 
+  // Big photos and screenshots are shrunk and re-encoded as WebP in the browser before
+  // upload, so the website stays fast. GIFs, videos, and files that would not get
+  // smaller are uploaded untouched.
+  async function optimizeImage(file, maxSide) {
+    if (!file || !/^image\/(png|jpeg|webp)$/i.test(file.type) || !window.createImageBitmap) return file;
+    try {
+      var bitmap = await createImageBitmap(file);
+      var scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+      var width = Math.round(bitmap.width * scale), height = Math.round(bitmap.height * scale);
+      var canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = height;
+      var context = canvas.getContext('2d');
+      context.imageSmoothingQuality = 'high';
+      context.drawImage(bitmap, 0, 0, width, height);
+      if (bitmap.close) bitmap.close();
+      var blob = await new Promise(function (resolve) { canvas.toBlob(resolve, 'image/webp', 0.86); });
+      if (!blob || blob.type !== 'image/webp' || (blob.size >= file.size && scale === 1)) return file;
+      return new File([blob], file.name.replace(/\.[a-z0-9]+$/i, '') + '.webp', { type: 'image/webp', lastModified: Date.now() });
+    } catch (error) { return file; }
+  }
+  async function optimizeAll(files, maxSide) {
+    var output = [];
+    for (var i = 0; i < files.length; i += 1) output.push(await optimizeImage(files[i], maxSide));
+    return output;
+  }
+  function savedBytes(before, after) {
+    var a = before.reduce(function (sum, file) { return sum + (file ? file.size : 0); }, 0);
+    var b = after.reduce(function (sum, file) { return sum + (file ? file.size : 0); }, 0);
+    return a - b > 51200 ? 'Images optimized: ' + fileSize(a) + ' → ' + fileSize(b) + '. ' : '';
+  }
+
   /* ---------- API ---------- */
   async function api(url, options) {
     options = options || {};
@@ -297,7 +328,16 @@ export const ADMIN_JS = String.raw`
     showView(target.name, target.arg);
     lastHash = window.location.hash;
   }
+  var calmMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   function showView(name, arg) {
+    // Sections cross-fade where the browser supports view transitions.
+    if (currentView && currentView !== name && document.startViewTransition && !calmMotion && !document.hidden) {
+      document.startViewTransition(function () { renderView(name, arg); });
+      return;
+    }
+    renderView(name, arg);
+  }
+  function renderView(name, arg) {
     var changed = currentView !== name;
     qsa('.view').forEach(function (view) { view.hidden = view.dataset.view !== name; });
     qsa('.nav-link').forEach(function (link) {
@@ -515,6 +555,7 @@ export const ADMIN_JS = String.raw`
   function renderPostList() {
     var list = $('postList');
     if (!app.posts) return;
+    list.removeAttribute('aria-busy');
     var query = $('postSearch').value.trim().toLowerCase();
     var counts = { all: app.posts.length, article: 0, card: 0, 'coming-soon': 0 };
     app.posts.forEach(function (post) { counts[postMode(post)] += 1; });
@@ -812,7 +853,7 @@ export const ADMIN_JS = String.raw`
     var sections = [];
     qsa('.section-card', sectionsHost).forEach(function (card, index) {
       var uploads = [];
-      card._files.forEach(function (file, fileIndex) {
+      (card._ready || card._files).forEach(function (file, fileIndex) {
         var field = 'section-' + index + '-' + fileIndex;
         form.append(field, file);
         uploads.push({ field: field, alt: file.name });
@@ -842,9 +883,10 @@ export const ADMIN_JS = String.raw`
     if (!text) return flagField('postDescription', mode === 'card' ? 'Write the post text.' : 'Add a short description.');
     if (mode !== 'card' && text.length > 320) return flagField('postDescription', 'Short descriptions can be up to 320 characters. Switch to "Post only" for longer text.');
     if (!$('postDate').value) return flagField('postDate', 'Pick a date.');
+    return true;
+  }
+  function checkUploadSizes(files) {
     var total = 0;
-    var files = [$('postThumbnail').files[0], mode === 'article' ? $('postHero').files[0] : null];
-    if (mode === 'article') qsa('.section-card', sectionsHost).forEach(function (card) { files = files.concat(card._files); });
     for (var i = 0; i < files.length; i += 1) {
       if (!files[i]) continue;
       if (files[i].size > 10 * 1048576) { toast('error', 'A file is too large', files[i].name + ' is ' + fileSize(files[i].size) + '. Each file can be up to 10 MB.'); return false; }
@@ -861,13 +903,28 @@ export const ADMIN_JS = String.raw`
     var mode = modeValue();
     var button = $('publishPost');
     var title = $('postTitle').value.trim();
-    var form = new FormData();
-    if ($('postThumbnail').files[0]) form.append('thumbnail', $('postThumbnail').files[0]);
-    if (mode === 'article' && $('postHero').files[0]) form.append('hero', $('postHero').files[0]);
-    form.append('metadata', JSON.stringify(collectPost(form)));
     setLoading(button, true);
+    setSaveState($('postSaveState'), 'saving', 'Preparing images…');
+    var note = toast('loading', 'Publishing "' + title + '"…', 'Optimizing images…');
+    var cards = mode === 'article' ? qsa('.section-card', sectionsHost) : [];
+    var originals = [$('postThumbnail').files[0], mode === 'article' ? $('postHero').files[0] : null];
+    var thumbnail = await optimizeImage(originals[0], 1920);
+    var hero = await optimizeImage(originals[1], 2400);
+    var prepared = [thumbnail, hero];
+    for (var c = 0; c < cards.length; c += 1) {
+      originals = originals.concat(cards[c]._files);
+      cards[c]._ready = await optimizeAll(cards[c]._files, 2400);
+      prepared = prepared.concat(cards[c]._ready);
+    }
+    var savings = savedBytes(originals.filter(Boolean), prepared.filter(Boolean));
+    if (!checkUploadSizes(prepared)) { note.dismiss(); setLoading(button, false); setSaveState($('postSaveState'), 'dirty', 'Unsaved changes'); return; }
+    var form = new FormData();
+    if (thumbnail) form.append('thumbnail', thumbnail);
+    if (hero) form.append('hero', hero);
+    form.append('metadata', JSON.stringify(collectPost(form)));
+    qsa('.section-card', sectionsHost).forEach(function (card) { card._ready = null; });
     setSaveState($('postSaveState'), 'saving', 'Publishing…');
-    var note = toast('loading', 'Publishing "' + title + '"…', 'Uploading media and saving to GitHub.');
+    note.update('loading', 'Publishing "' + title + '"…', savings + 'Uploading and saving to GitHub.');
     try {
       var result = await api('/api/publish', { method: 'POST', body: form });
       storage('remove', DRAFT_KEY);
@@ -985,6 +1042,7 @@ export const ADMIN_JS = String.raw`
   function renderProjectList() {
     var list = $('projectList');
     list.replaceChildren();
+    list.removeAttribute('aria-busy');
     if (!app.projects) return;
     if (!app.projects.length) { list.appendChild(el('p', 'list-empty', 'Create your first project to fill the homepage slider.')); return; }
     app.projects.forEach(function (project, index) {
@@ -1098,7 +1156,7 @@ export const ADMIN_JS = String.raw`
     }
     var file = $('projectImage').files[0];
     var project = projectById(projectsUi.currentId);
-    $('projectImageCurrent').textContent = file ? file.name + ' · ' + fileSize(file.size) : source && project ? 'Current: ' + project.image.split('/').pop() + ' · drop an image to replace' : 'Drop an image or click to choose · PNG, JPG, or WebP up to 8 MB';
+    $('projectImageCurrent').textContent = file ? file.name + ' · ' + fileSize(file.size) : source && project ? 'Current: ' + project.image.split('/').pop() + ' · drop an image to replace' : 'Drop an image or click to choose · optimized automatically';
     $('projectImage').closest('.dropzone').classList.toggle('has-file', Boolean(file));
     $('projectRemoveImage').hidden = !source;
     updateCounters(projectForm);
@@ -1149,9 +1207,9 @@ export const ADMIN_JS = String.raw`
   projectForm.addEventListener('change', function (event) {
     if (event.target.id === 'projectImage') {
       var file = $('projectImage').files[0];
-      if (file && (!/^image\/(png|jpeg|webp)$/i.test(file.type) || file.size > 8 * 1048576)) {
+      if (file && (!/^image\/(png|jpeg|webp)$/i.test(file.type) || file.size > 25 * 1048576)) {
         $('projectImage').value = '';
-        toast('error', 'That image cannot be used', 'Project images must be PNG, JPG, or WebP and 8 MB or smaller.');
+        toast('error', 'That image cannot be used', 'Project images must be PNG, JPG, or WebP and 25 MB or smaller. Large images are shrunk automatically.');
       } else projectsUi.removedImage = false;
       clearProjectObject();
     }
@@ -1174,7 +1232,7 @@ export const ADMIN_JS = String.raw`
     };
     var form = new FormData();
     form.append('metadata', JSON.stringify(metadata));
-    if ($('projectImage').files[0]) form.append('image', $('projectImage').files[0]);
+    if ($('projectImage').files[0]) form.append('image', await optimizeImage($('projectImage').files[0], 1600));
     var button = $('saveProject');
     setLoading(button, true);
     setSaveState($('projectSaveState'), 'saving', 'Saving…');
@@ -1291,7 +1349,7 @@ export const ADMIN_JS = String.raw`
     if (portraitUi.objectUrl) { URL.revokeObjectURL(portraitUi.objectUrl); portraitUi.objectUrl = ''; }
     $('artworkInput').value = '';
     $('artworkInput').closest('.dropzone').classList.remove('has-file');
-    $('artworkFileText').textContent = 'PNG, JPG, or WebP up to 8 MB. Transparent artwork looks best.';
+    $('artworkFileText').textContent = 'PNG, JPG, or WebP · optimized automatically. Transparent artwork looks best.';
     $('saveArtwork').disabled = true;
     $('cancelArtwork').disabled = true;
     renderPortrait();
@@ -1299,7 +1357,7 @@ export const ADMIN_JS = String.raw`
   $('artworkInput').addEventListener('change', function () {
     var file = $('artworkInput').files[0];
     if (!file) { clearArtworkSelection(); return; }
-    if (!/^image\/(png|jpeg|webp)$/i.test(file.type) || file.size > 8 * 1048576) { clearArtworkSelection(); toast('error', 'That image cannot be used', 'Use a PNG, JPG, or WebP image up to 8 MB.'); return; }
+    if (!/^image\/(png|jpeg|webp)$/i.test(file.type) || file.size > 25 * 1048576) { clearArtworkSelection(); toast('error', 'That image cannot be used', 'Use a PNG, JPG, or WebP image up to 25 MB. Large images are shrunk automatically.'); return; }
     if (portraitUi.objectUrl) URL.revokeObjectURL(portraitUi.objectUrl);
     portraitUi.objectUrl = URL.createObjectURL(file);
     $('artworkPreview').src = portraitUi.objectUrl;
@@ -1319,7 +1377,7 @@ export const ADMIN_JS = String.raw`
     var note = toast('loading', 'Uploading your artwork…');
     try {
       var form = new FormData();
-      form.append('image', file);
+      form.append('image', await optimizeImage(file, 1200));
       var result = await api('/api/profile-art', { method: 'POST', body: form });
       app.portrait.profileImage = result.profileImage;
       note.update('success', 'Artwork saved', 'The homepage updates in about a minute.');
@@ -1567,7 +1625,7 @@ export const ADMIN_JS = String.raw`
       form.append('enabled', String(on));
       form.append('mediaUrl', url);
       form.append('mediaType', $('abyssType').value);
-      if ($('abyssFile').files[0]) form.append('media', $('abyssFile').files[0]);
+      if ($('abyssFile').files[0]) form.append('media', await optimizeImage($('abyssFile').files[0], 2400));
       var result = await api('/api/fresh-abyss', { method: 'POST', body: form });
       app.abyss = result.config;
       fillAbyss();

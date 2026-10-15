@@ -1,4 +1,6 @@
 export const ADMIN_CSS = String.raw`
+@font-face{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:swap;src:url("https://danny4686.com/assets/fonts/inter-latin.woff2") format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Inter Fallback";src:local("Arial"),local("Helvetica Neue"),local("Helvetica");size-adjust:107%;ascent-override:90%;descent-override:22.4%;line-gap-override:0%}
 :root{
   color-scheme:dark;
   --bg:#050f14;--bg-2:#07161d;--panel:#0a1c25;--panel-2:#0d2430;--raised:#102b38;
@@ -8,11 +10,15 @@ export const ADMIN_CSS = String.raw`
   --mint:#8bcf9b;--gold:#f2c75c;--orange:#ed8b45;--danger:#ef7b76;--danger-2:#ff9b96;
   --radius:16px;--radius-sm:11px;--shadow:0 18px 50px rgba(0,0,0,.32);
   --sidebar:264px;--topbar:64px;
-  --ease:cubic-bezier(.2,.8,.2,1);
+  --ease:cubic-bezier(.22,1,.36,1);
 }
 *{box-sizing:border-box}
 html{background:var(--bg)}
-body{margin:0;min-height:100vh;color:var(--text);font:15px/1.5 Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:radial-gradient(1200px 600px at 85% -10%,rgba(104,208,223,.07),transparent 60%),linear-gradient(180deg,var(--bg-2),var(--bg) 40%);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body{margin:0;min-height:100vh;color:var(--text);font:15px/1.5 Inter,"Inter Fallback",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:radial-gradient(1200px 600px at 85% -10%,rgba(104,208,223,.07),transparent 60%),linear-gradient(180deg,var(--bg-2),var(--bg) 40%);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overflow-x:hidden}
+::selection{background:rgba(104,208,223,.3);color:#fff}
+html{scrollbar-color:rgba(104,208,223,.26) #040a0f}
+h1,h2,h3{text-wrap:balance}
+::view-transition-old(root),::view-transition-new(root){animation-duration:.22s;animation-timing-function:cubic-bezier(.4,0,.2,1)}
 img,video{max-width:100%}
 a{color:var(--cyan)}
 h1,h2,h3{margin:0;letter-spacing:-.02em;line-height:1.15}
@@ -34,6 +40,10 @@ button,input,select,textarea{font:inherit;color:inherit}
 .btn:hover{filter:brightness(1.1)}
 .btn:active{transform:translateY(1px)}
 .btn:disabled,.btn[aria-disabled="true"]{opacity:.45;cursor:not-allowed;filter:none;transform:none}
+.btn.primary,.btn.danger,.btn.success{overflow:hidden;isolation:isolate}
+.btn.primary::before,.btn.danger::before,.btn.success::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.35) 50%,transparent 70%);transform:translateX(-120%);transition:transform .75s var(--ease)}
+.btn.primary:hover::before,.btn.danger:hover::before,.btn.success:hover::before{transform:translateX(120%)}
+.btn:active:not(:disabled){transform:scale(.975)}
 .btn.primary{background:linear-gradient(145deg,var(--cyan-2),var(--cyan));color:var(--ink);box-shadow:0 8px 22px rgba(104,208,223,.18)}
 .btn.ghost{background:transparent;border-color:var(--line-2);color:var(--text)}
 .btn.ghost:hover{background:rgba(255,255,255,.04)}
@@ -158,6 +168,11 @@ fieldset.card>legend+*{clear:both}
 .stat-label .icon{width:17px;height:17px;color:var(--cyan)}
 .stat-value{font-size:1.5rem;font-weight:850;letter-spacing:-.03em}
 .stat-note{color:var(--muted);font-size:.8rem}
+.skeleton-row{display:flex;align-items:center;gap:10px;padding:9px 10px}
+.skeleton-row .skeleton:first-child{width:46px;height:46px;min-width:46px;border-radius:9px}
+.skeleton-row span:last-child{display:grid;gap:7px;flex:1}
+.skeleton-row span:last-child .skeleton{height:10px;width:80%}
+.skeleton-row span:last-child .skeleton+.skeleton{width:45%}
 .skeleton{display:inline-block;min-width:60px;height:1em;border-radius:6px;background:linear-gradient(90deg,rgba(255,255,255,.04),rgba(255,255,255,.09),rgba(255,255,255,.04));background-size:200% 100%;animation:shimmer 1.3s infinite}
 @keyframes shimmer{to{background-position:-200% 0}}
 .overview-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:clamp(14px,2vw,22px);align-items:start}

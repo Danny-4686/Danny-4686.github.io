@@ -10,7 +10,7 @@
       "Game"
     ],
     "mediaType": "image",
-    "thumbnail": "/assets/images/journal/what-is-that-development/thumbnail.png",
+    "thumbnail": "/assets/images/journal/what-is-that-development/thumbnail.webp",
     "fit": "cover",
     "mode": "card",
     "comingSoon": false,
@@ -93,7 +93,7 @@
     "displayDate": "August 19, 2026",
     "tags": [],
     "mediaType": "image",
-    "thumbnail": "/assets/images/journal/wonderland-easy-mode-completed/thumbnail.png",
+    "thumbnail": "/assets/images/journal/wonderland-easy-mode-completed/thumbnail.webp",
     "fit": "cover",
     "mode": "card",
     "comingSoon": false,

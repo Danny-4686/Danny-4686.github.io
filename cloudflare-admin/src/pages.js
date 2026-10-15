@@ -93,7 +93,7 @@ const journalView = `
               <button type="button" class="chip" data-filter="coming-soon" aria-pressed="false">Soon <span></span></button>
             </div>
           </div>
-          <div class="list" id="postList"><p class="muted pad">Loading posts…</p></div>
+          <div class="list" id="postList" aria-busy="true"><span class="sr-only">Loading posts…</span><div class="skeleton-row" aria-hidden="true"><span class="skeleton"></span><span><span class="skeleton"></span><span class="skeleton"></span></span></div><div class="skeleton-row" aria-hidden="true"><span class="skeleton"></span><span><span class="skeleton"></span><span class="skeleton"></span></span></div><div class="skeleton-row" aria-hidden="true"><span class="skeleton"></span><span><span class="skeleton"></span><span class="skeleton"></span></span></div><div class="skeleton-row" aria-hidden="true"><span class="skeleton"></span><span><span class="skeleton"></span><span class="skeleton"></span></span></div><div class="skeleton-row" aria-hidden="true"><span class="skeleton"></span><span><span class="skeleton"></span><span class="skeleton"></span></span></div></div>
         </aside>
         <div class="editor-pane">
           <div class="notice-banner" id="draftBanner" hidden>
@@ -132,7 +132,7 @@ const journalView = `
                     <label class="dropzone" data-dropzone><input id="postThumbnail" type="file" accept="image/*,video/*"><span class="dropzone-copy"><strong>Card thumbnail</strong><small id="thumbCurrent">Drop a file or click to choose</small></span></label>
                     <label class="dropzone" data-dropzone id="heroZone"><input id="postHero" type="file" accept="image/*,video/*"><span class="dropzone-copy"><strong>Article hero</strong><small id="heroCurrent">Uses the thumbnail when empty</small></span></label>
                   </div>
-                  <p class="field-hint">Up to 10 MB per file and 30 MB in total. PNG, JPG, WebP, GIF, MP4, WebM, MOV, or M4V.</p>
+                  <p class="field-hint">Photos are optimized automatically before upload. Videos and GIFs: up to 10 MB each, 30 MB per publish.</p>
                 </section>
                 <section class="card" id="articleFields">
                   <div class="card-title-row"><h3 class="card-title">Article sections</h3><button class="btn sm ghost" type="button" id="addSection">${icon('plus')}Add section</button></div>
@@ -177,7 +177,7 @@ const projectsView = `
       <div class="split">
         <aside class="panel list-pane" aria-label="Projects">
           <div class="list-tools"><p class="list-caption" id="projectsCaption">Loading projects…</p></div>
-          <div class="list" id="projectList"></div>
+          <div class="list" id="projectList" aria-busy="true"><span class="sr-only">Loading projects…</span><div class="skeleton-row" aria-hidden="true"><span class="skeleton"></span><span><span class="skeleton"></span><span class="skeleton"></span></span></div><div class="skeleton-row" aria-hidden="true"><span class="skeleton"></span><span><span class="skeleton"></span><span class="skeleton"></span></span></div><div class="skeleton-row" aria-hidden="true"><span class="skeleton"></span><span><span class="skeleton"></span><span class="skeleton"></span></span></div></div>
         </aside>
         <div class="editor-pane">
           <form id="projectForm" class="editor" novalidate>
@@ -223,7 +223,7 @@ const projectsView = `
                     <label class="field"><span class="field-label">Image fit</span><select id="projectFit"><option value="cover">Fill the frame</option><option value="contain">Show the whole image</option></select></label>
                   </div>
                   <div class="image-field">
-                    <label class="dropzone" data-dropzone><input id="projectImage" type="file" accept="image/png,image/jpeg,image/webp"><span class="dropzone-copy"><strong>Project image</strong><small id="projectImageCurrent">Drop an image or click to choose · PNG, JPG, or WebP up to 8 MB</small></span></label>
+                    <label class="dropzone" data-dropzone><input id="projectImage" type="file" accept="image/png,image/jpeg,image/webp"><span class="dropzone-copy"><strong>Project image</strong><small id="projectImageCurrent">Drop an image or click to choose · PNG, JPG, or WebP · optimized automatically</small></span></label>
                     <button class="btn ghost sm" type="button" id="projectRemoveImage" hidden>Remove image</button>
                   </div>
                 </section>
@@ -281,7 +281,7 @@ const homepageView = `
         <div class="artwork-editor">
           <div class="artwork-preview"><img id="artworkPreview" alt="Profile artwork preview"></div>
           <div class="artwork-controls">
-            <label class="dropzone tall" data-dropzone><input id="artworkInput" type="file" accept="image/png,image/jpeg,image/webp"><span class="dropzone-copy"><strong>Choose new artwork</strong><small id="artworkFileText">PNG, JPG, or WebP up to 8 MB. Transparent artwork looks best.</small></span></label>
+            <label class="dropzone tall" data-dropzone><input id="artworkInput" type="file" accept="image/png,image/jpeg,image/webp"><span class="dropzone-copy"><strong>Choose new artwork</strong><small id="artworkFileText">PNG, JPG, or WebP · optimized automatically. Transparent artwork looks best.</small></span></label>
             <p class="field-hint" id="artworkPath"></p>
             <div class="inline-actions"><button class="btn primary" type="button" id="saveArtwork" disabled>Save artwork</button><button class="btn ghost" type="button" id="cancelArtwork" disabled>Cancel</button></div>
           </div>
@@ -388,6 +388,7 @@ export function dashboardPage(login) {
   <link rel="icon" href="https://danny4686.com/favicon.ico" sizes="16x16 32x32 48x48">
   <link rel="icon" href="https://danny4686.com/assets/icons/favicon-48x48.png" type="image/png" sizes="48x48">
   <link rel="apple-touch-icon" href="https://danny4686.com/assets/icons/apple-touch-icon.png" sizes="180x180">
+  <link rel="preload" href="https://danny4686.com/assets/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/admin.css">
 </head>
 <body>

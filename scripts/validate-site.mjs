@@ -48,6 +48,16 @@ for (const page of filesUnder(root, '.html')) {
   const head = html.slice(0, html.search(/<\/head>/i));
   const gateAt = head.indexOf(SITE_GATE_TAG);
   const firstScript = head.search(/<script\b/i);
+  if (!/http-equiv="refresh"/.test(html)) {
+    // Every real page shares the self-hosted font and the finishing layer, loaded last.
+    if (!head.includes('href="/assets/fonts/inter-latin.woff2" as="font"')) fail(page, 'missing the Inter font preload');
+    if (/fonts\.googleapis\.com/.test(html)) fail(page, 'loads Google Fonts; use the self-hosted Inter in /assets/fonts');
+    const premiumAt = head.search(/<link rel="stylesheet" href="\/assets\/css\/premium\.css/);
+    const lastStylesheet = head.lastIndexOf('rel="stylesheet"');
+    if (premiumAt < 0) fail(page, 'missing /assets/css/premium.css');
+    else if (head.indexOf('rel="stylesheet"', premiumAt) !== lastStylesheet) fail(page, 'premium.css must be the last stylesheet in <head>');
+    if (!head.includes('src="/assets/js/premium.js')) fail(page, 'missing /assets/js/premium.js');
+  }
   if (gateAt < 0) fail(page, `missing emergency-close gate ${SITE_GATE_TAG} in <head>`);
   else if (firstScript !== gateAt) fail(page, 'the emergency-close gate must be the first script in <head>');
 
@@ -108,8 +118,12 @@ for (const template of [
   }
 }
 
+const postTemplateSourceEarly = readFileSync(join(root, 'cloudflare-admin', 'src', 'post-template.js'), 'utf8');
 for (const template of ['post-template.js', 'fresh-abyss.js'].map((name) => join(root, 'cloudflare-admin', 'src', name))) {
   if (!readFileSync(template, 'utf8').includes(SITE_GATE_TAG)) fail(template, 'generated public pages are missing the emergency-close gate');
+}
+for (const token of ['/assets/css/premium.css', '/assets/js/premium.js', '/assets/fonts/inter-latin.woff2']) {
+  if (!postTemplateSourceEarly.includes(token)) fail(join(root, 'cloudflare-admin', 'src', 'post-template.js'), `generated journal posts are missing ${token}`);
 }
 
 const postTemplatePath = join(root, 'cloudflare-admin', 'src', 'post-template.js');
@@ -133,7 +147,7 @@ for (const page of filesUnder(join(root, 'games'), '.html').filter((path) => dir
     'property="og:title"', 'property="og:description"', `property="og:url" content="${canonical}"`,
     'property="og:image"', 'name="twitter:card"', 'name="twitter:title"',
     'rel="manifest"', '/assets/js/site-loader.js?v=', '/assets/css/site-quality.css?v=',
-    '/assets/js/hub.js?v=20260810.2'
+    '/assets/js/hub.js?v=20261015.1'
   ];
   required.forEach((token) => { if (!html.includes(token)) fail(page, `missing metadata token ${token}`); });
 }

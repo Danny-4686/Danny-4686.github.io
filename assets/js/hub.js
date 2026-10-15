@@ -190,7 +190,7 @@ if (reducedMotion || !('IntersectionObserver' in window)) {
         observer.unobserve(entry.target);
       }
     });
-  }, { threshold: 0.1, rootMargin: '0px 0px -5% 0px' });
+  }, { threshold: 0, rootMargin: '0px 0px -8% 0px' });
 
   revealItems.forEach((element) => observer.observe(element));
 }

@@ -17,7 +17,7 @@ if (reducedMotion || !('IntersectionObserver' in window)) {
         revealObserver.unobserve(entry.target);
       }
     });
-  }, { threshold: 0.12, rootMargin: '0px 0px -6% 0px' });
+  }, { threshold: 0, rootMargin: '0px 0px -8% 0px' });
 
   revealItems.forEach((element) => revealObserver.observe(element));
 }
@@ -320,7 +320,7 @@ function setupProjectSlider(track) {
       if (!entries.some((entry) => entry.isIntersecting)) return;
       items.forEach((card) => card.classList.add('visible'));
       rowObserver.disconnect();
-    }, { threshold: 0.12, rootMargin: '0px 0px -6% 0px' });
+    }, { threshold: 0, rootMargin: '0px 0px -8% 0px' });
     rowObserver.observe(track);
   }
   if (track.dataset.slider === 'true') {
