@@ -52,11 +52,11 @@
     "newTab": true,
     "image": "/assets/images/projects/cloudlab/project-1792033628299.png",
     "imageAlt": "Cheaper Items project artwork",
-    "fit": "contain",
+    "fit": "cover",
     "accent": "cyan",
     "layout": "media-top",
     "draft": false,
-    "updatedAt": "2026-10-15T03:07:33.805Z",
+    "updatedAt": "2026-10-15T03:08:42.561Z",
     "updatedBy": "Danny-4686"
   },
   {
