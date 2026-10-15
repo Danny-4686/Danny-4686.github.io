@@ -49,14 +49,14 @@
     "buttonLabel": "Play on Roblox",
     "showButton": true,
     "clickable": true,
-    "newTab": false,
+    "newTab": true,
     "image": "/assets/images/projects/cloudlab/project-1792033628299.png",
     "imageAlt": "Cheaper Items project artwork",
     "fit": "contain",
     "accent": "cyan",
     "layout": "media-top",
     "draft": false,
-    "updatedAt": "2026-10-15T03:07:08.299Z",
+    "updatedAt": "2026-10-15T03:07:15.810Z",
     "updatedBy": "Danny-4686"
   },
   {
