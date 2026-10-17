@@ -300,6 +300,8 @@
     pauseButton.textContent = 'Pause';
     hideMessage();
     last = performance.now();
+    // A pause and resume inside one frame would otherwise leave two loops running.
+    cancelAnimationFrame(raf);
     raf = requestAnimationFrame(loop);
   }
 
@@ -640,7 +642,7 @@
       flap();
     } else if (event.key.toLowerCase() === 'p') {
       event.preventDefault();
-      togglePause();
+      if (!event.repeat) togglePause();
     }
   });
 

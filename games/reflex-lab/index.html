@@ -4,12 +4,12 @@
   <meta charset="UTF-8">
   <script src="/assets/js/site-gate.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Play Reflex Lab in the CloudLab Arcade. Test your reaction time over five signals.">
+  <meta name="description" content="Test your reaction time over five signals in Reflex Lab, a free browser game in the CloudLab Arcade that tracks your average and personal best.">
   <meta name="theme-color" content="#061117">
   <meta name="author" content="Danny4686"><meta name="application-name" content="CloudLab"><meta name="apple-mobile-web-app-title" content="CloudLab">
   <link rel="canonical" href="https://danny4686.com/games/reflex-lab/">
-  <meta property="og:site_name" content="CloudLab"><meta property="og:title" content="Reflex Lab | CloudLab Arcade"><meta property="og:description" content="Play Reflex Lab in the CloudLab Arcade. Test your reaction time over five signals."><meta property="og:type" content="website"><meta property="og:url" content="https://danny4686.com/games/reflex-lab/"><meta property="og:image" content="https://danny4686.com/assets/images/cloudlab-logo.png"><meta property="og:image:alt" content="CloudLab Earth logo">
-  <meta name="twitter:card" content="summary"><meta name="twitter:title" content="Reflex Lab | CloudLab Arcade"><meta name="twitter:description" content="Play Reflex Lab in the CloudLab Arcade. Test your reaction time over five signals."><meta name="twitter:image" content="https://danny4686.com/assets/images/cloudlab-logo.png">
+  <meta property="og:site_name" content="CloudLab"><meta property="og:title" content="Reflex Lab | CloudLab Arcade"><meta property="og:description" content="Test your reaction time over five signals in Reflex Lab, a free browser game in the CloudLab Arcade that tracks your average and personal best."><meta property="og:type" content="website"><meta property="og:url" content="https://danny4686.com/games/reflex-lab/"><meta property="og:image" content="https://danny4686.com/assets/images/cloudlab-logo.png"><meta property="og:image:alt" content="CloudLab Earth logo">
+  <meta name="twitter:card" content="summary"><meta name="twitter:title" content="Reflex Lab | CloudLab Arcade"><meta name="twitter:description" content="Test your reaction time over five signals in Reflex Lab, a free browser game in the CloudLab Arcade that tracks your average and personal best."><meta name="twitter:image" content="https://danny4686.com/assets/images/cloudlab-logo.png">
   <title>Reflex Lab | CloudLab Arcade</title>
   <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
   <link rel="icon" href="/assets/icons/favicon-48x48.png" type="image/png" sizes="48x48">
@@ -86,10 +86,10 @@
   <script src="/assets/js/premium.js?v=20261015.1" defer></script>
 </head>
 <body>
-  <header class="hub-header"><a class="hub-brand" href="/" aria-label="Return to Danny4686.com"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>Danny4686</strong><small>CloudLab Studio</small></span></a><nav class="hub-nav" aria-label="Site navigation"><a href="/#about">About</a><a href="/#projects">Projects</a><a class="active" href="/games/" aria-current="page">Games</a><a href="/journal/">Journal</a><a href="/#connect">Connect</a></nav><a class="header-action" href="/games/">All Games</a></header>
+  <header class="hub-header"><a class="hub-brand" href="/" aria-label="Return to Danny4686.com"><img src="../../assets/images/optimized/cloudlab-logo-256.webp" width="256" height="256" alt="CloudLab logo"><span><strong>Danny4686</strong><small>CloudLab Studio</small></span></a><nav class="hub-nav" aria-label="Site navigation"><a href="/#about">About</a><a href="/#projects">Projects</a><a class="active" href="/games/" aria-current="page">Games</a><a href="/journal/">Journal</a><a href="/#connect">Connect</a></nav><a class="header-action" href="/games/">All Games</a></header>
   <main class="page-shell game-page">
     <a class="back-link reveal" href="/games/">← Back to Browser Games</a>
-    <div class="game-heading reveal"><div><p class="eyebrow">CLOUDLAB ARCADE</p><h1>Reflex Lab</h1><p>Wait for the signal, then hit it as fast as you can. Five clean trials, lowest average wins.</p></div><div class="score-row"><div class="score-chip"><small>LAST</small><strong id="last">--</strong></div><div class="score-chip"><small>AVERAGE</small><strong id="average">--</strong></div><div class="score-chip"><small>TRIAL</small><strong id="trial">0/5</strong></div><div class="score-chip"><small>BEST</small><strong id="best">--</strong></div></div></div>
+    <div class="game-heading reveal"><div><p class="eyebrow">CLOUDLAB ARCADE</p><h1>Reflex Lab</h1><p>Wait for the signal, then hit it as fast as you can. Five clean trials, lowest average wins.</p></div><div class="score-row" role="group" aria-label="Reflex Lab results"><div class="score-chip"><small>LAST</small><strong id="last">--</strong></div><div class="score-chip"><small>AVERAGE</small><strong id="average">--</strong></div><div class="score-chip"><small>TRIAL</small><strong id="trial">0/5</strong></div><div class="score-chip"><small>BEST</small><strong id="best">--</strong></div></div></div>
     <section class="game-panel reveal" aria-label="Reflex Lab game">
       <div class="reflex-stage" id="reflexStage" data-state="idle">
         <div class="reflex-hud" aria-hidden="true"><div class="reflex-dots" id="reflexDots"><span class="reflex-dot"></span><span class="reflex-dot"></span><span class="reflex-dot"></span><span class="reflex-dot"></span><span class="reflex-dot"></span></div><span class="reflex-fouls" id="foulCount">FOULS 0</span></div>
@@ -104,7 +104,7 @@
       <p class="control-note" id="controlNote">Click the signal or press Space / Enter when it turns mint. Pressing early is a foul and the trial restarts.</p>
     </section>
   </main>
-  <footer class="site-footer"><a class="footer-brand" href="/"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>Reflex Lab</small></span></a><p>© <span id="year"></span> Danny4686.</p></footer>
+  <footer class="site-footer"><a class="footer-brand" href="/"><img src="../../assets/images/optimized/cloudlab-logo-256.webp" width="256" height="256" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>Reflex Lab</small></span></a><p>© <span id="year"></span> Danny4686.</p></footer>
   <script src="/assets/js/hub.js?v=20261015.1"></script>
   <script src="game.js?v=1"></script>
 </body>
