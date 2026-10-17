@@ -67,7 +67,7 @@
 .core-status.is-paused .active-dot { background:var(--gold); animation:none; }
 .core-stage { position:relative; width:100%; flex:1 1 auto; min-height:300px; display:grid; place-items:center; }
 .core-wrap { position:relative; width:min(290px,72vw); aspect-ratio:1; display:grid; place-items:center; }
-.combo-ring { position:absolute; inset:-6%; width:112%; height:112%; transform:rotate(-90deg); pointer-events:none; overflow:visible; }
+.combo-ring { position:absolute; top:-6%; left:-6%; width:112%; height:112%; max-width:none; max-height:none; margin:0; transform:rotate(-90deg); pointer-events:none; overflow:visible; }
 .combo-ring circle { fill:none; stroke-width:2.2; }
 .combo-ring-track { stroke:rgba(255,255,255,.05); }
 .combo-ring-fill { stroke:url(#none); stroke:var(--cyan); stroke-linecap:round; stroke-dasharray:100; stroke-dashoffset:100; filter:drop-shadow(0 0 6px rgba(104,208,223,.7)); transition:stroke-dashoffset .15s linear,stroke .3s; }
