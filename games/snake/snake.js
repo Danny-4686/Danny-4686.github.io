@@ -14,11 +14,16 @@
   const difficulty = document.getElementById('difficulty');
 
   const gridSize = 24;
-  const tileSize = canvas.width / gridSize;
+  // Logical board size; the backing store is scaled to the display size and devicePixelRatio in fitCanvas.
+  const boardSize = canvas.width;
+  const tileSize = boardSize / gridSize;
   const storageKey = 'cloudlab-snake-best';
   const appleImage = new Image();
   appleImage.decoding = 'async';
   appleImage.src = '../../assets/images/memory/optimized/apple-160.webp';
+  // The static backdrop (gradient + grid) is drawn once per canvas size instead of every frame.
+  const boardLayer = document.createElement('canvas');
+  let raf = 0;
 
   let snake = [];
   let food = { x: 17, y: 10 };
@@ -60,6 +65,7 @@
     startButton.textContent = 'Playing';
     pauseButton.textContent = 'Pause';
     lastMoveAt = performance.now();
+    wake();
   }
 
   function togglePause() {
@@ -74,6 +80,7 @@
       pauseButton.textContent = 'Pause';
       startButton.textContent = 'Playing';
       lastMoveAt = performance.now();
+      wake();
     }
   }
 
@@ -182,28 +189,35 @@
     context.closePath();
   }
 
-  function drawBoard() {
-    context.clearRect(0, 0, canvas.width, canvas.height);
-
-    const background = context.createLinearGradient(0, 0, canvas.width, canvas.height);
+  function paintBoardLayer() {
+    boardLayer.width = canvas.width;
+    boardLayer.height = canvas.height;
+    const layer = boardLayer.getContext('2d');
+    layer.setTransform(canvas.width / boardSize, 0, 0, canvas.height / boardSize, 0, 0);
+    const background = layer.createLinearGradient(0, 0, boardSize, boardSize);
     background.addColorStop(0, '#09212a');
     background.addColorStop(1, '#061217');
-    context.fillStyle = background;
-    context.fillRect(0, 0, canvas.width, canvas.height);
+    layer.fillStyle = background;
+    layer.fillRect(0, 0, boardSize, boardSize);
 
-    context.strokeStyle = 'rgba(104, 208, 223, 0.065)';
-    context.lineWidth = 1;
+    layer.strokeStyle = 'rgba(104, 208, 223, 0.065)';
+    layer.lineWidth = 1;
+    layer.beginPath();
     for (let index = 1; index < gridSize; index += 1) {
       const position = index * tileSize;
-      context.beginPath();
-      context.moveTo(position, 0);
-      context.lineTo(position, canvas.height);
-      context.stroke();
-      context.beginPath();
-      context.moveTo(0, position);
-      context.lineTo(canvas.width, position);
-      context.stroke();
+      layer.moveTo(position, 0);
+      layer.lineTo(position, boardSize);
+      layer.moveTo(0, position);
+      layer.lineTo(boardSize, position);
     }
+    layer.stroke();
+  }
+
+  function drawBoard() {
+    context.save();
+    context.setTransform(1, 0, 0, 1, 0, 0);
+    context.drawImage(boardLayer, 0, 0);
+    context.restore();
   }
 
   function drawFood(time) {
@@ -294,7 +308,17 @@
     });
   }
 
+  function draw(time) {
+    drawBoard();
+    drawFood(time);
+    drawSnake();
+    drawParticles();
+  }
+
+  // The loop only runs while the snake moves or food particles are still fading; idle, paused,
+  // and game-over boards are drawn once and left alone.
   function render(time) {
+    raf = 0;
     const speed = Number.parseInt(difficulty.value, 10) || 105;
     if (state === 'running' && time - lastMoveAt >= speed) {
       moveSnake();
@@ -302,11 +326,25 @@
     }
 
     updateParticles();
-    drawBoard();
-    drawFood(time);
-    drawSnake();
-    drawParticles();
-    requestAnimationFrame(render);
+    draw(time);
+    if (state === 'running' || particles.length) raf = requestAnimationFrame(render);
+  }
+
+  function wake() {
+    if (!raf) raf = requestAnimationFrame(render);
+  }
+
+  function fitCanvas() {
+    const cssWidth = canvas.clientWidth || boardSize;
+    const dpr = Math.min(2.5, window.devicePixelRatio || 1);
+    const backing = Math.max(150, Math.round(cssWidth * dpr));
+    if (canvas.width !== backing || canvas.height !== backing || boardLayer.width !== backing) {
+      canvas.width = backing;
+      canvas.height = backing;
+      paintBoardLayer();
+    }
+    context.setTransform(backing / boardSize, 0, 0, backing / boardSize, 0, 0);
+    draw(performance.now());
   }
 
   function showMessage(title, text) {
@@ -391,6 +429,7 @@
     hideMessage();
     startButton.textContent = 'Playing';
     pauseButton.textContent = 'Pause';
+    wake();
   });
 
   document.addEventListener('visibilitychange', () => {
@@ -401,6 +440,15 @@
     if (state === 'running') lastMoveAt = performance.now();
   });
 
+  let fitFrame = 0;
+  const scheduleFit = () => {
+    cancelAnimationFrame(fitFrame);
+    fitFrame = requestAnimationFrame(fitCanvas);
+  };
+  if (window.ResizeObserver) new ResizeObserver(scheduleFit).observe(canvas);
+  window.addEventListener('resize', scheduleFit);
+  appleImage.addEventListener('load', () => { if (!raf) draw(performance.now()); });
+
   resetGame();
-  requestAnimationFrame(render);
+  fitCanvas();
 })();

@@ -114,7 +114,8 @@
 
   const earthImage = new Image();
   earthImage.decoding = 'async';
-  earthImage.src = '/assets/images/memory/Earth.png';
+  earthImage.src = '/assets/images/memory/optimized/Earth-256.webp';
+  earthImage.addEventListener('load', () => wake());
 
   let activeStorageKey = STORAGE_KEY;
   let save = loadStateFromKey(activeStorageKey);
@@ -142,6 +143,7 @@
   let trailTimer = 0;
   let dustTimer = 0;
   let cameraShake = 0;
+  let raf = 0;
   let muzzleFlashUntil = 0;
   let perfectLaunch = false;
   let cloudCommunity = null;
@@ -417,6 +419,7 @@
   }
 
   function updateHud() {
+    wake();
     distanceEl.textContent = `${format(distanceMeters())} m`;
     const bestText = `${format(Math.max(save.best, distanceMeters()))} m`;
     if (bestEl.textContent !== bestText) bestEl.textContent = bestText;
@@ -1186,18 +1189,34 @@
     announce(`${upgrade.name} upgraded to level ${save.levels[upgrade.id]}.`);
   }
 
+  // The canvas animates while charging, flying, or finishing effects; a settled scene stays on its
+  // last frame until something changes (every state change goes through updateHud, which wakes it).
+  function sceneActive() {
+    return status === 'charging' || (status === 'flying' && !paused)
+      || particles.length > 0 || shockwaves.length > 0 || floatingLabels.length > 0 || cameraShake > 0
+      || performance.now() < muzzleFlashUntil;
+  }
+
   function loop(now) {
+    raf = 0;
     const dt = Math.min(.024, Math.max(0, (now - last) / 1000 || 0));
     last = now;
     update(dt, now);
     draw(now);
-    requestAnimationFrame(loop);
+    if (sceneActive()) raf = requestAnimationFrame(loop);
+  }
+
+  function wake() {
+    if (raf) return;
+    last = performance.now();
+    raf = requestAnimationFrame(loop);
   }
 
   angleButtons.addEventListener('click', (event) => {
     const button = event.target.closest('[data-angle]');
     if (!button || button.disabled || status !== 'ready') return;
     angle = Number(button.dataset.angle);
+    wake();
     angleButtons.querySelectorAll('[data-angle]').forEach((item) => {
       const active = item === button;
       item.classList.toggle('active', active);
@@ -1290,5 +1309,5 @@
   resetFlight();
   fitCanvas();
   initializeCloudSave();
-  requestAnimationFrame(loop);
+  wake();
 })();

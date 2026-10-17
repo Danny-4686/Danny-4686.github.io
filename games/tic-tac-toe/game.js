@@ -61,6 +61,7 @@
     const tally = stats[activeMode];
     xLabel.textContent = activeMode === 'computer' ? 'YOU' : 'X WINS';
     oLabel.textContent = activeMode === 'computer' ? 'CPU' : 'O WINS';
+    xWinsEl.dataset.mode = activeMode;
     xWinsEl.textContent = String(tally.x);
     oWinsEl.textContent = String(tally.o);
     drawsEl.textContent = String(tally.draws);

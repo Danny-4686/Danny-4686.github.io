@@ -4,18 +4,18 @@
   <meta charset="UTF-8">
   <script src="/assets/js/site-gate.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Play Breakout in the CloudLab Arcade.">
+  <meta name="description" content="Bounce the ball, clear every glowing brick, and climb through faster levels in Breakout, a free browser game in the CloudLab Arcade.">
   <meta name="theme-color" content="#061117">
   <meta name="author" content="Danny4686"><meta name="application-name" content="CloudLab"><meta name="apple-mobile-web-app-title" content="CloudLab">
   <link rel="canonical" href="https://danny4686.com/games/breakout/">
-  <meta property="og:site_name" content="CloudLab"><meta property="og:title" content="Breakout | CloudLab Arcade"><meta property="og:description" content="Play Breakout in the CloudLab Arcade."><meta property="og:type" content="website"><meta property="og:url" content="https://danny4686.com/games/breakout/"><meta property="og:image" content="https://danny4686.com/assets/images/cloudlab-logo.png"><meta property="og:image:alt" content="CloudLab Earth logo">
-  <meta name="twitter:card" content="summary"><meta name="twitter:title" content="Breakout | CloudLab Arcade"><meta name="twitter:description" content="Play Breakout in the CloudLab Arcade."><meta name="twitter:image" content="https://danny4686.com/assets/images/cloudlab-logo.png">
+  <meta property="og:site_name" content="CloudLab"><meta property="og:title" content="Breakout | CloudLab Arcade"><meta property="og:description" content="Bounce the ball, clear every glowing brick, and climb through faster levels in Breakout, a free browser game in the CloudLab Arcade."><meta property="og:type" content="website"><meta property="og:url" content="https://danny4686.com/games/breakout/"><meta property="og:image" content="https://danny4686.com/assets/images/cloudlab-logo.png"><meta property="og:image:alt" content="CloudLab Earth logo">
+  <meta name="twitter:card" content="summary"><meta name="twitter:title" content="Breakout | CloudLab Arcade"><meta name="twitter:description" content="Bounce the ball, clear every glowing brick, and climb through faster levels in Breakout, a free browser game in the CloudLab Arcade."><meta name="twitter:image" content="https://danny4686.com/assets/images/cloudlab-logo.png">
   <title>Breakout | CloudLab Arcade</title>
   <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
   <link rel="icon" href="/assets/icons/favicon-48x48.png" type="image/png" sizes="48x48">
   <link rel="icon" href="/assets/icons/favicon-32x32.png" type="image/png" sizes="32x32">
   <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" sizes="180x180">
-  <link rel="manifest" href="/site.webmanifest"><link rel="stylesheet" href="/assets/css/site-loader.css?v=20260808"><script src="/assets/js/site-loader.js?v=20260808"></script>
+  <link rel="manifest" href="/site.webmanifest"><script src="/assets/js/site-loader.js?v=20260808"></script><link rel="stylesheet" href="/assets/css/site-loader.css?v=20260808">
   <link rel="preload" href="/assets/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/assets/css/hub.css">
   <link rel="stylesheet" href="/assets/css/site-quality.css?v=20260808">
@@ -32,7 +32,7 @@
 </head>
 <body>
   <header class="hub-header">
-    <a class="hub-brand" href="/" aria-label="Return to Danny4686.com"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>Danny4686</strong><small>CloudLab Studio</small></span></a>
+    <a class="hub-brand" href="/" aria-label="Return to Danny4686.com"><img src="../../assets/images/optimized/cloudlab-logo-256.webp" width="256" height="256" alt="CloudLab logo"><span><strong>Danny4686</strong><small>CloudLab Studio</small></span></a>
     <nav class="hub-nav" aria-label="Site navigation"><a href="/#about">About</a><a href="/#projects">Projects</a><a class="active" href="/games/" aria-current="page">Games</a><a href="/journal/">Journal</a><a href="/#connect">Connect</a></nav>
     <a class="header-action" href="/games/">All Games</a>
   </header>
@@ -60,8 +60,8 @@
     </section>
   </main>
 
-  <footer class="site-footer"><a class="footer-brand" href="/"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>Breakout</small></span></a><p>© <span id="year"></span> Danny4686.</p></footer>
-  <script src="/assets/js/hub.js?v=20261015.1"></script>
+  <footer class="site-footer"><a class="footer-brand" href="/"><img src="../../assets/images/optimized/cloudlab-logo-256.webp" width="256" height="256" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>Breakout</small></span></a><p>© <span id="year"></span> Danny4686.</p></footer>
+  <script src="/assets/js/hub.js?v=20261017.1"></script>
   <script>
   (() => {
     const canvas = document.getElementById('breakoutCanvas');
@@ -112,6 +112,7 @@
     let paddle;
     let ball;
     let pointerStart = null;
+    let raf = 0;
 
     const settings = {
       easy: { speed: 300, paddle: 150, rows: 5 },
@@ -201,6 +202,7 @@
       pauseButton.textContent = 'Pause';
       showMessage('Ready?', copy.ready);
       draw();
+      wake();
     }
 
     function launch() {
@@ -216,6 +218,7 @@
       hideMessage();
       startButton.textContent = 'Playing';
       last = performance.now();
+      wake();
     }
 
     function pauseGame(text = copy.paused) {
@@ -234,6 +237,7 @@
       pauseButton.textContent = 'Pause';
       hideMessage();
       last = performance.now();
+      wake();
     }
 
     function loseLife() {
@@ -407,12 +411,27 @@
       }
     }
 
+    // Runs while the ball is live or the player is lining up a launch. Paused, finished, and
+    // waiting-behind-a-message boards stay still until input wakes the loop.
+    function loopActive() {
+      if (paused || phase === 'over') return false;
+      return phase === 'play' || keys.left || keys.right || message.classList.contains('hidden');
+    }
+
     function loop(now) {
-      const dt = Math.min(.022, (now - last) / 1000 || 0);
+      raf = 0;
+      const dt = Math.min(.022, Math.max(0, (now - last) / 1000) || 0);
       last = now;
       if (!paused && phase !== 'over') update(dt);
       draw();
-      requestAnimationFrame(loop);
+      if (loopActive()) raf = requestAnimationFrame(loop);
+    }
+
+    function wake() {
+      if (!raf) {
+        last = performance.now();
+        raf = requestAnimationFrame(loop);
+      }
     }
 
     function fitCanvas() {
@@ -435,11 +454,12 @@
     }
 
     function pointerMove(event) {
+      wake();
       paddle.x = Math.max(0, Math.min(W - paddle.w, pointerX(event) - paddle.w / 2));
     }
 
     function bindHold(button, key) {
-      const on = (event) => { event.preventDefault(); keys[key] = true; };
+      const on = (event) => { event.preventDefault(); keys[key] = true; wake(); };
       const off = () => { keys[key] = false; };
       button.addEventListener('pointerdown', on);
       button.addEventListener('pointerup', off);
@@ -450,8 +470,8 @@
     document.querySelectorAll('[data-move]').forEach((button) => bindHold(button, button.dataset.move));
     window.addEventListener('keydown', (event) => {
       if (event.ctrlKey || event.metaKey || event.altKey || isTypingTarget(event.target)) return;
-      if (['ArrowLeft', 'a', 'A'].includes(event.key)) { keys.left = true; event.preventDefault(); }
-      if (['ArrowRight', 'd', 'D'].includes(event.key)) { keys.right = true; event.preventDefault(); }
+      if (['ArrowLeft', 'a', 'A'].includes(event.key)) { keys.left = true; event.preventDefault(); wake(); }
+      if (['ArrowRight', 'd', 'D'].includes(event.key)) { keys.right = true; event.preventDefault(); wake(); }
       if (event.code === 'Space' && !isActivatableTarget(event.target)) {
         event.preventDefault();
         if (event.repeat) return;
@@ -510,7 +530,6 @@
 
     resetGame();
     fitCanvas();
-    requestAnimationFrame(loop);
   })();
   </script>
 </body>

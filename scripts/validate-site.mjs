@@ -157,7 +157,7 @@ for (const page of filesUnder(join(root, 'games'), '.html').filter((path) => dir
     'property="og:title"', 'property="og:description"', `property="og:url" content="${canonical}"`,
     'property="og:image"', 'name="twitter:card"', 'name="twitter:title"',
     'rel="manifest"', '/assets/js/site-loader.js?v=', '/assets/css/site-quality.css?v=',
-    '/assets/js/hub.js?v=20261015.1'
+    '/assets/js/hub.js?v=20261017.1'
   ];
   required.forEach((token) => { if (!html.includes(token)) fail(page, `missing metadata token ${token}`); });
 }

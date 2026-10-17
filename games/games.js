@@ -10,7 +10,7 @@
   if (!document.querySelector('link[data-arcade-polish]')) {
     const polishStyles = document.createElement('link');
     polishStyles.rel = 'stylesheet';
-    polishStyles.href = 'games-polish.css?v=3';
+    polishStyles.href = 'games-polish.css?v=4';
     polishStyles.dataset.arcadePolish = 'true';
     document.head.append(polishStyles);
   }

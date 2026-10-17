@@ -26,10 +26,10 @@
     '/games/2048/': { id: '2048', name: '2048', selector: '#bestScore', metric: 'points', direction: 'desc' },
     '/games/memory-match/': { id: 'memory-match', name: 'Memory Match', selector: '#best', metric: 'memory', direction: 'asc' },
     '/games/pong/': { id: 'pong', name: 'Pong', selector: '#bestRally', metric: 'rally', direction: 'desc' },
-    '/games/tic-tac-toe/': { id: 'tic-tac-toe', name: 'Tic-Tac-Toe', selector: '#xWins', metric: 'wins', direction: 'desc' },
+    '/games/tic-tac-toe/': { id: 'tic-tac-toe', name: 'Tic-Tac-Toe', selector: '#xWins', metric: 'wins', direction: 'desc', soloMode: 'computer' },
     '/games/minesweeper/': { id: 'minesweeper', name: 'Minesweeper', selector: '#best', metric: 'seconds', direction: 'asc' },
     '/games/breakout/': { id: 'breakout', name: 'Breakout', selector: '#best', metric: 'points', direction: 'desc' },
-    '/games/connect-four/': { id: 'connect-four', name: 'Connect Four', selector: '#cyanWins', metric: 'wins', direction: 'desc' },
+    '/games/connect-four/': { id: 'connect-four', name: 'Connect Four', selector: '#cyanWins', metric: 'wins', direction: 'desc', soloMode: 'cpu' },
     '/games/cloud-hopper/': { id: 'cloud-hopper', name: 'Cloud Hopper', selector: '#best', metric: 'points', direction: 'desc' },
     '/games/flappy-cloud/': { id: 'flappy-cloud', name: 'Flappy Cloud', selector: '#best', metric: 'points', direction: 'desc', saveManaged: true },
     '/games/cloudlab-clicker/': { id: 'cloudlab-clicker', name: 'CloudLab Clicker', selector: '#allTime', attribute: 'data-record-value', metric: 'clouds', direction: 'desc', saveManaged: true },
@@ -273,7 +273,8 @@
     const expectedUserId = session.user?.id || '';
     const request = {
       method: 'POST',
-      body: JSON.stringify({ gameId, value, secondary, extra })
+      body: JSON.stringify({ gameId, value, secondary, extra }),
+      keepalive: true
     };
     try {
       return await api('/scores', request);
@@ -591,6 +592,8 @@
     let suppressInitialNotice = Boolean(parseRecord(config, target));
     let lastNoticeAt = 0;
     async function sync() {
+      // Two-player tallies are shown in the same element but never count toward the leaderboard.
+      if (config.soloMode && target.dataset.mode && target.dataset.mode !== config.soloMode) return;
       const record = parseRecord(config, target);
       if (!record) return;
       const signature = `${record.value}:${record.secondary ?? ''}`;
@@ -629,10 +632,21 @@
           pending = false;
           schedule();
         }
-      }, config.syncDelay || 750);
+      }, config.syncDelay || 4000);
+    }
+
+    // Live scores change constantly mid-run, so posts are batched; anything pending is sent on leaving.
+    function flush() {
+      if (!timer) return;
+      window.clearTimeout(timer);
+      timer = null;
+      pending = false;
+      sync();
     }
 
     new MutationObserver(schedule).observe(target, { attributes: true, childList: true, characterData: true, subtree: true });
+    document.addEventListener('visibilitychange', () => { if (document.hidden) flush(); });
+    window.addEventListener('pagehide', flush);
     schedule();
   }
 

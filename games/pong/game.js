@@ -42,6 +42,7 @@
   } catch (_) {}
   let state = 'idle';
   let lastTime = performance.now();
+  let raf = 0;
   const keys = new Set();
   let pointerActive = false;
   let serveTimer = 0;
@@ -95,6 +96,7 @@
     startButton.textContent = 'Playing';
     pauseButton.textContent = 'Pause';
     lastTime = performance.now();
+    wake();
   }
 
   function pauseMatch(text = copy.paused) {
@@ -115,6 +117,7 @@
       pauseButton.textContent = 'Pause';
       startButton.textContent = 'Playing';
       lastTime = performance.now();
+      wake();
     }
   }
 
@@ -332,12 +335,18 @@
     draw();
   }
 
+  // Animate only during a live match; idle, paused, and finished boards stay on their last frame.
   function frame(time) {
-    const dt = Math.min(0.034, (time - lastTime) / 1000 || 0);
+    raf = 0;
+    const dt = Math.min(0.034, Math.max(0, (time - lastTime) / 1000) || 0);
     lastTime = time;
     if (state === 'running') update(dt);
     draw();
-    requestAnimationFrame(frame);
+    if (state === 'running') raf = requestAnimationFrame(frame);
+  }
+
+  function wake() {
+    if (!raf) raf = requestAnimationFrame(frame);
   }
 
   function movePlayerToPointer(event) {
@@ -346,6 +355,7 @@
     player.y = y - player.height / 2;
     clampPaddle(player);
     if (state === 'idle' || state === 'over') startMatch();
+    else if (state !== 'running') draw();
   }
 
   window.addEventListener('keydown', (event) => {
@@ -394,6 +404,7 @@
       player.y += amount;
       clampPaddle(player);
       if (state === 'idle' || state === 'over') startMatch();
+      else if (state !== 'running') draw();
     };
     const stop = () => {
       window.clearInterval(interval);
@@ -422,6 +433,7 @@
     startButton.textContent = 'Playing';
     pauseButton.textContent = 'Pause';
     lastTime = performance.now();
+    wake();
   });
 
   let fitFrame = 0;
@@ -437,5 +449,4 @@
   resetMatch();
   serveTimer = 0;
   fitCanvas();
-  requestAnimationFrame(frame);
 })();

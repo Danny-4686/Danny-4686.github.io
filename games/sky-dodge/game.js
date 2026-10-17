@@ -24,7 +24,7 @@
   const touchUI = window.matchMedia?.('(pointer: coarse)').matches || false;
   const motionQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)');
   let reducedMotion = motionQuery?.matches || false;
-  motionQuery?.addEventListener?.('change', (event) => { reducedMotion = event.matches; });
+  motionQuery?.addEventListener?.('change', (event) => { reducedMotion = event.matches; ensureLoop(); });
 
   const copy = touchUI ? {
     ready: 'Tap Start Run, then hold and drag anywhere on the sky to steer your cloud ship.',
@@ -859,6 +859,11 @@
     if (paused) { loopActive = false; draw(); return; }
     update(dt);
     draw();
+    // Once a crash has finished playing out, leave the final frame up instead of animating behind
+    // the result card; the ready screen keeps its idle hover unless reduced motion is requested.
+    const settled = state === 'over' ? overTimer > 1.6 && !particles.length && !floaters.length && !rings.length && flash <= 0
+      : state === 'ready' && reducedMotion;
+    if (settled) { loopActive = false; return; }
     raf = requestAnimationFrame(loop);
   }
 

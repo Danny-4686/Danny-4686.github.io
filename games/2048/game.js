@@ -38,7 +38,8 @@
 
   function loadBestScore() {
     try {
-      return Number.parseInt(localStorage.getItem(bestKey) || '0', 10) || 0;
+      const saved = Number.parseInt(localStorage.getItem(bestKey) || '0', 10);
+      return Number.isSafeInteger(saved) && saved > 0 ? saved : 0;
     } catch (_) {
       return 0;
     }

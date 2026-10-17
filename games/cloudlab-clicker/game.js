@@ -642,6 +642,11 @@
     }
   }
 
+  let lastComboShare = null;
+  function setText(element, text) {
+    if (element && element.textContent !== text) element.textContent = text;
+  }
+
   function renderStats() {
     const now = performance.now();
     const cloudText = format(state.clouds);
@@ -654,13 +659,17 @@
     if (allTime.textContent !== totalText) allTime.textContent = totalText;
     if (allTime.dataset.recordValue !== rawTotal) allTime.dataset.recordValue = rawTotal;
     if (pressValue && pressValue.textContent !== pressText) pressValue.textContent = pressText;
-    if (pressCount) pressCount.textContent = state.clicks.toLocaleString('en-US');
-    coreValue.textContent = `+${pressText}`;
-    comboValue.textContent = `${comboMultiplier().toFixed(2)}×`;
-    const comboShare = Math.min(100, combo * 2);
-    comboFill.style.width = `${comboShare}%`;
-    comboRing?.style.setProperty('stroke-dashoffset', String(100 - comboShare));
-    corePanel?.style.setProperty('--combo-energy', String(Math.min(1, combo / 50)));
+    // This runs every frame, so only touch the DOM when a value actually changes.
+    setText(pressCount, state.clicks.toLocaleString('en-US'));
+    setText(coreValue, `+${pressText}`);
+    setText(comboValue, `${comboMultiplier().toFixed(2)}×`);
+    const comboShare = Math.round(Math.min(100, combo * 2) * 10) / 10;
+    if (comboShare !== lastComboShare) {
+      lastComboShare = comboShare;
+      comboFill.style.width = `${comboShare}%`;
+      comboRing?.style.setProperty('stroke-dashoffset', String(100 - comboShare));
+      corePanel?.style.setProperty('--combo-energy', String(Math.min(1, combo / 50)));
+    }
     corePanel?.classList.toggle('combo-hot', combo >= 15);
     corePanel?.classList.toggle('combo-max', combo >= 42);
     clickerPanel?.classList.toggle('is-frenzy', buffActive('frenzy', now));
@@ -1256,11 +1265,23 @@
 
   // Sticky parts sit just under the site header, whose height changes with screen size.
   const siteHeader = document.querySelector('.hub-header');
+  let stickyTop = '';
+  let hudHeight = '';
+  let stickyFrame = 0;
   function measureStickyTop() {
+    stickyFrame = 0;
     const bottom = siteHeader ? Math.max(0, siteHeader.getBoundingClientRect().bottom) : 0;
-    clickerPanel?.style.setProperty('--clicker-sticky', `${Math.round(bottom + 10)}px`);
+    const nextTop = `${Math.round(bottom + 10)}px`;
+    if (nextTop !== stickyTop) {
+      stickyTop = nextTop;
+      clickerPanel?.style.setProperty('--clicker-sticky', nextTop);
+    }
     const hud = clickerPanel?.querySelector('.clicker-hud');
-    if (hud) clickerPanel.style.setProperty('--clicker-hud', `${Math.round(hud.offsetHeight)}px`);
+    const nextHud = hud ? `${Math.round(hud.offsetHeight)}px` : '';
+    if (hud && nextHud !== hudHeight) {
+      hudHeight = nextHud;
+      clickerPanel.style.setProperty('--clicker-hud', nextHud);
+    }
   }
 
   function loop(now) {
@@ -1398,7 +1419,7 @@
     save(false, { immediate: document.hidden, keepalive: document.hidden });
   });
   window.addEventListener('resize', measureStickyTop, { passive: true });
-  window.addEventListener('scroll', () => requestAnimationFrame(measureStickyTop), { passive: true });
+  window.addEventListener('scroll', () => { if (!stickyFrame) stickyFrame = requestAnimationFrame(measureStickyTop); }, { passive: true });
   window.addEventListener('pagehide', () => save(false, { immediate: true, keepalive: true }));
   window.setInterval(() => save(false, { cloud: false }), savePolicy?.LOCAL_SAVE_INTERVAL_MS || 15000);
   window.setInterval(() => scheduleCloudSave(), savePolicy?.CLOUD_SAVE_INTERVAL_MS || 60000);
