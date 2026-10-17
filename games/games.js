@@ -46,6 +46,8 @@
   const filters = document.getElementById('gameFilters');
   const cards = grid ? [...grid.querySelectorAll('.game-card[data-genre][data-game-id]')] : [];
   const empty = document.getElementById('gameEmpty');
+  const gameCount = document.getElementById('arcadeGameCount');
+  if (gameCount && cards.length) gameCount.textContent = String(cards.length);
   const defaultFeatured = ['cloud-hopper', 'cloudlab-clicker', 'launcher'];
   const sourceCards = new Map(cards.map((card) => [card.dataset.gameId, card]));
 

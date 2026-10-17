@@ -156,6 +156,10 @@ const arcadePage = join(root, 'games', 'index.html');
 const arcadeHtml = readFileSync(arcadePage, 'utf8');
 const arcadeGameIds = [...arcadeHtml.matchAll(/\bdata-game-id="([^"]+)"/g)].map((match) => match[1]);
 if (arcadeGameIds.length !== 18) fail(arcadePage, `expected 18 game cards, found ${arcadeGameIds.length}`);
+const summaryCount = arcadeHtml.match(/id="arcadeGameCount">(\d+)</)?.[1];
+if (Number(summaryCount) !== arcadeGameIds.length) fail(arcadePage, `Playable games count ${summaryCount} does not match ${arcadeGameIds.length} game cards`);
+const descriptionCount = arcadeHtml.match(/content="Play (\d+) browser games/)?.[1];
+if (Number(descriptionCount) !== arcadeGameIds.length) fail(arcadePage, `meta description game count ${descriptionCount} does not match ${arcadeGameIds.length} game cards`);
 const duplicateGameIds = [...new Set(arcadeGameIds.filter((id, index) => arcadeGameIds.indexOf(id) !== index))];
 if (duplicateGameIds.length) fail(arcadePage, `duplicate game IDs: ${duplicateGameIds.join(', ')}`);
 for (const gameId of ['cloud-hopper', 'cloudlab-clicker', 'launcher', 'flappy-cloud']) {
