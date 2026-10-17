@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script src="/assets/js/site-gate.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Play Pattern Pulse in the CloudLab Arcade.">
+  <meta name="theme-color" content="#061117">
+  <meta name="author" content="Danny4686"><meta name="application-name" content="CloudLab"><meta name="apple-mobile-web-app-title" content="CloudLab">
+  <link rel="canonical" href="https://danny4686.com/games/pattern-pulse/">
+  <meta property="og:site_name" content="CloudLab"><meta property="og:title" content="Pattern Pulse | CloudLab Arcade"><meta property="og:description" content="Play Pattern Pulse in the CloudLab Arcade."><meta property="og:type" content="website"><meta property="og:url" content="https://danny4686.com/games/pattern-pulse/"><meta property="og:image" content="https://danny4686.com/assets/images/cloudlab-logo.png"><meta property="og:image:alt" content="CloudLab Earth logo">
+  <meta name="twitter:card" content="summary"><meta name="twitter:title" content="Pattern Pulse | CloudLab Arcade"><meta name="twitter:description" content="Play Pattern Pulse in the CloudLab Arcade."><meta name="twitter:image" content="https://danny4686.com/assets/images/cloudlab-logo.png">
+  <title>Pattern Pulse | CloudLab Arcade</title>
+  <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="icon" href="/assets/icons/favicon-48x48.png" type="image/png" sizes="48x48">
+  <link rel="icon" href="/assets/icons/favicon-32x32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" sizes="180x180">
+  <link rel="manifest" href="/site.webmanifest"><link rel="stylesheet" href="/assets/css/site-loader.css?v=20260808"><script src="/assets/js/site-loader.js?v=20260808"></script>
+  <link rel="preload" href="/assets/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/assets/css/hub.css">
+  <link rel="stylesheet" href="/assets/css/site-quality.css?v=20260808">
+  <style>
+    .pulse-stage{--pad-gap:clamp(8px,2.4vw,14px);position:relative;width:min(560px,100%);aspect-ratio:1;margin:0 auto;padding:clamp(14px,4vw,28px);overflow:hidden;border:1px solid var(--line);border-radius:24px;background:radial-gradient(circle at 50% 50%,rgba(104,208,223,.09),transparent 62%),linear-gradient(180deg,#0a2029,#07151c 55%,#040d12);box-shadow:inset 0 0 0 1px rgba(255,255,255,.025),0 20px 50px rgba(0,0,0,.24);touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+    .pulse-stage::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(104,208,223,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(104,208,223,.05) 1px,transparent 1px);background-size:32px 32px;mask-image:radial-gradient(circle,#000 30%,transparent 75%);-webkit-mask-image:radial-gradient(circle,#000 30%,transparent 75%);pointer-events:none}
+    .pulse-ring{position:relative;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:var(--pad-gap);width:100%;height:100%;border-radius:50%;padding:var(--pad-gap);background:radial-gradient(circle,rgba(3,9,13,.9) 60%,rgba(104,208,223,.12) 71%,rgba(3,9,13,.0) 72%)}
+    .pulse-pad{--c:104,208,223;position:relative;display:block;width:100%;height:100%;min-width:0;padding:0;border:1px solid rgba(var(--c),.34);border-radius:18px;color:#061117;background:radial-gradient(circle at var(--gx) var(--gy),rgba(var(--c),.34),rgba(var(--c),.12) 58%,rgba(var(--c),.05));box-shadow:inset 0 0 0 1px rgba(255,255,255,.03),inset 0 0 26px rgba(var(--c),.10);cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:background .16s ease,box-shadow .16s ease,border-color .16s ease,transform .12s ease,filter .16s ease;outline-offset:4px}
+    .pulse-pad:focus-visible{outline:3px solid rgba(var(--c),.9)}
+    .pad-cyan{--c:104,208,223;--gx:85%;--gy:85%;border-radius:100% 18px 18px 18px}
+    .pad-mint{--c:139,207,155;--gx:15%;--gy:85%;border-radius:18px 100% 18px 18px}
+    .pad-gold{--c:242,199,92;--gx:85%;--gy:15%;border-radius:18px 18px 18px 100%}
+    .pad-orange{--c:237,139,69;--gx:15%;--gy:15%;border-radius:18px 18px 100% 18px}
+    .pulse-pad::after{content:"";position:absolute;inset:8%;border-radius:inherit;background:radial-gradient(circle at var(--gx) var(--gy),rgba(255,255,255,.55),rgba(255,255,255,0) 55%);opacity:0;transition:opacity .16s ease;pointer-events:none}
+    .pulse-pad.lit{border-color:rgba(var(--c),1);background:radial-gradient(circle at var(--gx) var(--gy),#fff 0%,rgb(var(--c)) 34%,rgba(var(--c),.78) 100%);box-shadow:0 0 28px rgba(var(--c),.85),0 0 80px rgba(var(--c),.45),inset 0 0 30px rgba(255,255,255,.35);filter:saturate(1.15);transition-duration:.05s;z-index:1}
+    .pulse-pad.lit::after{opacity:1;transition-duration:.05s}
+    .pulse-pad.pressed{transform:scale(.965)}
+    .pulse-stage[data-phase="idle"] .pulse-pad,.pulse-stage[data-phase="over"] .pulse-pad:not(.hint):not(.wrong),.pulse-stage[data-phase="paused"] .pulse-pad{filter:saturate(.7) brightness(.82)}
+    .pulse-stage[data-phase="playback"] .pulse-pad{cursor:default}
+    .pulse-pad.wrong{--c:239,109,104;border-color:#ef6d68;background:radial-gradient(circle at var(--gx) var(--gy),rgba(239,109,104,.75),rgba(239,109,104,.32));box-shadow:0 0 30px rgba(239,109,104,.6)}
+    .pulse-pad.hint{animation:pad-hint .5s ease-in-out 4 alternate;border-color:rgba(var(--c),1)}
+    @keyframes pad-hint{from{box-shadow:0 0 6px rgba(var(--c),.3)}to{background:radial-gradient(circle at var(--gx) var(--gy),#fff 0%,rgb(var(--c)) 34%,rgba(var(--c),.78) 100%);box-shadow:0 0 28px rgba(var(--c),.85),0 0 70px rgba(var(--c),.4)}}
+    .pulse-pad.wrong.shake{animation:pad-shake .32s ease}
+    @keyframes pad-shake{0%,100%{translate:0}20%{translate:-6px 0}40%{translate:6px 0}60%{translate:-4px 0}80%{translate:3px 0}}
+    .pad-keys{position:absolute;display:flex;gap:4px;font-size:.68rem;font-weight:800;letter-spacing:.04em;color:rgba(var(--c),.85);pointer-events:none}
+    .pad-keys kbd{min-width:20px;padding:2px 5px;border:1px solid rgba(var(--c),.35);border-radius:6px;background:rgba(3,9,13,.55);font:inherit;text-align:center}
+    .pad-cyan .pad-keys{left:30%;top:30%}.pad-mint .pad-keys{right:30%;top:30%}.pad-gold .pad-keys{left:30%;bottom:30%}.pad-orange .pad-keys{right:30%;bottom:30%}
+    .pulse-pad.lit .pad-keys{color:#061117}.pulse-pad.lit .pad-keys kbd{background:rgba(255,255,255,.35);border-color:rgba(6,17,23,.25)}
+    .touch-ui .pad-keys{display:none}
+    .pulse-hub{position:absolute;left:50%;top:50%;z-index:2;display:grid;place-content:center;gap:2px;width:34%;aspect-ratio:1;border:1px solid var(--line-strong);border-radius:50%;background:radial-gradient(circle at 50% 35%,#123340,#071820 62%,#04100f);box-shadow:0 0 0 clamp(6px,1.6vw,10px) #050f14,0 0 0 calc(clamp(6px,1.6vw,10px) + 1px) rgba(104,208,223,.18),0 14px 40px rgba(0,0,0,.5),inset 0 0 24px rgba(104,208,223,.12);text-align:center;transform:translate(-50%,-50%);transition:box-shadow .25s ease,border-color .25s ease}
+    .pulse-hub small{color:var(--muted);font-size:clamp(.56rem,1.7vw,.7rem);font-weight:800;letter-spacing:.14em}
+    .pulse-hub strong{font-size:clamp(1.9rem,7.5vw,3.1rem);line-height:1;font-variant-numeric:tabular-nums;color:var(--text)}
+    .pulse-hub span{min-height:1.2em;color:var(--cyan);font-size:clamp(.62rem,2vw,.82rem);font-weight:800;letter-spacing:.04em}
+    .pulse-stage[data-phase="input"] .pulse-hub{border-color:rgba(139,207,155,.6);box-shadow:0 0 0 clamp(6px,1.6vw,10px) #050f14,0 0 0 calc(clamp(6px,1.6vw,10px) + 1px) rgba(139,207,155,.35),0 0 34px rgba(139,207,155,.22),inset 0 0 24px rgba(139,207,155,.14)}
+    .pulse-stage[data-phase="input"] .pulse-hub span{color:var(--mint)}
+    .pulse-stage[data-phase="over"] .pulse-hub span{color:#ef6d68}
+    .pulse-stage.cleared .pulse-hub{animation:hub-pop .5s ease}
+    @keyframes hub-pop{0%{scale:1}40%{scale:1.08;box-shadow:0 0 0 10px #050f14,0 0 50px rgba(242,199,92,.55)}100%{scale:1}}
+    .pulse-stage .game-message{z-index:3;background:rgba(4,13,18,.42);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);transition:opacity .2s ease,visibility .2s ease}
+    .pulse-stage .game-message.hidden{display:grid;opacity:0;visibility:hidden;pointer-events:none}
+    .pulse-stage .game-message h2{font-size:clamp(1.7rem,6vw,2.6rem)}
+    .pulse-start{width:min(260px,100%);min-height:52px;font-size:1rem}
+    .sound-button[aria-pressed="false"]{color:var(--muted)}
+    @media (max-width:420px){.pulse-stage{border-radius:20px}.pulse-pad{border-radius:12px}.pad-cyan{border-radius:100% 12px 12px 12px}.pad-mint{border-radius:12px 100% 12px 12px}.pad-gold{border-radius:12px 12px 12px 100%}.pad-orange{border-radius:12px 12px 100% 12px}.game-toolbar .game-button{flex:1 1 auto}}
+    @media (prefers-reduced-motion:reduce){.pulse-pad,.pulse-pad::after,.pulse-hub{transition:none}.pulse-pad.pressed{transform:none}.pulse-pad.wrong.shake,.pulse-stage.cleared .pulse-hub{animation:none}.pulse-pad.hint{animation-duration:.8s;animation-timing-function:steps(1,end)}}
+  </style>
+  <link rel="stylesheet" href="/assets/css/premium.css?v=20261015.1">
+  <script src="/assets/js/premium.js?v=20261015.1" defer></script>
+</head>
+<body>
+  <header class="hub-header"><a class="hub-brand" href="/" aria-label="Return to Danny4686.com"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>Danny4686</strong><small>CloudLab Studio</small></span></a><nav class="hub-nav" aria-label="Site navigation"><a href="/#about">About</a><a href="/#projects">Projects</a><a class="active" href="/games/" aria-current="page">Games</a><a href="/journal/">Journal</a><a href="/#connect">Connect</a></nav><a class="header-action" href="/games/">All Games</a></header>
+  <main class="page-shell game-page">
+    <a class="back-link reveal" href="/games/">← Back to Browser Games</a>
+    <div class="game-heading reveal"><div><p class="eyebrow">CLOUDLAB ARCADE</p><h1>Pattern Pulse</h1><p>Watch the pads light up, then repeat the growing pattern. One wrong pad ends the run.</p></div><div class="score-row"><div class="score-chip"><small>ROUND</small><strong id="round">0</strong></div><div class="score-chip"><small>STEP</small><strong id="step">0/0</strong></div><div class="score-chip"><small>BEST</small><strong id="best">0</strong></div></div></div>
+    <section class="game-panel reveal" aria-label="Pattern Pulse game">
+      <div class="pulse-stage" id="pulseStage" data-phase="idle">
+        <div class="pulse-ring">
+          <button class="pulse-pad pad-cyan" type="button" data-pad="0" aria-label="Cyan pad (key 1, Q or Up arrow)"><span class="pad-keys" aria-hidden="true"><kbd>1</kbd><kbd>Q</kbd><kbd>↑</kbd></span></button>
+          <button class="pulse-pad pad-mint" type="button" data-pad="1" aria-label="Mint pad (key 2, W or Right arrow)"><span class="pad-keys" aria-hidden="true"><kbd>2</kbd><kbd>W</kbd><kbd>→</kbd></span></button>
+          <button class="pulse-pad pad-gold" type="button" data-pad="2" aria-label="Gold pad (key 3, A or Left arrow)"><span class="pad-keys" aria-hidden="true"><kbd>3</kbd><kbd>A</kbd><kbd>←</kbd></span></button>
+          <button class="pulse-pad pad-orange" type="button" data-pad="3" aria-label="Orange pad (key 4, S or Down arrow)"><span class="pad-keys" aria-hidden="true"><kbd>4</kbd><kbd>S</kbd><kbd>↓</kbd></span></button>
+        </div>
+        <div class="pulse-hub" aria-hidden="true"><small>ROUND</small><strong id="hubRound">0</strong><span id="hubState">Ready</span></div>
+        <div class="game-message" id="gameMessage"><div><h2 id="messageTitle">Follow the pulse.</h2><p id="messageText">Press Start or Space, watch the pattern, then repeat it with the pads or keys 1–4.</p></div></div>
+      </div>
+      <p class="sr-only" id="liveStatus" aria-live="polite"></p>
+      <div class="game-toolbar"><button class="game-button primary pulse-start" id="startButton" type="button">Start Pattern</button><button class="game-button" id="restartButton" type="button">Restart</button><button class="game-button sound-button" id="soundButton" type="button" aria-pressed="true">Sound: On</button></div>
+      <p class="control-note" id="controlNote">Click the pads or use keys 1–4, Q/W/A/S, or the arrows (↑ cyan, → mint, ← gold, ↓ orange). Space or Enter starts. The pattern speeds up every round.</p>
+    </section>
+  </main>
+  <footer class="site-footer"><a class="footer-brand" href="/"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>Pattern Pulse</small></span></a><p>© <span id="year"></span> Danny4686.</p></footer>
+  <script src="/assets/js/hub.js?v=20261015.1"></script>
+  <script>
+  (() => {
+    const stage = document.getElementById('pulseStage');
+    const pads = [...stage.querySelectorAll('.pulse-pad')];
+    const roundEl = document.getElementById('round');
+    const stepEl = document.getElementById('step');
+    const bestEl = document.getElementById('best');
+    const hubRound = document.getElementById('hubRound');
+    const hubState = document.getElementById('hubState');
+    const liveStatus = document.getElementById('liveStatus');
+    const message = document.getElementById('gameMessage');
+    const messageTitle = document.getElementById('messageTitle');
+    const messageText = document.getElementById('messageText');
+    const startButton = document.getElementById('startButton');
+    const restartButton = document.getElementById('restartButton');
+    const soundButton = document.getElementById('soundButton');
+    const controlNote = document.getElementById('controlNote');
+    const touchUI = window.matchMedia?.('(pointer: coarse)').matches || false;
+    const BEST_KEY = 'cloudlab-pattern-pulse-best';
+    const SOUND_KEY = 'cloudlab-pattern-pulse-sound';
+    const NAMES = ['Cyan', 'Mint', 'Gold', 'Orange'];
+    const TONES = [329.63, 415.3, 493.88, 659.25];
+    const KEYMAP = {
+      Digit1: 0, Numpad1: 0, KeyQ: 0, ArrowUp: 0,
+      Digit2: 1, Numpad2: 1, KeyW: 1, ArrowRight: 1,
+      Digit3: 2, Numpad3: 2, KeyA: 2, ArrowLeft: 2,
+      Digit4: 3, Numpad4: 3, KeyS: 3, ArrowDown: 3
+    };
+    const copy = touchUI ? {
+      ready: 'Tap Start, watch the pads light up, then tap the same pattern back.',
+      paused: 'Tap Resume to replay the pattern from the start of this round.',
+      again: 'Tap Play Again for a fresh pattern.',
+      note: 'Tap the glowing pads in order. The pattern grows by one step and speeds up every round.'
+    } : {
+      ready: 'Press Start or Space, watch the pattern, then repeat it with the pads or keys 1–4.',
+      paused: 'Press Space or Resume to replay this round’s pattern.',
+      again: 'Press Space or Play Again for a fresh pattern.',
+      note: controlNote.textContent
+    };
+    if (touchUI) stage.classList.add('touch-ui');
+    controlNote.textContent = copy.note;
+
+    let phase = 'idle'; // idle | playback | input | paused | over
+    let sequence = [];
+    let inputIndex = 0;
+    let best = 0;
+    let timers = new Set();
+    let audio = null;
+    let soundOn = true;
+    try {
+      const savedBest = Number(localStorage.getItem(BEST_KEY) || 0);
+      best = Number.isFinite(savedBest) && savedBest >= 0 ? Math.floor(savedBest) : 0;
+    } catch (_) {}
+    try { soundOn = localStorage.getItem(SOUND_KEY) !== 'off'; } catch (_) {}
+
+    function later(fn, ms) {
+      const id = setTimeout(() => { timers.delete(id); fn(); }, ms);
+      timers.add(id);
+      return id;
+    }
+    function clearTimers() { timers.forEach(clearTimeout); timers.clear(); }
+
+    function ensureAudio() {
+      if (!soundOn) return null;
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      try {
+        if (!audio) audio = new AC();
+        if (audio.state === 'suspended') audio.resume().catch(() => {});
+      } catch (_) { audio = null; }
+      return audio;
+    }
+
+    function tone(freq, duration, type = 'sine', volume = .16) {
+      if (!soundOn || !audio || audio.state !== 'running') return;
+      try {
+        const now = audio.currentTime;
+        const osc = audio.createOscillator();
+        const osc2 = audio.createOscillator();
+        const gain = audio.createGain();
+        const end = now + Math.max(.08, duration);
+        osc.type = type;
+        osc.frequency.value = freq;
+        osc2.type = 'sine';
+        osc2.frequency.value = freq * 2;
+        const g2 = audio.createGain();
+        g2.gain.value = .18;
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.exponentialRampToValueAtTime(volume, now + .018);
+        gain.gain.exponentialRampToValueAtTime(volume * .55, now + Math.min(.12, duration * .5));
+        gain.gain.exponentialRampToValueAtTime(0.0001, end);
+        osc.connect(gain);
+        osc2.connect(g2).connect(gain);
+        gain.connect(audio.destination);
+        osc.start(now); osc2.start(now);
+        osc.stop(end + .02); osc2.stop(end + .02);
+      } catch (_) {}
+    }
+
+    function buzz() {
+      if (!soundOn || !audio || audio.state !== 'running') return;
+      try {
+        const now = audio.currentTime;
+        const osc = audio.createOscillator();
+        const filter = audio.createBiquadFilter();
+        const gain = audio.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(140, now);
+        osc.frequency.exponentialRampToValueAtTime(70, now + .45);
+        filter.type = 'lowpass';
+        filter.frequency.value = 700;
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.exponentialRampToValueAtTime(.16, now + .02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + .5);
+        osc.connect(filter).connect(gain).connect(audio.destination);
+        osc.start(now);
+        osc.stop(now + .52);
+      } catch (_) {}
+    }
+
+    function chime() {
+      [659.25, 987.77].forEach((f, i) => later(() => tone(f, .16, 'triangle', .08), i * 70));
+    }
+
+    function setPhase(next, label) {
+      phase = next;
+      stage.dataset.phase = next;
+      if (label !== undefined) { hubState.textContent = label; liveStatus.textContent = label; }
+    }
+
+    function updateStats() {
+      const round = sequence.length;
+      roundEl.textContent = round;
+      hubRound.textContent = round;
+      stepEl.textContent = phase === 'input' ? `${inputIndex}/${round}` : `0/${round}`;
+    }
+
+    function showMessage(title, text) { messageTitle.textContent = title; messageText.textContent = text; message.classList.remove('hidden'); }
+    function hideMessage() { message.classList.add('hidden'); }
+
+    function clearPadStates() { pads.forEach((pad) => pad.classList.remove('lit', 'pressed', 'wrong', 'hint', 'shake')); }
+
+    function flashPad(index, ms, pressed = false) {
+      const pad = pads[index];
+      pad.classList.add('lit');
+      if (pressed) pad.classList.add('pressed');
+      tone(TONES[index], ms / 1000 + .05, 'triangle');
+      later(() => pad.classList.remove('lit', 'pressed'), ms);
+    }
+
+    function stepMs() { return Math.max(240, 520 - (sequence.length - 1) * 28); }
+
+    function playSequence() {
+      clearTimers();
+      clearPadStates();
+      inputIndex = 0;
+      setPhase('playback', 'Watch…');
+      updateStats();
+      const ms = stepMs();
+      const lightMs = Math.round(ms * .62);
+      let t = 620;
+      sequence.forEach((padIndex) => {
+        later(() => flashPad(padIndex, lightMs), t);
+        t += ms;
+      });
+      later(() => {
+        setPhase('input', 'Your turn');
+        updateStats();
+      }, t - ms + lightMs + 60);
+    }
+
+    function nextRound() {
+      sequence.push(Math.floor(Math.random() * 4));
+      setPhase('playback', `Round ${sequence.length}`);
+      updateStats();
+      playSequence();
+    }
+
+    function resetGame() {
+      clearTimers();
+      clearPadStates();
+      sequence = [];
+      inputIndex = 0;
+      setPhase('idle', 'Ready');
+      updateStats();
+      startButton.textContent = 'Start Pattern';
+      showMessage('Follow the pulse.', copy.ready);
+    }
+
+    function start() {
+      ensureAudio();
+      resetGame();
+      hideMessage();
+      startButton.textContent = 'Pause';
+      nextRound();
+    }
+
+    function pauseGame() {
+      if (phase !== 'playback' && phase !== 'input') return;
+      clearTimers();
+      clearPadStates();
+      inputIndex = 0;
+      setPhase('paused', 'Paused');
+      updateStats();
+      startButton.textContent = 'Resume';
+      showMessage('Paused', copy.paused);
+    }
+
+    function resumeGame() {
+      if (phase !== 'paused') return;
+      ensureAudio();
+      hideMessage();
+      startButton.textContent = 'Pause';
+      playSequence();
+    }
+
+    function endGame(wrongIndex) {
+      clearTimers();
+      const correctIndex = sequence[inputIndex];
+      const cleared = Math.max(0, sequence.length - 1);
+      setPhase('over', 'Missed');
+      stepEl.textContent = `${inputIndex}/${sequence.length}`;
+      clearPadStates();
+      pads[wrongIndex].classList.add('wrong', 'shake');
+      pads[correctIndex].classList.add('hint');
+      buzz();
+      const isRecord = cleared > best;
+      best = Math.max(best, cleared);
+      try { localStorage.setItem(BEST_KEY, String(best)); } catch (_) {}
+      bestEl.textContent = best;
+      startButton.textContent = 'Play Again';
+      const roundsText = `${cleared} ${cleared === 1 ? 'round' : 'rounds'}`;
+      liveStatus.textContent = `Wrong pad. The next pad was ${NAMES[correctIndex]}. You cleared ${roundsText}.`;
+      later(() => {
+        if (phase !== 'over') return;
+        showMessage(isRecord ? 'New best!' : 'Pattern broken', `It was ${NAMES[correctIndex]}. You cleared ${roundsText}. ${copy.again}`);
+      }, 1300);
+    }
+
+    function press(index) {
+      if (phase === 'idle' || phase === 'over') { start(); return; }
+      if (phase === 'paused') { resumeGame(); return; }
+      if (phase !== 'input') return;
+      ensureAudio();
+      if (index !== sequence[inputIndex]) { endGame(index); return; }
+      flashPad(index, 200, true);
+      inputIndex += 1;
+      updateStats();
+      if (inputIndex >= sequence.length) {
+        setPhase('playback', 'Nice!');
+        stepEl.textContent = `${inputIndex}/${sequence.length}`;
+        stage.classList.remove('cleared');
+        void stage.offsetWidth;
+        stage.classList.add('cleared');
+        later(chime, 160);
+        later(() => { stage.classList.remove('cleared'); nextRound(); }, 760);
+      }
+    }
+
+    function primaryAction() {
+      if (phase === 'idle' || phase === 'over') start();
+      else if (phase === 'paused') resumeGame();
+      else pauseGame();
+    }
+
+    function isTypingTarget(target) {
+      return target instanceof Element && Boolean(target.closest('input, select, textarea, [contenteditable="true"], [contenteditable=""]'));
+    }
+    function isActivatableTarget(target) {
+      return target instanceof Element && Boolean(target.closest('a[href], button, summary'));
+    }
+
+    function renderSound() {
+      soundButton.textContent = soundOn ? 'Sound: On' : 'Sound: Off';
+      soundButton.setAttribute('aria-pressed', String(soundOn));
+    }
+
+    let lastPointerAt = -Infinity;
+    pads.forEach((pad, index) => {
+      pad.addEventListener('pointerdown', (event) => {
+        if (event.button !== undefined && event.button > 0) return;
+        event.preventDefault();
+        lastPointerAt = performance.now();
+        press(index);
+      });
+      // Keyboard activation of a focused pad (Enter/Space) arrives as a click with detail 0;
+      // touch taps can also report detail 0, so skip clicks that follow a pointerdown.
+      pad.addEventListener('click', (event) => {
+        if (event.detail || performance.now() - lastPointerAt < 1000) return;
+        press(index);
+      });
+      pad.addEventListener('contextmenu', (event) => event.preventDefault());
+    });
+    startButton.addEventListener('click', (event) => { if (event.detail) startButton.blur(); primaryAction(); });
+    restartButton.addEventListener('click', (event) => { if (event.detail) restartButton.blur(); start(); });
+    soundButton.addEventListener('click', (event) => {
+      if (event.detail) soundButton.blur();
+      soundOn = !soundOn;
+      try { localStorage.setItem(SOUND_KEY, soundOn ? 'on' : 'off'); } catch (_) {}
+      renderSound();
+      if (soundOn) { ensureAudio(); tone(TONES[0], .14, 'triangle', .08); }
+    });
+    window.addEventListener('keydown', (event) => {
+      if (event.ctrlKey || event.metaKey || event.altKey || event.repeat) return;
+      if (isTypingTarget(event.target)) return;
+      const onPad = event.target instanceof Element && Boolean(event.target.closest('.pulse-pad'));
+      if (isActivatableTarget(event.target) && !(onPad && KEYMAP[event.code] !== undefined)) return;
+      if (event.code === 'Space' || event.key === 'Enter') {
+        event.preventDefault();
+        if (phase === 'idle' || phase === 'over' || phase === 'paused') primaryAction();
+        return;
+      }
+      if (event.key === 'Escape' || event.key === 'p' || event.key === 'P') {
+        if (phase === 'playback' || phase === 'input') { event.preventDefault(); pauseGame(); }
+        return;
+      }
+      const padIndex = KEYMAP[event.code];
+      if (padIndex === undefined) return;
+      event.preventDefault();
+      if (phase === 'input') press(padIndex);
+    });
+    document.addEventListener('visibilitychange', () => { if (document.hidden) pauseGame(); });
+    window.addEventListener('pagehide', pauseGame);
+
+    renderSound();
+    bestEl.textContent = best;
+    resetGame();
+  })();
+  </script>
+</body>
+</html>

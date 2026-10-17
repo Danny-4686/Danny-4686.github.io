@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script src="/assets/js/site-gate.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Play Slide Puzzle in the CloudLab Arcade.">
+  <meta name="theme-color" content="#061117">
+  <meta name="author" content="Danny4686"><meta name="application-name" content="CloudLab"><meta name="apple-mobile-web-app-title" content="CloudLab">
+  <link rel="canonical" href="https://danny4686.com/games/slide-puzzle/">
+  <meta property="og:site_name" content="CloudLab"><meta property="og:title" content="Slide Puzzle | CloudLab Arcade"><meta property="og:description" content="Play Slide Puzzle in the CloudLab Arcade."><meta property="og:type" content="website"><meta property="og:url" content="https://danny4686.com/games/slide-puzzle/"><meta property="og:image" content="https://danny4686.com/assets/images/cloudlab-logo.png"><meta property="og:image:alt" content="CloudLab Earth logo">
+  <meta name="twitter:card" content="summary"><meta name="twitter:title" content="Slide Puzzle | CloudLab Arcade"><meta name="twitter:description" content="Play Slide Puzzle in the CloudLab Arcade."><meta name="twitter:image" content="https://danny4686.com/assets/images/cloudlab-logo.png">
+  <title>Slide Puzzle | CloudLab Arcade</title>
+  <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="icon" href="/assets/icons/favicon-48x48.png" type="image/png" sizes="48x48">
+  <link rel="icon" href="/assets/icons/favicon-32x32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" sizes="180x180">
+  <link rel="manifest" href="/site.webmanifest"><link rel="stylesheet" href="/assets/css/site-loader.css?v=20260808"><script src="/assets/js/site-loader.js?v=20260808"></script>
+  <link rel="preload" href="/assets/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/assets/css/hub.css">
+  <link rel="stylesheet" href="/assets/css/site-quality.css?v=20260808">
+  <link rel="stylesheet" href="game.css?v=1">
+  <link rel="stylesheet" href="/assets/css/premium.css?v=20261015.1">
+  <script src="/assets/js/premium.js?v=20261015.1" defer></script>
+</head>
+<body>
+  <header class="hub-header"><a class="hub-brand" href="/" aria-label="Return to Danny4686.com"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>Danny4686</strong><small>CloudLab Studio</small></span></a><nav class="hub-nav" aria-label="Site navigation"><a href="/#about">About</a><a href="/#projects">Projects</a><a class="active" href="/games/" aria-current="page">Games</a><a href="/journal/">Journal</a><a href="/#connect">Connect</a></nav><a class="header-action" href="/games/">All Games</a></header>
+  <main class="page-shell game-page">
+    <a class="back-link reveal" href="/games/">← Back to Browser Games</a>
+    <div class="game-heading reveal"><div><p class="eyebrow">CLOUDLAB ARCADE</p><h1>Slide Puzzle</h1><p>Slide the fifteen tiles back into order from 1 to 15 in as few seconds as you can.</p></div><div class="score-row" role="group" aria-label="Puzzle stats"><div class="score-chip"><small>MOVES</small><strong id="moves">0</strong></div><div class="score-chip"><small>TIME</small><strong id="time">0:00</strong></div><div class="score-chip"><small>BEST</small><strong id="best">--</strong></div></div></div>
+    <section class="game-panel reveal" aria-label="Slide Puzzle game">
+      <div class="slide-stage" id="slideStage">
+        <div class="slide-board" id="board" role="group" aria-label="Slide puzzle board" aria-describedby="slideStatus">
+          <div class="slide-slots" aria-hidden="true"></div>
+          <div class="slide-tiles" id="tiles"></div>
+        </div>
+        <div class="game-message hidden" id="gameMessage">
+          <div>
+            <p class="slide-message-kicker" id="messageKicker">PUZZLE SOLVED</p>
+            <h2 id="messageTitle">Solved!</h2>
+            <p id="messageText">Every tile is back in place.</p>
+            <div class="slide-message-actions"><button class="game-button primary" id="againButton" type="button">Shuffle Again</button></div>
+          </div>
+        </div>
+      </div>
+      <p class="slide-status" id="slideStatus" aria-live="polite">0 of 15 tiles in place</p>
+      <div class="game-toolbar"><button class="game-button primary" id="shuffleButton" type="button">New Shuffle</button><button class="game-button" id="restartButton" type="button">Restart Shuffle</button></div>
+      <p class="control-note" id="controlNote">Click a tile in the gap's row or column, or use the arrow keys or WASD. The timer starts on your first move.</p>
+    </section>
+  </main>
+  <footer class="site-footer"><a class="footer-brand" href="/"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>Slide Puzzle</small></span></a><p>© <span id="year"></span> Danny4686.</p></footer>
+  <script src="/assets/js/hub.js?v=20261015.1"></script>
+  <script src="game.js?v=1"></script>
+</body>
+</html>

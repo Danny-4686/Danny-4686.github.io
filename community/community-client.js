@@ -34,7 +34,12 @@
     '/games/flappy-cloud/': { id: 'flappy-cloud', name: 'Flappy Cloud', selector: '#best', metric: 'points', direction: 'desc', saveManaged: true },
     '/games/cloudlab-clicker/': { id: 'cloudlab-clicker', name: 'CloudLab Clicker', selector: '#allTime', attribute: 'data-record-value', metric: 'clouds', direction: 'desc', saveManaged: true },
     '/games/launcher/': { id: 'launcher', name: 'Launcher', selector: '#bestDistance', metric: 'distance', direction: 'desc', saveManaged: true },
-    '/games/tower-stacker/': { id: 'tower-stacker', name: 'Tower Stacker', selector: '#best', metric: 'height', direction: 'desc' }
+    '/games/tower-stacker/': { id: 'tower-stacker', name: 'Tower Stacker', selector: '#best', metric: 'height', direction: 'desc' },
+    '/games/whack-a-cloud/': { id: 'whack-a-cloud', name: 'Whack-a-Cloud', selector: '#best', metric: 'points', direction: 'desc' },
+    '/games/reflex-lab/': { id: 'reflex-lab', name: 'Reflex Lab', selector: '#best', metric: 'ms', direction: 'asc' },
+    '/games/pattern-pulse/': { id: 'pattern-pulse', name: 'Pattern Pulse', selector: '#best', metric: 'rounds', direction: 'desc' },
+    '/games/sky-dodge/': { id: 'sky-dodge', name: 'Sky Dodge', selector: '#best', metric: 'points', direction: 'desc' },
+    '/games/slide-puzzle/': { id: 'slide-puzzle', name: 'Slide Puzzle', selector: '#best', metric: 'seconds', direction: 'asc' }
   };
 
   function publishCommunity() {
@@ -252,6 +257,8 @@
       return `${entry.value} moves · ${Math.floor(time / 60)}:${String(time % 60).padStart(2, '0')}`;
     }
     if (config.metric === 'seconds') return `${entry.value}s`;
+    if (config.metric === 'ms') return `${entry.value} ms`;
+    if (config.metric === 'rounds') return `${entry.value} rounds`;
     if (config.metric === 'rally') return `${entry.value} rally`;
     if (config.metric === 'wins') return `${entry.value} wins`;
     if (config.metric === 'height') return `${Number(entry.value).toLocaleString()} high`;
@@ -515,7 +522,7 @@
     try {
       const data = await api(`/leaderboards/${config.id}?limit=10`);
       ranking.replaceChildren();
-      if (!data.entries.length) {
+      if (!data.entries?.length) {
         const empty = document.createElement('div');
         empty.className = 'community-leaderboard-empty';
         empty.textContent = 'No saved records yet. The first signed-in player can take the top spot.';

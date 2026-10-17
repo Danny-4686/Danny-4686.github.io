@@ -8,7 +8,7 @@
   }
   if (!document.querySelector('script[data-community-ui]')) {
     const script = document.createElement('script');
-    script.src = '/community/community-client.js?v=20260810.2';
+    script.src = '/community/community-client.js?v=20261017';
     script.dataset.communityUi = 'true';
     document.head.append(script);
   }

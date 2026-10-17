@@ -1,0 +1,51 @@
+/* Card previews (static: site-quality.css freezes arcade-grid animation) for Whack-a-Cloud, Reflex Lab, Pattern Pulse, Sky Dodge and Slide Puzzle. */
+.whack-preview,.reflex-preview,.pulse-preview,.dodge-preview,.slide-preview{position:relative;width:100%;height:100%;overflow:hidden;background:linear-gradient(145deg,#0b2732,#061117)}
+.whack-preview::before,.reflex-preview::before,.pulse-preview::before,.dodge-preview::before,.slide-preview::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 72% 20%,rgba(104,208,223,.16),transparent 43%)}
+
+.whack-preview{display:grid;place-items:center}
+.whack-grid{position:relative;z-index:1;width:min(64%,190px);display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.whack-grid span{position:relative;aspect-ratio:1;overflow:hidden;border:1px solid rgba(104,208,223,.22);border-radius:50%;background:radial-gradient(circle at 50% 70%,#123a48,#05121a 70%);box-shadow:inset 0 6px 12px rgba(0,0,0,.5)}
+.whack-grid span::after{content:"";position:absolute;left:16%;right:16%;top:30%;height:44%;border-radius:999px;background:#eaf8fb;box-shadow:-9px 6px 0 -3px #eaf8fb,9px 6px 0 -3px #eaf8fb,0 0 14px rgba(104,208,223,.6);transform:translateY(240%)}
+.whack-grid span.up::after{transform:translateY(8%)}
+.whack-grid span.gold::after{background:#ffe08a;box-shadow:-9px 6px 0 -3px #ffe08a,9px 6px 0 -3px #ffe08a,0 0 16px rgba(242,199,92,.8)}
+.whack-grid span.storm::after{background:#4b5a70;box-shadow:-9px 6px 0 -3px #4b5a70,9px 6px 0 -3px #4b5a70,0 0 12px rgba(239,109,104,.45)}
+.whack-hit{position:absolute;z-index:2;right:16%;top:16%;color:#ffe08a;font-size:.9rem;font-weight:900;text-shadow:0 0 12px rgba(242,199,92,.7)}
+
+.reflex-preview{display:grid;place-items:center}
+.reflex-signal{position:relative;z-index:1;width:min(44%,130px);aspect-ratio:1;display:grid;place-items:center;border-radius:50%;color:#f2c75c;background:#2d2a1a;box-shadow:0 0 0 1px rgba(242,199,92,.45),0 0 24px rgba(242,199,92,.18);font-size:.95rem;font-weight:950;letter-spacing:.06em}
+.reflex-signal::before{content:"WAIT"}
+.reflex-signal::after{content:"TAP!";position:absolute;inset:0;display:grid;place-items:center;border-radius:50%;color:#061117;background:var(--mint);box-shadow:0 0 0 1px rgba(139,207,155,.7),0 0 44px rgba(139,207,155,.6)}
+.reflex-ring{position:absolute;width:min(60%,176px);aspect-ratio:1;border:1px solid rgba(139,207,155,.35);border-radius:50%;transform:scale(1.04)}
+.reflex-time{position:absolute;z-index:2;right:12%;bottom:14%;padding:4px 9px;border:1px solid rgba(139,207,155,.35);border-radius:999px;color:#bdf0c7;background:rgba(5,18,24,.8);font-size:.72rem;font-weight:900}
+
+.pulse-preview{display:grid;place-items:center}
+.pulse-pads{position:relative;z-index:1;width:min(52%,156px);aspect-ratio:1;display:grid;grid-template-columns:1fr 1fr;gap:7px;transform:rotate(45deg)}
+.pulse-pads span{border-radius:14px;opacity:.38;box-shadow:inset 0 3px rgba(255,255,255,.18)}
+.pulse-pads span:nth-child(1){background:var(--cyan);border-top-left-radius:50%;opacity:1;filter:drop-shadow(0 0 16px rgba(104,208,223,.75)) brightness(1.12)}
+.pulse-pads span:nth-child(2){background:var(--mint);border-top-right-radius:50%}
+.pulse-pads span:nth-child(3){background:var(--orange);border-bottom-left-radius:50%}
+.pulse-pads span:nth-child(4){background:var(--gold);border-bottom-right-radius:50%}
+.pulse-core{position:absolute;z-index:2;width:min(17%,52px);aspect-ratio:1;display:grid;place-items:center;border:1px solid rgba(104,208,223,.4);border-radius:50%;color:#dff7fb;background:#061117;font-size:.8rem;font-weight:950}
+
+.dodge-preview{background:linear-gradient(180deg,#0b2d3a,#05121a)}
+.dodge-preview i{position:absolute;top:-12%;width:14px;height:14px;border-radius:50%;background:#b9d8e2;box-shadow:0 0 10px rgba(185,216,226,.6)}
+.dodge-preview i:nth-child(1){left:22%;top:30%}
+.dodge-preview i:nth-child(4){left:58%;top:50%;width:10px;height:10px}
+.dodge-preview i:nth-child(5){left:84%;top:12%;width:11px;height:11px}
+.dodge-preview i:nth-child(6){left:12%;top:10%;transform:rotate(-12deg)}
+.dodge-preview i:nth-child(2){left:46%;top:14%;transform:rotate(14deg)}
+.dodge-preview i:nth-child(3){left:72%;top:36%}
+.dodge-preview i.bolt{width:6px;height:38px;border-radius:2px;background:linear-gradient(#fff6c8,var(--gold));box-shadow:0 0 12px rgba(242,199,92,.7)}
+.dodge-preview i.star{width:22px;height:22px;background:var(--gold);clip-path:polygon(50% 0,61% 36%,100% 38%,69% 61%,80% 100%,50% 77%,20% 100%,31% 61%,0 38%,39% 36%);box-shadow:none}
+.dodge-ship{position:absolute;bottom:14%;left:calc(50% - 30px);width:60px;height:28px;border-radius:999px;background:#eaf8fb;box-shadow:-12px 8px 0 -4px #eaf8fb,12px 8px 0 -4px #eaf8fb,0 0 22px rgba(104,208,223,.7)}
+.dodge-ship::after{content:"";position:absolute;left:50%;top:100%;width:16px;height:22px;transform:translateX(-50%);border-radius:0 0 50% 50%;background:linear-gradient(rgba(104,208,223,.55),transparent)}
+
+.slide-preview{display:grid;place-items:center}
+.slide-board{position:relative;z-index:1;width:min(56%,170px);aspect-ratio:1;padding:6px;display:grid;grid-template-columns:repeat(4,1fr);gap:5px;border:1px solid rgba(104,208,223,.28);border-radius:16px;background:#0d2c38;box-shadow:0 16px 34px rgba(0,0,0,.28)}
+.slide-board span{display:grid;place-items:center;border-radius:7px;color:#e9fbff;background:linear-gradient(160deg,#1c5466,#123846);box-shadow:inset 0 2px rgba(255,255,255,.14);font-size:.74rem;font-weight:900}
+.slide-board span.ok{box-shadow:inset 0 0 0 1px rgba(139,207,155,.7),inset 0 2px rgba(255,255,255,.14)}
+.slide-board span.gap{background:transparent;box-shadow:inset 0 0 0 1px rgba(104,208,223,.14)}
+.slide-board span.move{transform:translateX(calc(50% + 2px));box-shadow:inset 0 2px rgba(255,255,255,.14),0 0 14px rgba(104,208,223,.4)}
+
+.card-meta:has(.card-new){justify-content:flex-start}
+.card-new{margin-left:auto;padding:3px 8px;border:1px solid rgba(242,199,92,.4);border-radius:999px;color:#ffe08a;background:rgba(242,199,92,.1);font-size:.62rem;font-weight:900;letter-spacing:.08em}

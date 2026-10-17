@@ -22,7 +22,12 @@ export const ADMIN_JS = String.raw`
     { id: 'memory-match', name: 'Memory Match', category: 'Memory', emoji: '🧠' },
     { id: 'pong', name: 'Pong', category: 'Arcade', emoji: '🏓' },
     { id: 'tic-tac-toe', name: 'Tic-Tac-Toe', category: 'Strategy', emoji: '❌' },
-    { id: 'minesweeper', name: 'Minesweeper', category: 'Strategy', emoji: '💣' }
+    { id: 'minesweeper', name: 'Minesweeper', category: 'Strategy', emoji: '💣' },
+    { id: 'whack-a-cloud', name: 'Whack-a-Cloud', category: 'Arcade', emoji: '🔨' },
+    { id: 'reflex-lab', name: 'Reflex Lab', category: 'Arcade', emoji: '⚡' },
+    { id: 'pattern-pulse', name: 'Pattern Pulse', category: 'Memory', emoji: '🎵' },
+    { id: 'sky-dodge', name: 'Sky Dodge', category: 'Arcade', emoji: '🌩️' },
+    { id: 'slide-puzzle', name: 'Slide Puzzle', category: 'Puzzle', emoji: '🧩' }
   ];
   var ACCENTS = { cyan: '#68d0df', gold: '#f2c75c', mint: '#8bcf9b', orange: '#ed8b45' };
 

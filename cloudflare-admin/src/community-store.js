@@ -11,7 +11,12 @@ const GAME_RULES = Object.freeze({
   'tower-stacker': { label: 'Tower Stacker', direction: 'desc', unit: 'height', min: 0, max: 1000000 },
   'flappy-cloud': { label: 'Flappy Cloud', direction: 'desc', unit: 'points', min: 0, max: 1000000 },
   'cloudlab-clicker': { label: 'CloudLab Clicker', direction: 'desc', unit: 'clouds', min: 0, max: Number.MAX_SAFE_INTEGER },
-  launcher: { label: 'Launcher', direction: 'desc', unit: 'distance', min: 0, max: 1000000000 }
+  launcher: { label: 'Launcher', direction: 'desc', unit: 'distance', min: 0, max: 1000000000 },
+  'whack-a-cloud': { label: 'Whack-a-Cloud', direction: 'desc', unit: 'points', min: 0, max: 1000000 },
+  'reflex-lab': { label: 'Reflex Lab', direction: 'asc', unit: 'ms', min: 90, max: 10000 },
+  'pattern-pulse': { label: 'Pattern Pulse', direction: 'desc', unit: 'rounds', min: 0, max: 10000 },
+  'sky-dodge': { label: 'Sky Dodge', direction: 'desc', unit: 'points', min: 0, max: 1000000000 },
+  'slide-puzzle': { label: 'Slide Puzzle', direction: 'asc', unit: 'seconds', min: 1, max: 86400 }
 });
 
 const GAME_SAVE_SCHEMA_VERSION = 1;
