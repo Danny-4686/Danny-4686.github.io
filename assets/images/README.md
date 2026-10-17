@@ -2,16 +2,23 @@
 
 This folder is the image library for Danny4686.com.
 
-## Active glossy assets
+## Source artwork (owner uploads, kept as masters)
 
-- `cloudlab-logo.png` — CloudLab logo used in the header, projects, and footer.
+- `cloudlab-logo.png` — CloudLab Earth logo (2048 px master; also the social `og:image`).
 - `profile-gloss.webp` — Danny4686 character/profile artwork.
-- `discord-gloss.png` — glossy Discord icon.
-- `github-gloss.webp` — glossy GitHub icon.
-- `tools-gloss.webp` — glossy tools/development icon.
-- `tiktok-gloss.webp` — glossy TikTok icon.
-- `roblox-gloss.png` — glossy Roblox icon.
+- `discord-gloss.png`, `github-gloss.webp`, `tools-gloss.webp`, `tiktok-gloss.webp`, `roblox-gloss.png` — glossy icons.
+- `memory/*.png` — Memory Match, Minesweeper, Snake and launcher artwork.
 
-The website reads these files directly from `assets/images/`. Replacing an image while keeping the same filename updates every place where that asset is used.
+These masters are large. Pages should not link to them directly.
 
-PNG, WebP, JPG, and SVG files are supported. When changing a filename or extension, update the matching path in `index.html`.
+## What pages actually load
+
+- `optimized/` — resized WebP copies of the masters above (`cloudlab-logo-256.webp`, `profile-600.webp`, `*-160.webp` icons, ...).
+- `memory/optimized/` — small WebP card/icon copies (`*-256.webp`, `*-160.webp`, `Earth-256.webp`).
+- `journal/<slug>/` — Journal thumbnails. `*-1080w.webp` files are smaller copies listed in a post's
+  `thumbnailSrcset` in `journal/posts.json`; the full `thumbnail` stays the fallback and the reader-modal image.
+- `projects/<id>/` — Project artwork. `*-960w.webp` files are sized for the homepage project cards
+  (about 458 CSS px wide, so 960 px covers 2x screens).
+
+Rule of thumb: size a served copy to about 2x its largest on-screen CSS size, encode WebP at quality 82-85,
+and keep the original upload next to it.

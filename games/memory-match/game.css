@@ -110,7 +110,7 @@
   content: "";
   width: 61%;
   aspect-ratio: 1;
-  background: url("../../assets/images/memory/Earth.png") center/contain no-repeat;
+  background: url("../../assets/images/memory/optimized/Earth-256.webp") center/contain no-repeat;
   filter: drop-shadow(0 9px 13px rgba(0, 0, 0, .25));
   transition: transform .28s cubic-bezier(.2, .8, .2, 1), filter .28s ease;
 }

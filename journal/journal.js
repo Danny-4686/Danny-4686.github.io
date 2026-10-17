@@ -86,6 +86,12 @@
       if (post.fit === 'contain') image.classList.add('contain-media');
       image.addEventListener('load', () => finishMedia(media, loader), { once: true });
       image.addEventListener('error', () => failMedia(media), { once: true });
+      // Optional smaller copies for the card; the reader pop-up keeps the full thumbnail.
+      const srcset = typeof post.thumbnailSrcset === 'string' ? post.thumbnailSrcset.trim() : '';
+      if (/^\/assets\/images\/journal\/[A-Za-z0-9_./-]+ \d+w(, \/assets\/images\/journal\/[A-Za-z0-9_./-]+ \d+w)*$/.test(srcset) && !srcset.includes('..')) {
+        image.sizes = '(max-width: 900px) calc(100vw - 40px), 530px';
+        image.srcset = srcset;
+      }
       image.src = post.thumbnail;
       media.append(image);
       if (image.complete && image.naturalWidth > 0) queueMicrotask(() => finishMedia(media, loader));
