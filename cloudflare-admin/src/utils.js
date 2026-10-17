@@ -2,6 +2,8 @@ export const SESSION_COOKIE = 'cloudlab_admin_session';
 export const STATE_COOKIE = 'cloudlab_oauth_state';
 export const CSRF_COOKIE = 'cloudlab_admin_csrf';
 export const SESSION_TTL = 8 * 60 * 60;
+// Policy for the standalone sign-in and sign-in error pages; the dashboard passes its own.
+export const LOGIN_PAGE_CSP = "default-src 'none'; style-src 'unsafe-inline'; img-src https://danny4686.com; font-src https://danny4686.com; form-action 'self' https://github.com; frame-ancestors 'none'; base-uri 'none'";
 
 export function html(body, status = 200, headers = {}) {
   return new Response(body, {
@@ -13,6 +15,8 @@ export function html(body, status = 200, headers = {}) {
       'X-Frame-Options': 'DENY',
       'X-Robots-Tag': 'noindex, nofollow, noarchive',
       'Referrer-Policy': 'no-referrer',
+      'Content-Security-Policy': LOGIN_PAGE_CSP,
+      'Cross-Origin-Opener-Policy': 'same-origin',
       ...headers
     }
   });

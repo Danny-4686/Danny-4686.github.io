@@ -1,3 +1,5 @@
+const FALLBACK_CSP = "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'";
+
 export function redirectToHttps(request) {
   const url = new URL(request.url);
   if (url.protocol === 'https:') return null;
@@ -22,6 +24,9 @@ export function addTransportSecurity(response) {
   if (!headers.has('Permissions-Policy')) {
     headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=()');
   }
+  // JSON, avatars and other non-page responses never need to run anything if opened directly.
+  // Pages set their own policy (see html() in utils.js), which is preserved here.
+  if (!headers.has('Content-Security-Policy')) headers.set('Content-Security-Policy', FALLBACK_CSP);
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,

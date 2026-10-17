@@ -116,7 +116,8 @@ async function verifySessionToken(token, secret) {
     );
     if (!valid) return null;
     const payload = JSON.parse(decoder.decode(base64UrlDecode(encodedPayload)));
-    if (!payload?.uid || !payload?.username || !payload?.csrf || payload.exp < Math.floor(Date.now() / 1000)) return null;
+    if (!payload?.uid || !payload?.username || !payload?.csrf) return null;
+    if (!Number.isSafeInteger(payload.exp) || payload.exp < Math.floor(Date.now() / 1000)) return null;
     return payload;
   } catch {
     return null;
@@ -172,10 +173,20 @@ function storeFetch(env, path, init = {}) {
   return communityStub(env).fetch(`https://community.internal${path}`, init);
 }
 
+const MAX_BODY_BYTES = 300000;
+
+// Content-Length is optional (chunked uploads), so the size is checked on the bytes actually read.
 async function readBody(request) {
   const contentLength = Number(request.headers.get('Content-Length') || 0);
-  if (contentLength > 300000) throw new Error('Request too large.');
-  return request.json().catch(() => ({}));
+  if (contentLength > MAX_BODY_BYTES) throw new Error('Request too large.');
+  const text = await request.text();
+  if (encoder.encode(text).byteLength > MAX_BODY_BYTES) throw new Error('Request too large.');
+  try {
+    const body = JSON.parse(text);
+    return body && typeof body === 'object' && !Array.isArray(body) ? body : {};
+  } catch {
+    return {};
+  }
 }
 
 async function readGameSaveBody(request) {

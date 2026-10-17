@@ -112,7 +112,9 @@ export async function getFreshAbyssConfig(env) {
 
   const media = normalizeMediaSource(stored.media || stored.image) || INITIAL_MEDIA;
   const mediaType = normalizeMediaType(stored.mediaType) || detectMediaType(media);
-  const managedMedia = String(stored.managedMedia || stored.managedImage || '').replace(/^\/+/, '');
+  // Only a file inside the Fresh Abyss media folder may later be deleted as "managed" media.
+  const storedManaged = String(stored.managedMedia || stored.managedImage || '').replace(/^\/+/, '');
+  const managedMedia = storedManaged.startsWith(`${MEDIA_FOLDER}/`) && !storedManaged.includes('..') ? storedManaged : '';
 
   return {
     enabled: stored.enabled !== false,

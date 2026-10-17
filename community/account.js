@@ -44,7 +44,10 @@
     const next = new URLSearchParams(location.search).get('next') || '';
     try {
       const url = new URL(next, location.origin);
-      return url.origin === location.origin && url.pathname.startsWith('/') ? `${url.pathname}${url.search}${url.hash}` : '/account/';
+      // A same-origin URL can still have a path like "//evil.example", which the browser
+      // would treat as a link to another site once it is used on its own.
+      const sameSite = url.origin === location.origin && url.pathname.startsWith('/') && !url.pathname.startsWith('//');
+      return sameSite ? `${url.pathname}${url.search}${url.hash}` : '/account/';
     } catch {
       return '/account/';
     }
@@ -375,7 +378,20 @@
         data.records.forEach((record) => {
           const item = document.createElement('article');
           item.className = 'record-card';
-          item.innerHTML = `<div class="record-card-top"><strong>${GAME_LABELS[record.gameId] || record.gameId}</strong><span class="record-rank">PERSONAL BEST</span></div><div class="record-value">${formatRecord(record)}</div><small>Updated ${new Date(record.updatedAt).toLocaleDateString()}</small>`;
+          const top = document.createElement('div');
+          top.className = 'record-card-top';
+          const label = document.createElement('strong');
+          label.textContent = GAME_LABELS[record.gameId] || String(record.gameId || '');
+          const rank = document.createElement('span');
+          rank.className = 'record-rank';
+          rank.textContent = 'PERSONAL BEST';
+          top.append(label, rank);
+          const value = document.createElement('div');
+          value.className = 'record-value';
+          value.textContent = formatRecord(record);
+          const updated = document.createElement('small');
+          updated.textContent = `Updated ${new Date(record.updatedAt).toLocaleDateString()}`;
+          item.append(top, value, updated);
           grid.append(item);
         });
       }

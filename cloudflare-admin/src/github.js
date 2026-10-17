@@ -14,6 +14,14 @@ function api(env, path, options = {}) {
   });
 }
 
+// Every path the admin writes is built by the Worker, but refuse anything that could step
+// outside the site or into git metadata if a caller ever passes something unexpected.
+export function isSafeRepositoryPath(path) {
+  const value = String(path || '');
+  if (!value || value.length > 400 || value.includes('..') || /[\\\u0000-\u001f\u007f]/.test(value)) return false;
+  return value.split('/').every((segment) => segment && segment !== '.' && segment.toLowerCase() !== '.git');
+}
+
 export async function readJsonFile(env, path, fallback = null) {
   const owner = encodeURIComponent(env.GITHUB_OWNER);
   const repo = encodeURIComponent(env.GITHUB_REPO);
@@ -47,7 +55,7 @@ export async function commitFiles(env, files, message) {
   let verify = null;
   for (const file of files) {
     const path = String(file.path || '').replace(/^\/+/, '');
-    if (!path || path.includes('..')) throw new Error('Invalid repository path.');
+    if (!isSafeRepositoryPath(path)) throw new Error('Invalid repository path.');
 
     if (file.delete) {
       tree.push({ path, mode: '100644', type: 'blob', sha: null });
