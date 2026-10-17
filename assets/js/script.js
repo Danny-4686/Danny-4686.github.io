@@ -148,11 +148,6 @@ function attachSpotlight(element) {
 }
 
 if (!reducedMotion) {
-  window.addEventListener('pointermove', (event) => {
-    document.documentElement.style.setProperty('--mouse-x', `${(event.clientX / window.innerWidth) * 100}%`);
-    document.documentElement.style.setProperty('--mouse-y', `${(event.clientY / window.innerHeight) * 100}%`);
-  }, { passive: true });
-
   document.querySelectorAll(
     '.hero-portrait, .studio-strip-inner, .gloss-card, .project-card, .connect-card, .destination-card'
   ).forEach(attachSpotlight);
@@ -178,7 +173,7 @@ function ensureManagedProjectStyles() {
   if (document.querySelector('link[data-managed-projects]')) return;
   const link = document.createElement('link');
   link.rel = 'stylesheet';
-  link.href = '/assets/css/project-managed.css?v=20261014.1';
+  link.href = '/assets/css/project-managed.css?v=20261017.1';
   link.dataset.managedProjects = 'true';
   document.head.append(link);
 }
@@ -203,11 +198,14 @@ function applyManagedProfileImage(settings) {
   if (!path) return;
   const stamp = typeof settings?.updatedAt === 'string' && settings.updatedAt ? `?v=${encodeURIComponent(settings.updatedAt)}` : '';
   document.querySelectorAll('.hero-profile:not(.hero-roblox-render), .connect-identity img').forEach((image) => {
+    // Uploaded artwork always gets a new file name, so an image already showing this
+    // file is current. Re-pointing it would download the hero (LCP) image twice.
+    if (new URL(image.getAttribute('src'), document.baseURI).pathname === path) return;
     image.src = `${path}${stamp}`;
   });
 }
 
-function createProjectMedia(project, index = 0) {
+function createProjectMedia(project) {
   const media = document.createElement('div');
   media.className = 'managed-project-media';
   media.dataset.fit = project.fit === 'contain' ? 'contain' : 'cover';
@@ -216,8 +214,9 @@ function createProjectMedia(project, index = 0) {
     const image = document.createElement('img');
     image.src = imagePath;
     image.alt = project.imageAlt || `${project.title} project artwork`;
-    // The first few slides are visible or peeking at once, so they load up front.
-    image.loading = index < 3 ? 'eager' : 'lazy';
+    // The Projects section sits well below the fold, so artwork waits until it is
+    // near the viewport (setupProjectSlider then loads the first slides together).
+    image.loading = 'lazy';
     image.decoding = 'async';
     image.className = project.fit === 'contain' ? 'is-contain' : '';
     media.append(image);
@@ -251,7 +250,7 @@ function makeProjectCard(project, index) {
     });
   }
 
-  card.append(createProjectMedia(project, index));
+  card.append(createProjectMedia(project));
 
   const content = document.createElement('div');
   content.className = 'project-content managed-project-content';
@@ -322,6 +321,18 @@ function setupProjectSlider(track) {
       rowObserver.disconnect();
     }, { threshold: 0, rootMargin: '0px 0px -8% 0px' });
     rowObserver.observe(track);
+  }
+  // Native lazy loading only sees slides inside the row's visible width, so once the
+  // row nears the screen the first slides (visible or peeking) all load together.
+  if ('IntersectionObserver' in window) {
+    const nearObserver = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return;
+      nearObserver.disconnect();
+      track.querySelectorAll('.managed-project-media img').forEach((image, index) => {
+        if (index < 3) image.loading = 'eager';
+      });
+    }, { rootMargin: '600px 0px' });
+    nearObserver.observe(track);
   }
   if (track.dataset.slider === 'true') {
     track.dispatchEvent(new Event('scroll'));
@@ -502,14 +513,211 @@ async function loadManagedProjects() {
   } finally {
     section.removeAttribute('aria-busy');
     requestNavigationUpdate();
+    // Cards render after the initial #hash scroll, so let it re-align to its target.
+    document.dispatchEvent(new Event('cloudlab:layoutchange'));
   }
 }
 
-fetch('/site-settings.json', { cache: 'no-store' })
-  .then((response) => response.ok ? response.json() : Promise.reject(new Error(`Settings returned ${response.status}`)))
-  .then(applyManagedProfileImage)
-  .catch(() => {});
+// One request serves both the managed profile image and the portrait view below.
+const siteSettings = fetch('/site-settings.json', { cache: 'no-store' })
+  .then((response) => response.ok ? response.json() : Promise.reject(new Error(`Settings returned ${response.status}`)));
+siteSettings.then(applyManagedProfileImage).catch(() => {});
 loadManagedProjects();
 
 const year = document.getElementById('year');
 if (year) year.textContent = new Date().getFullYear();
+
+// Section links: offset hash scrolling for the sticky header (formerly hash-navigation.js).
+(() => {
+  const header = document.querySelector('.site-header');
+  if (!header) return;
+
+  const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const nav = header.querySelector('.nav-links');
+  let resizeFrame = 0;
+  let allowInitialCorrection = true;
+
+  function headerOffset() {
+    const rect = header.getBoundingClientRect();
+    const top = Number.parseFloat(getComputedStyle(header).top) || 0;
+    return Math.max(0, Math.ceil(rect.height + Math.max(0, top) + 18));
+  }
+
+  function syncHeaderOffset() {
+    document.documentElement.style.setProperty('--site-header-offset', `${headerOffset()}px`);
+  }
+
+  function decodeHash(hash) {
+    if (!hash || hash === '#') return '';
+    try { return decodeURIComponent(hash.slice(1)); } catch { return hash.slice(1); }
+  }
+
+  function targetForHash(hash) {
+    const id = decodeHash(hash);
+    if (!id) return null;
+    return document.getElementById(id);
+  }
+
+  function targetContentTop(target) {
+    const rect = target.getBoundingClientRect();
+    let top = window.scrollY + rect.top;
+    if (target.matches('section.section-shell')) {
+      top += Number.parseFloat(getComputedStyle(target).paddingTop) || 0;
+    }
+    return top;
+  }
+
+  function keepNavLinkVisible(link) {
+    if (!nav || !link || nav.scrollWidth <= nav.clientWidth) return;
+    const left = link.offsetLeft - ((nav.clientWidth - link.offsetWidth) / 2);
+    nav.scrollTo({ left: Math.max(0, left), behavior: reducedMotion ? 'auto' : 'smooth' });
+  }
+
+  function scrollToHash(hash, behavior = reducedMotion ? 'auto' : 'smooth') {
+    const target = targetForHash(hash);
+    if (!target) return false;
+    syncHeaderOffset();
+    const offset = headerOffset();
+    const top = Math.max(0, targetContentTop(target) - offset);
+    window.scrollTo({ top, left: 0, behavior });
+    return true;
+  }
+
+  function writeHash(hash) {
+    if (!hash) return;
+    const next = `${window.location.pathname}${window.location.search}${hash}`;
+    if (window.location.hash === hash) window.history.replaceState(null, '', next);
+    else window.history.pushState(null, '', next);
+  }
+
+  document.addEventListener('click', (event) => {
+    if (event.defaultPrevented || event.button > 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    const link = event.target.closest('a[href^="#"]');
+    if (!link) return;
+    const hash = link.getAttribute('href');
+    if (!targetForHash(hash)) return;
+
+    allowInitialCorrection = false;
+    event.preventDefault();
+    writeHash(hash);
+    scrollToHash(hash);
+    keepNavLinkVisible(link.closest('.nav-links') ? link : nav?.querySelector(`a[href="${hash}"]`));
+  }, true);
+
+  window.addEventListener('hashchange', () => {
+    allowInitialCorrection = false;
+    if (window.location.hash) scrollToHash(window.location.hash);
+  });
+
+  function correctInitialHash() {
+    syncHeaderOffset();
+    if (!allowInitialCorrection || !window.location.hash) return;
+    scrollToHash(window.location.hash, 'auto');
+    const active = nav?.querySelector(`a[href="${window.location.hash}"]`);
+    keepNavLinkVisible(active);
+  }
+
+  ['pointerdown', 'touchstart', 'wheel', 'keydown'].forEach((type) => {
+    window.addEventListener(type, () => { allowInitialCorrection = false; }, { passive: true, once: true });
+  });
+
+  syncHeaderOffset();
+  requestAnimationFrame(() => requestAnimationFrame(correctInitialHash));
+  window.addEventListener('load', () => {
+    correctInitialHash();
+    window.setTimeout(correctInitialHash, 180);
+  }, { once: true });
+  document.addEventListener('cloudlab:layoutchange', () => requestAnimationFrame(correctInitialHash));
+
+  if (document.fonts?.ready) {
+    document.fonts.ready.then(() => {
+      syncHeaderOffset();
+      correctInitialHash();
+    }).catch(() => {});
+  }
+
+  if ('ResizeObserver' in window) {
+    const observer = new ResizeObserver(() => syncHeaderOffset());
+    observer.observe(header);
+  }
+
+  window.addEventListener('resize', () => {
+    if (resizeFrame) cancelAnimationFrame(resizeFrame);
+    resizeFrame = requestAnimationFrame(() => {
+      resizeFrame = 0;
+      syncHeaderOffset();
+    });
+  }, { passive: true });
+})();
+
+// Homepage portrait: shows either the profile artwork or Danny4686's live Roblox
+// avatar render, whichever is chosen in the admin panel (site-settings.json
+// "profileView"). api.danny4686.com looks up the current render (Roblox's API
+// doesn't allow browser requests) and re-checks Roblox every few minutes, so
+// avatar changes show up on their own.
+(() => {
+  const portrait = document.querySelector('.hero-portrait');
+  const artwork = portrait?.querySelector('.hero-profile');
+  if (!portrait || !artwork) return;
+
+  const API = 'https://api.danny4686.com/v1/roblox-avatar';
+  const REFRESH_MS = 5 * 60 * 1000;
+
+  const render = document.createElement('img');
+  render.className = 'hero-profile hero-roblox-render';
+  render.alt = 'Danny4686’s current Roblox avatar';
+  render.width = 720;
+  render.height = 720;
+  render.decoding = 'async';
+  render.hidden = true;
+  artwork.after(render);
+
+  let renderUrl = '';
+
+  async function latestRenderUrl() {
+    const response = await fetch(API, { credentials: 'omit' });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.available || !data.imageUrl) throw new Error(data.error || `Avatar ${data.state || 'unavailable'}`);
+    return data.imageUrl;
+  }
+
+  // Swap only once the new image has loaded, so the portrait never flashes empty.
+  function preload(url) {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(url);
+      image.onerror = () => reject(new Error('Avatar image failed to load'));
+      image.src = url;
+    });
+  }
+
+  async function refresh() {
+    const url = await latestRenderUrl();
+    if (url !== renderUrl) {
+      await preload(url);
+      renderUrl = url;
+      render.src = url;
+    }
+  }
+
+  async function showRoblox() {
+    try {
+      await refresh();
+      artwork.hidden = true;
+      render.hidden = false;
+      portrait.dataset.portraitView = 'roblox';
+      window.setInterval(() => {
+        if (!document.hidden) refresh().catch(() => {});
+      }, REFRESH_MS);
+    } catch (error) {
+      // The artwork is already showing, so visitors never see a gap.
+      console.warn('Roblox avatar unavailable; showing the profile image.', error);
+    }
+  }
+
+  siteSettings
+    .then((settings) => {
+      if (settings?.profileView === 'roblox') showRoblox();
+    })
+    .catch(() => {});
+})();

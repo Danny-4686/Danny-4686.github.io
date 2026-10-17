@@ -31,24 +31,22 @@
   <link rel="manifest" href="/site.webmanifest">
   <link rel="preload" as="image" href="/assets/images/optimized/cloudlab-logo-256.webp" type="image/webp">
   <link rel="preload" href="/assets/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/assets/css/site-loader.css?v=20260808">
   <script src="/assets/js/site-loader.js?v=20260808"></script>
-  <link rel="stylesheet" href="/assets/css/styles.css?v=20260808">
-  <link rel="stylesheet" href="/assets/css/home-additions.css?v=20260808">
+  <link rel="stylesheet" href="/assets/css/site-loader.css?v=20260808">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=20261017.1">
   <link rel="stylesheet" href="/community/community.css?v=20260810.2">
-  <link rel="stylesheet" href="/assets/css/home-mobile-nav.css?v=20260811.2">
-  <link rel="stylesheet" href="/assets/css/project-managed.css?v=20261014.1" data-managed-projects="true">
+  <link rel="stylesheet" href="/assets/css/project-managed.css?v=20261017.1" data-managed-projects="true">
   <link rel="stylesheet" href="/assets/css/site-quality.css?v=20260811.2">
-  <link rel="stylesheet" href="/assets/css/roblox-avatar.css?v=20261014.4">
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"CloudLab","alternateName":"Danny4686","url":"https://danny4686.com/","description":"Games, projects, journal updates, and community experiences from Danny4686 and CloudLab."}</script>
   <link rel="stylesheet" href="/assets/css/premium.css?v=20261015.1">
+  <script src="/assets/js/script.js?v=20261017.1" defer></script>
+  <script src="/community/home-client.js?v=20260810.2" defer></script>
   <script src="/assets/js/premium.js?v=20261015.1" defer></script>
 </head>
 <body id="top">
   <div class="background-glow glow-blue" aria-hidden="true"></div>
   <div class="background-glow glow-gold" aria-hidden="true"></div>
   <div class="background-glow glow-red" aria-hidden="true"></div>
-  <div class="pointer-light" aria-hidden="true"></div>
 
   <header class="site-header">
     <a class="brand" href="#top" aria-label="Danny4686 home">
@@ -89,7 +87,7 @@
 
       <aside class="hero-portrait reveal" aria-label="Danny4686 profile artwork">
         <div class="portrait-ring" aria-hidden="true"></div>
-        <img class="hero-profile" src="assets/images/optimized/profile-600.webp" width="600" height="900" alt="Danny4686 profile character">
+        <img class="hero-profile" src="assets/images/optimized/profile-600.webp" width="600" height="900" fetchpriority="high" alt="Danny4686 profile character">
         <div class="profile-label">
           <span class="status-dot" aria-hidden="true"></span>
           <div>
@@ -157,7 +155,7 @@
 
       <div class="about-grid">
         <article class="gloss-card reveal">
-          <div class="card-icon"><img src="assets/images/optimized/tools-192.webp" width="192" height="192" alt="Development tools"></div>
+          <div class="card-icon"><img src="assets/images/optimized/tools-192.webp" width="192" height="192" loading="lazy" decoding="async" alt="Development tools"></div>
           <h3>Build and improve</h3>
           <p>I design systems, interfaces, and tools with care, refining each one thoughtfully until every part feels intentional.</p>
         </article>
@@ -169,7 +167,7 @@
         </article>
 
         <article class="gloss-card reveal">
-          <div class="card-icon"><img src="assets/images/optimized/discord-160.webp" width="160" height="160" alt="Discord"></div>
+          <div class="card-icon"><img src="assets/images/optimized/discord-160.webp" width="160" height="160" loading="lazy" decoding="async" alt="Discord"></div>
           <h3>Community</h3>
           <p>Every space I create, I build like I'm inviting someone into my own home, welcoming, easy to understand, and worth staying for.</p>
         </article>
@@ -216,10 +214,5 @@
     </div>
     <p>© <span id="year"></span> Danny4686.</p>
   </footer>
-
-  <script src="/assets/js/script.js?v=20261015.1"></script>
-  <script src="/assets/js/hash-navigation.js?v=20260811.2"></script>
-  <script src="/community/home-client.js?v=20260810.2"></script>
-  <script src="/assets/js/roblox-avatar.js?v=20261014.4"></script>
 </body>
 </html>

@@ -81,6 +81,16 @@ for (const page of filesUnder(root, '.html')) {
   }
 }
 
+// Homepage load budget: only the gate and the intro loader may block the parser
+// (both must run before first paint); every other script is deferred.
+const homePage = join(root, 'index.html');
+const homeHtml = readFileSync(homePage, 'utf8');
+for (const tag of homeHtml.match(/<script\b[^>]*\bsrc=["'][^"']+["'][^>]*>/gi) || []) {
+  if (tag.includes(SITE_GATE_PATH) || tag.includes('/assets/js/site-loader.js')) continue;
+  if (!/\s(?:defer|async)\b/i.test(tag) && !/type=["']module["']/i.test(tag)) fail(homePage, `parser-blocking script ${tag}; add defer`);
+}
+if (!/<img class="hero-profile"[^>]*fetchpriority="high"/.test(homeHtml)) fail(homePage, 'the hero portrait (the LCP image) must keep fetchpriority="high"');
+
 for (const entry of readdirSync(root)) {
   const path = join(root, entry);
   if (statSync(path).isFile() && /\.(?:css|js)$/i.test(entry)) {
