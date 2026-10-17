@@ -3,6 +3,7 @@
   if (!canvas) return;
 
   const ctx = canvas.getContext('2d');
+  const stage = canvas.parentElement;
   const playerScoreEl = document.getElementById('playerScore');
   const cpuScoreEl = document.getElementById('cpuScore');
   const bestRallyEl = document.getElementById('bestRally');
@@ -14,6 +15,25 @@
   const restartButton = document.getElementById('restartButton');
   const difficulty = document.getElementById('difficulty');
 
+  // Logical board size. Width is fixed; the board gets taller on narrow portrait screens.
+  const W = 760;
+  const WIDE_H = 460;
+  const TALL_H = 640;
+  const MAX_BALL_SPEED = 760;
+  const SERVE_DELAY = 0.7;
+  let H = WIDE_H;
+
+  const touchUI = window.matchMedia?.('(pointer: coarse)').matches || false;
+  const copy = touchUI ? {
+    ready: 'Tap Start Match or drag on the board to move your paddle. First to seven wins.',
+    paused: 'Tap Resume to continue the match.',
+    away: 'The match paused while this tab was away. Tap Resume to continue.'
+  } : {
+    ready: 'Press Start, move with W/S or the arrow keys, or drag on the board.',
+    paused: 'Press Space or the Pause button to continue.',
+    away: 'The match paused while this tab was away. Press Space to continue.'
+  };
+
   const storageKey = 'cloudlab-pong-best-rally';
   let bestRally = 0;
   try {
@@ -22,40 +42,54 @@
   } catch (_) {}
   let state = 'idle';
   let lastTime = performance.now();
-  let keys = new Set();
+  const keys = new Set();
   let pointerActive = false;
+  let serveTimer = 0;
+  let serveDirection = 1;
 
-  const player = { x: 30, y: 170, width: 16, height: 120, speed: 430 };
-  const cpu = { x: canvas.width - 46, y: 170, width: 16, height: 120 };
-  const ball = { x: canvas.width / 2, y: canvas.height / 2, radius: 11, vx: 350, vy: 145 };
+  const player = { x: 30, y: (H - 120) / 2, width: 16, height: 120, speed: 430 };
+  const cpu = { x: W - 46, y: (H - 120) / 2, width: 16, height: 120 };
+  const ball = { x: W / 2, y: H / 2, radius: 11, vx: 350, vy: 145 };
   let playerScore = 0;
   let cpuScore = 0;
   let rally = 0;
 
   bestRallyEl.textContent = String(bestRally);
 
+  function isTypingTarget(target) {
+    return target instanceof Element && Boolean(target.closest('input, select, textarea, [contenteditable="true"]'));
+  }
+
+  function isActivatableTarget(target) {
+    return target instanceof Element && Boolean(target.closest('a[href], button, summary'));
+  }
+
   function resetBall(direction = Math.random() > 0.5 ? 1 : -1) {
-    ball.x = canvas.width / 2;
-    ball.y = canvas.height / 2;
+    ball.x = W / 2;
+    ball.y = H / 2;
     const angle = (Math.random() * 0.7 - 0.35);
     const speed = 360;
     ball.vx = Math.cos(angle) * speed * direction;
     ball.vy = Math.sin(angle) * speed;
+    serveDirection = direction;
+    serveTimer = SERVE_DELAY;
     rally = 0;
   }
 
   function resetMatch() {
     playerScore = 0;
     cpuScore = 0;
-    player.y = (canvas.height - player.height) / 2;
-    cpu.y = (canvas.height - cpu.height) / 2;
+    player.y = (H - player.height) / 2;
+    cpu.y = (H - cpu.height) / 2;
     playerScoreEl.textContent = '0';
     cpuScoreEl.textContent = '0';
     resetBall(1);
   }
 
   function startMatch() {
-    if (state === 'idle' || state === 'over') resetMatch();
+    if (state === 'running') return;
+    if (state === 'paused') { togglePause(); return; }
+    resetMatch();
     state = 'running';
     hideMessage();
     startButton.textContent = 'Playing';
@@ -63,12 +97,18 @@
     lastTime = performance.now();
   }
 
+  function pauseMatch(text = copy.paused) {
+    if (state !== 'running') return;
+    state = 'paused';
+    keys.clear();
+    showMessage('Paused', text);
+    pauseButton.textContent = 'Resume';
+    startButton.textContent = 'Start Match';
+  }
+
   function togglePause() {
     if (state === 'running') {
-      state = 'paused';
-      showMessage('Paused', 'Press Space or the Pause button to continue.');
-      pauseButton.textContent = 'Resume';
-      startButton.textContent = 'Start Match';
+      pauseMatch();
     } else if (state === 'paused') {
       state = 'running';
       hideMessage();
@@ -90,6 +130,7 @@
 
   function endMatch(winner) {
     state = 'over';
+    keys.clear();
     showMessage(winner === 'player' ? 'You win!' : 'CPU wins', `Final score: ${playerScore}–${cpuScore}. Start a new match whenever you are ready.`);
     startButton.textContent = 'Start Match';
     pauseButton.textContent = 'Pause';
@@ -113,7 +154,7 @@
   }
 
   function clampPaddle(paddle) {
-    paddle.y = Math.max(12, Math.min(canvas.height - paddle.height - 12, paddle.y));
+    paddle.y = Math.max(12, Math.min(H - paddle.height - 12, paddle.y));
   }
 
   function update(dt) {
@@ -124,44 +165,71 @@
     clampPaddle(player);
 
     const aiStrength = Number.parseFloat(difficulty.value);
-    const targetY = ball.y - cpu.height / 2;
+    const targetY = (serveTimer > 0 ? H / 2 : ball.y) - cpu.height / 2;
     cpu.y += (targetY - cpu.y) * Math.min(1, aiStrength * dt * 60);
     clampPaddle(cpu);
 
-    ball.x += ball.vx * dt;
-    ball.y += ball.vy * dt;
-
-    if (ball.y - ball.radius <= 0 && ball.vy < 0) {
-      ball.y = ball.radius;
-      ball.vy *= -1;
-    }
-    if (ball.y + ball.radius >= canvas.height && ball.vy > 0) {
-      ball.y = canvas.height - ball.radius;
-      ball.vy *= -1;
+    if (serveTimer > 0) {
+      serveTimer = Math.max(0, serveTimer - dt);
+      return;
     }
 
-    collideWithPaddle(player, 1);
-    collideWithPaddle(cpu, -1);
+    // Move in small sub-steps so a fast ball can never skip past a paddle or wall.
+    const distance = Math.hypot(ball.vx, ball.vy) * dt;
+    const steps = Math.max(1, Math.ceil(distance / (ball.radius * 0.5)));
+    const stepDt = dt / steps;
+    for (let i = 0; i < steps; i += 1) {
+      const previousX = ball.x;
+      const previousY = ball.y;
+      ball.x += ball.vx * stepDt;
+      ball.y += ball.vy * stepDt;
 
-    if (ball.x + ball.radius < 0) scorePoint('cpu');
-    if (ball.x - ball.radius > canvas.width) scorePoint('player');
+      if (ball.y - ball.radius <= 0 && ball.vy < 0) {
+        ball.y = ball.radius;
+        ball.vy *= -1;
+      }
+      if (ball.y + ball.radius >= H && ball.vy > 0) {
+        ball.y = H - ball.radius;
+        ball.vy *= -1;
+      }
+
+      if (collideWithPaddle(player, 1, previousX, previousY) || collideWithPaddle(cpu, -1, previousX, previousY)) continue;
+
+      if (ball.x + ball.radius < 0) { scorePoint('cpu'); return; }
+      if (ball.x - ball.radius > W) { scorePoint('player'); return; }
+    }
   }
 
-  function collideWithPaddle(paddle, direction) {
-    const touchingX = direction === 1
-      ? ball.x - ball.radius <= paddle.x + paddle.width && ball.x > paddle.x
-      : ball.x + ball.radius >= paddle.x && ball.x < paddle.x + paddle.width;
-    const touchingY = ball.y + ball.radius >= paddle.y && ball.y - ball.radius <= paddle.y + paddle.height;
+  function collideWithPaddle(paddle, direction, previousX, previousY) {
     const movingToward = direction === 1 ? ball.vx < 0 : ball.vx > 0;
+    if (!movingToward) return false;
 
-    if (!touchingX || !touchingY || !movingToward) return;
+    // Swept test against the paddle's front face.
+    const faceX = direction === 1 ? paddle.x + paddle.width : paddle.x;
+    const edgeBefore = direction === 1 ? previousX - ball.radius : previousX + ball.radius;
+    const edgeAfter = direction === 1 ? ball.x - ball.radius : ball.x + ball.radius;
+    const crossed = direction === 1 ? edgeBefore >= faceX && edgeAfter <= faceX : edgeBefore <= faceX && edgeAfter >= faceX;
+    let hitY = null;
+    if (crossed) {
+      const t = edgeBefore === edgeAfter ? 0 : (edgeBefore - faceX) / (edgeBefore - edgeAfter);
+      hitY = previousY + (ball.y - previousY) * t;
+    } else {
+      // Fallback overlap test (e.g. the paddle moved into the ball).
+      const overlapX = direction === 1
+        ? ball.x - ball.radius <= paddle.x + paddle.width && ball.x + ball.radius >= paddle.x
+        : ball.x + ball.radius >= paddle.x && ball.x - ball.radius <= paddle.x + paddle.width;
+      if (overlapX) hitY = ball.y;
+    }
+    if (hitY === null) return false;
+    if (hitY + ball.radius < paddle.y || hitY - ball.radius > paddle.y + paddle.height) return false;
 
-    const offset = (ball.y - (paddle.y + paddle.height / 2)) / (paddle.height / 2);
-    const speed = Math.min(760, Math.hypot(ball.vx, ball.vy) * 1.045);
+    const offset = Math.max(-1, Math.min(1, (hitY - (paddle.y + paddle.height / 2)) / (paddle.height / 2)));
+    const speed = Math.min(MAX_BALL_SPEED, Math.hypot(ball.vx, ball.vy) * 1.045);
     const angle = offset * 0.9;
     ball.vx = Math.cos(angle) * speed * direction;
     ball.vy = Math.sin(angle) * speed;
     ball.x = direction === 1 ? paddle.x + paddle.width + ball.radius : paddle.x - ball.radius;
+    ball.y = hitY;
 
     rally += 1;
     if (rally > bestRally) {
@@ -169,6 +237,7 @@
       bestRallyEl.textContent = String(bestRally);
       try { localStorage.setItem(storageKey, String(bestRally)); } catch (_) {}
     }
+    return true;
   }
 
   function drawRoundedRect(x, y, width, height, radius, fill) {
@@ -178,19 +247,44 @@
     ctx.fill();
   }
 
+  function drawServeCue() {
+    if (serveTimer <= 0 || state !== 'running') return;
+    const progress = 1 - serveTimer / SERVE_DELAY;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(242,199,92,.85)';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, ball.radius + 11, -Math.PI / 2, -Math.PI / 2 + progress * Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(242,199,92,.75)';
+    const tipX = ball.x + serveDirection * (ball.radius + 34);
+    ctx.beginPath();
+    ctx.moveTo(tipX, ball.y);
+    ctx.lineTo(tipX - serveDirection * 12, ball.y - 8);
+    ctx.lineTo(tipX - serveDirection * 12, ball.y + 8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.font = '800 16px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(214,246,250,.85)';
+    ctx.fillText('SERVE', ball.x, ball.y - ball.radius - 22);
+    ctx.restore();
+  }
+
   function draw() {
-    const bg = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    const bg = ctx.createLinearGradient(0, 0, W, H);
     bg.addColorStop(0, '#0a2430');
     bg.addColorStop(1, '#061117');
     ctx.fillStyle = bg;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, W, H);
 
     ctx.strokeStyle = 'rgba(104,208,223,.16)';
     ctx.lineWidth = 4;
     ctx.setLineDash([13, 18]);
     ctx.beginPath();
-    ctx.moveTo(canvas.width / 2, 20);
-    ctx.lineTo(canvas.width / 2, canvas.height - 20);
+    ctx.moveTo(W / 2, 20);
+    ctx.lineTo(W / 2, H - 20);
     ctx.stroke();
     ctx.setLineDash([]);
 
@@ -210,6 +304,32 @@
     ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowBlur = 0;
+    drawServeCue();
+  }
+
+  function fitCanvas() {
+    const cssWidth = canvas.getBoundingClientRect().width || W;
+    const nextH = cssWidth < 560 && window.innerHeight > window.innerWidth ? TALL_H : WIDE_H;
+    if (nextH !== H) {
+      const ratio = nextH / H;
+      H = nextH;
+      player.y *= ratio;
+      cpu.y *= ratio;
+      ball.y = Math.max(ball.radius, Math.min(H - ball.radius, ball.y * ratio));
+      clampPaddle(player);
+      clampPaddle(cpu);
+      canvas.style.aspectRatio = `${W} / ${H}`;
+    }
+    const dpr = Math.min(2.5, window.devicePixelRatio || 1);
+    const scale = Math.max(0.25, (cssWidth * dpr) / W);
+    const backingWidth = Math.round(W * scale);
+    const backingHeight = Math.round(H * scale);
+    if (canvas.width !== backingWidth || canvas.height !== backingHeight) {
+      canvas.width = backingWidth;
+      canvas.height = backingHeight;
+    }
+    ctx.setTransform(backingWidth / W, 0, 0, backingHeight / H, 0, 0);
+    draw();
   }
 
   function frame(time) {
@@ -222,29 +342,43 @@
 
   function movePlayerToPointer(event) {
     const rect = canvas.getBoundingClientRect();
-    const y = (event.clientY - rect.top) * (canvas.height / rect.height);
+    const y = (event.clientY - rect.top) * (H / rect.height);
     player.y = y - player.height / 2;
     clampPaddle(player);
     if (state === 'idle' || state === 'over') startMatch();
   }
 
   window.addEventListener('keydown', (event) => {
+    if (event.ctrlKey || event.metaKey || event.altKey || isTypingTarget(event.target)) return;
     const key = event.key.toLowerCase();
-    if (['arrowup', 'arrowdown', 'w', 's', ' '].includes(key)) event.preventDefault();
-    if (key === ' ') {
-      togglePause();
+    if (key === ' ' || key === 'enter') {
+      // Let focused links and buttons keep their native keyboard activation.
+      if (isActivatableTarget(event.target) || key === 'enter') return;
+      event.preventDefault();
+      if (!event.repeat) {
+        if (state === 'idle' || state === 'over') startMatch();
+        else togglePause();
+      }
       return;
     }
     if (!['arrowup', 'arrowdown', 'w', 's'].includes(key)) return;
+    event.preventDefault();
     keys.add(key);
     if (state === 'idle' || state === 'over') startMatch();
   });
 
   window.addEventListener('keyup', (event) => keys.delete(event.key.toLowerCase()));
+  window.addEventListener('blur', () => { keys.clear(); pointerActive = false; });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) pauseMatch(copy.away);
+    keys.clear();
+    lastTime = performance.now();
+  });
 
   canvas.addEventListener('pointerdown', (event) => {
     pointerActive = true;
-    canvas.setPointerCapture(event.pointerId);
+    canvas.setPointerCapture?.(event.pointerId);
+    if (state === 'paused') togglePause();
     movePlayerToPointer(event);
   });
   canvas.addEventListener('pointermove', (event) => {
@@ -261,18 +395,24 @@
       clampPaddle(player);
       if (state === 'idle' || state === 'over') startMatch();
     };
-    button.addEventListener('pointerdown', () => {
+    const stop = () => {
+      window.clearInterval(interval);
+      interval = null;
+    };
+    button.addEventListener('pointerdown', (event) => {
+      event.preventDefault();
+      stop();
       move();
       interval = window.setInterval(move, 70);
     });
-    ['pointerup', 'pointerleave', 'pointercancel'].forEach((name) => {
-      button.addEventListener(name, () => {
-        window.clearInterval(interval);
-        interval = null;
-      });
-    });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach((name) => button.addEventListener(name, stop));
+    window.addEventListener('blur', stop);
   });
 
+  // Mouse clicks should not leave focus on toolbar buttons, so Space keeps controlling the match.
+  [startButton, pauseButton, restartButton].forEach((button) => {
+    button.addEventListener('click', (event) => { if (event.detail) button.blur(); });
+  });
   startButton.addEventListener('click', startMatch);
   pauseButton.addEventListener('click', togglePause);
   restartButton.addEventListener('click', () => {
@@ -280,10 +420,22 @@
     state = 'running';
     hideMessage();
     startButton.textContent = 'Playing';
+    pauseButton.textContent = 'Pause';
     lastTime = performance.now();
   });
 
+  let fitFrame = 0;
+  const scheduleFit = () => {
+    cancelAnimationFrame(fitFrame);
+    fitFrame = requestAnimationFrame(fitCanvas);
+  };
+  if (window.ResizeObserver) new ResizeObserver(scheduleFit).observe(stage);
+  window.addEventListener('resize', scheduleFit);
+  window.addEventListener('orientationchange', scheduleFit);
+
+  messageText.textContent = copy.ready;
   resetMatch();
-  draw();
+  serveTimer = 0;
+  fitCanvas();
   requestAnimationFrame(frame);
 })();

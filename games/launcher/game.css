@@ -24,7 +24,7 @@
 .launch-console { margin-top:14px; padding:15px; display:grid; grid-template-columns:auto minmax(230px,1fr) auto; align-items:center; gap:18px; border:1px solid var(--line); border-radius:18px; background:rgba(5,18,24,.72); }
 .angle-control > span,.power-control span { color:var(--muted); font-size:.61rem; font-weight:900; letter-spacing:.08em; }
 .angle-control > div { margin-top:7px; display:flex; padding:4px; border:1px solid var(--line); border-radius:12px; background:rgba(1,9,13,.55); }
-.angle-control button { min-width:48px; min-height:35px; padding:6px 9px; border:0; border-radius:9px; color:var(--muted); background:transparent; cursor:pointer; font-size:.69rem; font-weight:900; }
+.angle-control button { min-width:52px; min-height:44px; padding:6px 9px; border:0; border-radius:9px; color:var(--muted); background:transparent; cursor:pointer; font-size:.69rem; font-weight:900; }
 .angle-control button.active { color:#061117; background:var(--cyan); }
 .angle-control button:disabled { cursor:not-allowed; opacity:.45; }
 .power-control > div:first-child { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px; }

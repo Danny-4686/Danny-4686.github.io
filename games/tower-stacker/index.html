@@ -32,7 +32,7 @@
     <a class="back-link reveal" href="/games/">← Back to Browser Games</a>
     <div class="game-heading reveal"><div><p class="eyebrow">CLOUDLAB ARCADE</p><h1>Tower Stacker</h1><p>Drop each moving block onto the tower. Miss the overlap and the run is over.</p></div><div class="score-row"><div class="score-chip"><small>HEIGHT</small><strong id="score">0</strong></div><div class="score-chip"><small>PERFECT</small><strong id="perfect">0</strong></div><div class="score-chip"><small>BEST</small><strong id="best">0</strong></div></div></div>
     <section class="game-panel reveal" aria-label="Tower Stacker game">
-      <div class="stack-stage"><canvas id="stackCanvas" width="720" height="720" role="img" aria-label="Tower Stacker board"></canvas><div class="game-message" id="gameMessage"><div><h2 id="messageTitle">Build upward.</h2><p id="messageText">Press Start, then tap the board or press Space to drop each moving block.</p></div></div></div>
+      <div class="stack-stage"><canvas id="stackCanvas" width="720" height="720" role="img" aria-label="Tower Stacker board"></canvas><div class="game-message" id="gameMessage"><div><h2 id="messageTitle">Build upward.</h2><p id="messageText">Press Start, then click the board or press Space to drop each moving block.</p></div></div></div>
       <div class="game-toolbar"><button class="game-button primary drop-button" id="dropButton" type="button">Start Tower</button><button class="game-button" id="restartButton" type="button">Restart</button></div>
       <p class="control-note">Tap anywhere on the board, press the drop button, or use Space. Near-perfect drops snap into place.</p>
     </section>
@@ -43,8 +43,9 @@
   (() => {
     const canvas = document.getElementById('stackCanvas');
     const ctx = canvas.getContext('2d');
-    const W = canvas.width;
-    const H = canvas.height;
+    const stage = canvas.parentElement;
+    const W = 720;
+    const H = 720;
     const scoreEl = document.getElementById('score');
     const perfectEl = document.getElementById('perfect');
     const bestEl = document.getElementById('best');
@@ -52,10 +53,23 @@
     const messageTitle = document.getElementById('messageTitle');
     const messageText = document.getElementById('messageText');
     const dropButton = document.getElementById('dropButton');
+    const restartButton = document.getElementById('restartButton');
+    const touchUI = window.matchMedia?.('(pointer: coarse)').matches || false;
+    const copy = touchUI ? {
+      ready: 'Tap Start Tower, then tap the board to drop each moving block.',
+      paused: 'Tap the board or Drop Block to keep building.',
+      again: 'Tap the board or Play Again to build a new tower.'
+    } : {
+      ready: 'Press Start, then click the board or press Space to drop each moving block.',
+      paused: 'Press Space or click the board to keep building.',
+      again: 'Press Space or Play Again to build a new tower.'
+    };
     let blocks = [];
     let active = null;
     let debris = [];
     let running = false;
+    let paused = false;
+    let gameOver = false;
     let score = 0;
     let perfect = 0;
     let best = 0;
@@ -64,6 +78,8 @@
       best = Number.isFinite(savedBest) && savedBest >= 0 ? savedBest : 0;
     } catch (_) {}
     let cameraY = 0;
+    let cameraTarget = 0;
+    let perfectFlash = 0;
     let last = 0;
     let raf = 0;
 
@@ -72,26 +88,45 @@
     function hideMessage() { message.classList.add('hidden'); }
     function updateStats() { scoreEl.textContent = score; perfectEl.textContent = perfect; bestEl.textContent = Math.max(best, score); }
 
+    function isTypingTarget(target) {
+      return target instanceof Element && Boolean(target.closest('input, select, textarea, [contenteditable="true"]'));
+    }
+
+    function isActivatableTarget(target) {
+      return target instanceof Element && Boolean(target.closest('a[href], button, summary'));
+    }
+
+    function ensureLoop() {
+      cancelAnimationFrame(raf);
+      last = performance.now();
+      raf = requestAnimationFrame(loop);
+    }
+
     function resetGame() {
       cancelAnimationFrame(raf);
       blocks = [{ x: W / 2 - 150, y: H - 62, w: 300, h: 34, color: colors[0] }];
       active = null;
       debris = [];
       running = false;
+      paused = false;
+      gameOver = false;
       score = 0;
       perfect = 0;
       cameraY = 0;
+      cameraTarget = 0;
+      perfectFlash = 0;
       dropButton.textContent = 'Start Tower';
       updateStats();
-      showMessage('Build upward.', 'Press Start, then tap the board or press Space to drop each moving block.');
+      showMessage('Build upward.', copy.ready);
       draw();
     }
 
     function makeActive() {
       const previous = blocks[blocks.length - 1];
       const direction = score % 2 === 0 ? 1 : -1;
+      // Start just inside the edge so the block is visible right away.
       active = {
-        x: direction > 0 ? -previous.w : W,
+        x: direction > 0 ? 8 : W - previous.w - 8,
         y: previous.y - 48,
         w: previous.w,
         h: 34,
@@ -102,27 +137,43 @@
 
     function start() {
       if (running) return;
-      if (score && !active) resetGame();
+      if (gameOver || score) resetGame();
       running = true;
+      paused = false;
       hideMessage();
       dropButton.textContent = 'Drop Block';
       makeActive();
-      last = performance.now();
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(loop);
+      ensureLoop();
+    }
+
+    function pauseGame() {
+      if (!running || paused) return;
+      paused = true;
+      dropButton.textContent = 'Resume';
+      showMessage('Paused', copy.paused);
+    }
+
+    function resumeGame() {
+      if (!paused) return;
+      paused = false;
+      dropButton.textContent = 'Drop Block';
+      hideMessage();
+      ensureLoop();
     }
 
     function endGame() {
       running = false;
+      gameOver = true;
       active = null;
       best = Math.max(best, score);
       try { localStorage.setItem('cloudlab-stacker-best', String(best)); } catch (_) {}
       updateStats();
       dropButton.textContent = 'Play Again';
-      showMessage('Tower Complete', `You stacked ${score} ${score === 1 ? 'level' : 'levels'} with ${perfect} perfect ${perfect === 1 ? 'drop' : 'drops'}.`);
+      showMessage('Block missed', `You stacked ${score} ${score === 1 ? 'level' : 'levels'} with ${perfect} perfect ${perfect === 1 ? 'drop' : 'drops'}. ${copy.again}`);
     }
 
     function drop() {
+      if (paused) { resumeGame(); return; }
       if (!running) { start(); return; }
       if (!active) return;
       const previous = blocks[blocks.length - 1];
@@ -130,11 +181,13 @@
       const right = Math.min(active.x + active.w, previous.x + previous.w);
       let overlap = right - left;
       const difference = active.x - previous.x;
+      const snapped = Math.abs(difference) <= 7;
 
-      if (Math.abs(difference) <= 7) {
+      if (snapped) {
         left = previous.x;
         overlap = previous.w;
         perfect += 1;
+        perfectFlash = 1;
       }
 
       if (overlap <= 0) {
@@ -143,25 +196,30 @@
         return;
       }
 
-      const overhangLeft = Math.max(0, previous.x - active.x);
-      const overhangRight = Math.max(0, active.x + active.w - (previous.x + previous.w));
-      if (overhangLeft > 0) debris.push({ x: active.x, y: active.y, w: overhangLeft, h: active.h, color: active.color, vy: 0, spin: 0, vr: -.5 });
-      if (overhangRight > 0) debris.push({ x: right, y: active.y, w: overhangRight, h: active.h, color: active.color, vy: 0, spin: 0, vr: .5 });
+      if (!snapped) {
+        const overhangLeft = Math.max(0, previous.x - active.x);
+        const overhangRight = Math.max(0, active.x + active.w - (previous.x + previous.w));
+        if (overhangLeft > 0) debris.push({ x: active.x, y: active.y, w: overhangLeft, h: active.h, color: active.color, vy: 0, spin: 0, vr: -.5 });
+        if (overhangRight > 0) debris.push({ x: right, y: active.y, w: overhangRight, h: active.h, color: active.color, vy: 0, spin: 0, vr: .5 });
+      }
 
       blocks.push({ x: left, y: active.y, w: overlap, h: active.h, color: active.color });
       score += 1;
       updateStats();
       const targetTop = H * .33;
-      if (active.y - cameraY < targetTop) cameraY = active.y - targetTop;
+      if (active.y - cameraTarget < targetTop) cameraTarget = active.y - targetTop;
       makeActive();
     }
 
     function update(dt) {
       if (active) {
         active.x += active.vx * dt;
-        if (active.vx > 0 && active.x > W) active.x = -active.w;
-        if (active.vx < 0 && active.x + active.w < 0) active.x = W;
+        // Bounce between the edges instead of wrapping off-screen.
+        if (active.vx > 0 && active.x + active.w > W) { active.x = W - active.w; active.vx *= -1; }
+        if (active.vx < 0 && active.x < 0) { active.x = 0; active.vx *= -1; }
       }
+      cameraY += (cameraTarget - cameraY) * Math.min(1, dt * 9);
+      perfectFlash = Math.max(0, perfectFlash - dt * 2.2);
       debris.forEach((piece) => { piece.vy += 920 * dt; piece.y += piece.vy * dt; piece.spin += piece.vr * dt; });
       debris = debris.filter((piece) => piece.y - cameraY < H + 180);
     }
@@ -188,10 +246,27 @@
       ctx.fillStyle = bg;
       ctx.fillRect(0, 0, W, H);
       ctx.strokeStyle = 'rgba(104,208,223,.07)';
+      ctx.lineWidth = 1;
+      const gridOffset = ((-cameraY % 48) + 48) % 48;
       for (let x = 0; x < W; x += 48) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
-      for (let y = 0; y < H; y += 48) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+      for (let y = gridOffset - 48; y < H; y += 48) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
 
       blocks.forEach((block) => drawBlock(block));
+      if (perfectFlash > 0 && blocks.length > 1) {
+        const top = blocks[blocks.length - 1];
+        ctx.save();
+        ctx.globalAlpha = perfectFlash;
+        ctx.strokeStyle = '#fff5c9';
+        ctx.lineWidth = 3;
+        ctx.shadowColor = '#f2c75c';
+        ctx.shadowBlur = 18;
+        ctx.beginPath(); ctx.roundRect(top.x - 4, top.y - cameraY - 4, top.w + 8, top.h + 8, 11); ctx.stroke();
+        ctx.fillStyle = '#ffe497';
+        ctx.font = '900 16px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('PERFECT', top.x + top.w / 2, top.y - cameraY - 14 - (1 - perfectFlash) * 16);
+        ctx.restore();
+      }
       if (active) drawBlock(active);
       debris.forEach((piece) => {
         ctx.save();
@@ -204,20 +279,50 @@
     }
 
     function loop(now) {
-      if (!running) { draw(); return; }
       const dt = Math.min(.025, (now - last) / 1000 || 0);
       last = now;
-      update(dt);
+      if (!paused) update(dt);
       draw();
-      raf = requestAnimationFrame(loop);
+      // Keep animating after a miss until the falling pieces have left the board.
+      if (!paused && (running || debris.length || Math.abs(cameraTarget - cameraY) > .5)) raf = requestAnimationFrame(loop);
     }
 
-    dropButton.addEventListener('click', drop);
+    function fitCanvas() {
+      const cssWidth = canvas.getBoundingClientRect().width || W;
+      const dpr = Math.min(2.5, window.devicePixelRatio || 1);
+      const scale = Math.max(.25, (cssWidth * dpr) / W);
+      const backingWidth = Math.round(W * scale);
+      const backingHeight = Math.round(H * scale);
+      if (canvas.width !== backingWidth || canvas.height !== backingHeight) {
+        canvas.width = backingWidth;
+        canvas.height = backingHeight;
+      }
+      ctx.setTransform(backingWidth / W, 0, 0, backingHeight / H, 0, 0);
+      draw();
+    }
+
+    dropButton.addEventListener('click', (event) => { if (event.detail) dropButton.blur(); drop(); });
     canvas.addEventListener('pointerdown', (event) => { event.preventDefault(); drop(); });
-    document.getElementById('restartButton').addEventListener('click', resetGame);
-    window.addEventListener('keydown', (event) => { if (event.code === 'Space' || event.key === 'Enter') { event.preventDefault(); drop(); } });
+    restartButton.addEventListener('click', (event) => { if (event.detail) restartButton.blur(); resetGame(); });
+    window.addEventListener('keydown', (event) => {
+      if (event.ctrlKey || event.metaKey || event.altKey || event.repeat) return;
+      if (isTypingTarget(event.target) || isActivatableTarget(event.target)) return;
+      if (event.code === 'Space' || event.key === 'Enter') { event.preventDefault(); drop(); }
+    });
+    document.addEventListener('visibilitychange', () => { if (document.hidden) pauseGame(); });
+
+    let fitFrame = 0;
+    const scheduleFit = () => {
+      cancelAnimationFrame(fitFrame);
+      fitFrame = requestAnimationFrame(fitCanvas);
+    };
+    if (window.ResizeObserver) new ResizeObserver(scheduleFit).observe(stage);
+    window.addEventListener('resize', scheduleFit);
+    window.addEventListener('orientationchange', scheduleFit);
+
     bestEl.textContent = best;
     resetGame();
+    fitCanvas();
   })();
   </script>
 </body>

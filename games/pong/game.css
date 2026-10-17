@@ -42,5 +42,5 @@
 
 @media (max-width: 800px) {
   .pong-touch-controls { display: flex; }
-  .pong-touch-controls .touch-button { width: 74px; }
+  .pong-touch-controls .touch-button { width: 88px; height: 56px; touch-action: none; user-select: none; }
 }

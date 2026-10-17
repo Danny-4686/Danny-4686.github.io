@@ -23,8 +23,9 @@
     .breakout-stage{position:relative;width:min(860px,100%);margin:0 auto;overflow:hidden;border:1px solid var(--line);border-radius:20px;background:#06141b;box-shadow:inset 0 0 0 1px rgba(255,255,255,.025),0 20px 50px rgba(0,0,0,.24)}
     #breakoutCanvas{display:block;width:100%;height:auto;aspect-ratio:21/13;touch-action:none}
     .game-message{background:rgba(4,13,18,.68);backdrop-filter:blur(8px);transition:opacity .2s ease,visibility .2s ease}.game-message.hidden{display:grid;opacity:0;visibility:hidden;pointer-events:none}.game-message h2{font-size:clamp(2rem,5vw,3.2rem)}
-    .breakout-touch{display:none;justify-content:center;gap:10px;margin-top:16px}.breakout-touch .touch-button{width:78px;height:56px}
+    .breakout-touch{display:none;justify-content:center;gap:10px;margin-top:16px}.breakout-touch .touch-button{width:88px;height:56px;touch-action:none;user-select:none}
     @media(max-width:800px){.breakout-touch{display:flex}}
+    @media(max-width:520px){.game-heading .score-row{grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.game-heading .score-chip{padding:9px 10px}}
   </style>
   <link rel="stylesheet" href="/assets/css/premium.css?v=20261015.1">
   <script src="/assets/js/premium.js?v=20261015.1" defer></script>
@@ -40,22 +41,22 @@
     <a class="back-link reveal" href="/games/">← Back to Browser Games</a>
     <div class="game-heading reveal">
       <div><p class="eyebrow">CLOUDLAB ARCADE</p><h1>Breakout</h1><p>Keep the ball alive, clear every glowing brick, and build the highest score you can.</p></div>
-      <div class="score-row" role="group" aria-label="Breakout scores"><div class="score-chip"><small>SCORE</small><strong id="score">0</strong></div><div class="score-chip"><small>LIVES</small><strong id="lives">3</strong></div><div class="score-chip"><small>BEST</small><strong id="best">0</strong></div></div>
+      <div class="score-row" role="group" aria-label="Breakout scores"><div class="score-chip"><small>SCORE</small><strong id="score">0</strong></div><div class="score-chip"><small>LIVES</small><strong id="lives">3</strong></div><div class="score-chip"><small>LEVEL</small><strong id="level">1</strong></div><div class="score-chip"><small>BEST</small><strong id="best">0</strong></div></div>
     </div>
 
     <section class="game-panel reveal" aria-label="Breakout game">
       <div class="breakout-stage">
         <canvas id="breakoutCanvas" width="840" height="520" role="img" aria-label="Breakout board"></canvas>
-        <div class="game-message" id="gameMessage"><div><h2 id="messageTitle">Ready?</h2><p id="messageText">Press Start, then move with A/D, the arrow keys, or drag on the board.</p></div></div>
+        <div class="game-message" id="gameMessage"><div><h2 id="messageTitle">Ready?</h2><p id="messageText">Move with A/D or the arrow keys, then press Space or click the board to launch.</p></div></div>
       </div>
       <div class="game-toolbar">
-        <button class="game-button primary" id="startButton" type="button">Start Game</button>
+        <button class="game-button primary" id="startButton" type="button">Launch Ball</button>
         <button class="game-button" id="pauseButton" type="button">Pause</button>
         <button class="game-button" id="restartButton" type="button">Restart</button>
         <select class="difficulty-select" id="difficulty" aria-label="Difficulty"><option value="easy">Easy</option><option value="normal" selected>Normal</option><option value="hard">Hard</option></select>
       </div>
       <div class="breakout-touch" role="group" aria-label="Touch paddle controls"><button class="touch-button" type="button" data-move="left" aria-label="Move left">←</button><button class="touch-button" type="button" data-move="right" aria-label="Move right">→</button></div>
-      <p class="control-note"><span class="desktop-only">Use A/D or the arrow keys.</span> Drag across the board or use the buttons on mobile.</p>
+      <p class="control-note"><span class="desktop-only">Use A/D or the arrow keys and Space to launch.</span> Drag across the board to aim, tap to launch, or use the buttons on mobile.</p>
     </section>
   </main>
 
@@ -65,8 +66,10 @@
   (() => {
     const canvas = document.getElementById('breakoutCanvas');
     const ctx = canvas.getContext('2d');
+    const stage = canvas.parentElement;
     const scoreEl = document.getElementById('score');
     const livesEl = document.getElementById('lives');
+    const levelEl = document.getElementById('level');
     const bestEl = document.getElementById('best');
     const message = document.getElementById('gameMessage');
     const messageTitle = document.getElementById('messageTitle');
@@ -75,30 +78,57 @@
     const pauseButton = document.getElementById('pauseButton');
     const restartButton = document.getElementById('restartButton');
     const difficulty = document.getElementById('difficulty');
-    const W = canvas.width;
-    const H = canvas.height;
+    const W = 840;
+    const H = 520;
     const keys = { left: false, right: false };
-    let raf = 0;
-    let running = false;
+    const touchUI = window.matchMedia?.('(pointer: coarse)').matches || false;
+    const copy = touchUI ? {
+      ready: 'Drag on the board to line up the paddle, then tap the board to launch.',
+      relaunch: 'Drag to line up, then tap the board to launch.',
+      paused: 'Tap Resume when you are ready.',
+      again: 'Tap the board or Play Again for another run.',
+      launchHint: 'TAP TO LAUNCH'
+    } : {
+      ready: 'Move with A/D or the arrow keys, then press Space or click the board to launch.',
+      relaunch: 'Line up the paddle, then press Space or click the board to launch.',
+      paused: 'Press Space or Resume when you are ready.',
+      again: 'Press Space, click the board, or Play Again for another run.',
+      launchHint: 'SPACE TO LAUNCH'
+    };
+    // phase: 'ready' (ball on paddle), 'play' (ball moving), 'over'
+    let phase = 'ready';
     let paused = false;
-    let started = false;
     let score = 0;
     let lives = 3;
+    let level = 1;
+    let livesAtLevelStart = 3;
     let best = 0;
     try {
       const savedBest = Number(localStorage.getItem('cloudlab-breakout-best') || 0);
       best = Number.isFinite(savedBest) && savedBest >= 0 ? savedBest : 0;
     } catch (_) {}
-    let last = 0;
+    let last = performance.now();
     let bricks = [];
     let paddle;
     let ball;
+    let pointerStart = null;
 
     const settings = {
       easy: { speed: 300, paddle: 150, rows: 5 },
       normal: { speed: 365, paddle: 126, rows: 6 },
       hard: { speed: 430, paddle: 108, rows: 7 }
     };
+
+    function isTypingTarget(target) {
+      return target instanceof Element && Boolean(target.closest('input, select, textarea, [contenteditable="true"]'));
+    }
+
+    function isActivatableTarget(target) {
+      return target instanceof Element && Boolean(target.closest('a[href], button, summary'));
+    }
+
+    function levelSpeed() { return settings[difficulty.value].speed * Math.min(1.6, 1 + (level - 1) * .09); }
+    function maxSpeed() { return Math.min(820, 620 + (level - 1) * 40); }
 
     function showMessage(title, text) {
       messageTitle.textContent = title;
@@ -111,111 +141,130 @@
     function updateStats() {
       scoreEl.textContent = score.toLocaleString();
       livesEl.textContent = String(lives);
-      bestEl.textContent = best.toLocaleString();
+      if (levelEl) levelEl.textContent = String(level);
+      bestEl.textContent = Math.max(best, score).toLocaleString();
+    }
+
+    function saveBest() {
+      if (score <= best) return;
+      best = score;
+      try { localStorage.setItem('cloudlab-breakout-best', String(best)); } catch (_) {}
+    }
+
+    function brickPattern(row, col, rows, cols) {
+      switch ((level - 1) % 4) {
+        case 1: return (row + col) % 2 === 0 || row === 0;
+        case 2: return Math.abs(col - (cols - 1) / 2) <= row * .75 + .5;
+        case 3: return col % 3 !== 1 || row % 2 === 0;
+        default: return true;
+      }
     }
 
     function makeBricks() {
-      const rows = settings[difficulty.value].rows;
+      const rows = Math.min(8, settings[difficulty.value].rows + Math.floor((level - 1) / 2));
       const cols = 10;
       const gap = 8;
       const side = 35;
       const top = 54;
       const width = (W - side * 2 - gap * (cols - 1)) / cols;
       const height = 24;
-      const palette = ['#68d0df', '#8bcf9b', '#f2c75c', '#ed8b45', '#ef6d68', '#9e8cff', '#68d0df'];
+      const palette = ['#68d0df', '#8bcf9b', '#f2c75c', '#ed8b45', '#ef6d68', '#9e8cff', '#68d0df', '#8bcf9b'];
       bricks = [];
       for (let row = 0; row < rows; row += 1) {
         for (let col = 0; col < cols; col += 1) {
-          bricks.push({ x: side + col * (width + gap), y: top + row * (height + gap), w: width, h: height, color: palette[row % palette.length], alive: true, points: (rows - row) * 10 });
+          if (!brickPattern(row, col, rows, cols)) continue;
+          bricks.push({ x: side + col * (width + gap), y: top + row * (height + gap), w: width, h: height, color: palette[(row + level - 1) % palette.length], alive: true, points: (rows - row) * 10 * level });
         }
       }
     }
 
-    function resetBall(serving = true) {
+    function resetBall() {
       const cfg = settings[difficulty.value];
       paddle = paddle || { x: W / 2 - cfg.paddle / 2, y: H - 42, w: cfg.paddle, h: 14, speed: 610 };
       paddle.w = cfg.paddle;
       paddle.x = Math.max(0, Math.min(W - paddle.w, paddle.x));
-      const angle = (Math.random() * .7 - .35) - Math.PI / 2;
-      ball = { x: paddle.x + paddle.w / 2, y: paddle.y - 14, r: 9, vx: Math.cos(angle) * cfg.speed, vy: Math.sin(angle) * cfg.speed, stuck: serving };
+      ball = { x: paddle.x + paddle.w / 2, y: paddle.y - 12, r: 9, vx: 0, vy: 0, stuck: true };
+      phase = 'ready';
     }
 
     function resetGame() {
-      cancelAnimationFrame(raf);
       score = 0;
       lives = 3;
-      started = false;
-      running = false;
+      level = 1;
+      livesAtLevelStart = lives;
       paused = false;
       paddle = null;
       makeBricks();
-      resetBall(true);
+      resetBall();
       updateStats();
-      startButton.textContent = 'Start Game';
+      startButton.textContent = 'Launch Ball';
       pauseButton.textContent = 'Pause';
-      showMessage('Ready?', 'Press Start, then move with A/D, the arrow keys, or drag on the board.');
+      showMessage('Ready?', copy.ready);
       draw();
     }
 
     function launch() {
+      if (phase === 'over') resetGame();
+      if (paused) { togglePause(); return; }
       if (!ball.stuck) return;
+      const speed = levelSpeed();
+      const angle = (Math.random() * .7 - .35) - Math.PI / 2;
+      ball.vx = Math.cos(angle) * speed;
+      ball.vy = Math.sin(angle) * speed;
       ball.stuck = false;
-      started = true;
-      running = true;
-      paused = false;
+      phase = 'play';
       hideMessage();
       startButton.textContent = 'Playing';
       last = performance.now();
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(loop);
+    }
+
+    function pauseGame(text = copy.paused) {
+      if (phase !== 'play' || paused) return;
+      paused = true;
+      keys.left = false;
+      keys.right = false;
+      pauseButton.textContent = 'Resume';
+      showMessage('Paused', text);
     }
 
     function togglePause() {
-      if (!started || !running) return;
-      paused = !paused;
-      pauseButton.textContent = paused ? 'Resume' : 'Pause';
-      if (paused) showMessage('Paused', 'Press Resume when you are ready.');
-      else {
-        hideMessage();
-        last = performance.now();
-        raf = requestAnimationFrame(loop);
-      }
+      if (phase !== 'play') return;
+      if (!paused) { pauseGame(); return; }
+      paused = false;
+      pauseButton.textContent = 'Pause';
+      hideMessage();
+      last = performance.now();
     }
 
     function loseLife() {
       lives -= 1;
       updateStats();
       if (lives <= 0) {
-        running = false;
-        started = false;
-        if (score > best) {
-          best = score;
-          try { localStorage.setItem('cloudlab-breakout-best', String(best)); } catch (_) {}
-          updateStats();
-        }
+        phase = 'over';
+        saveBest();
+        updateStats();
         startButton.textContent = 'Play Again';
-        showMessage('Game Over', `You scored ${score.toLocaleString()} points. Press Play Again for another run.`);
+        showMessage('Game Over', `You reached level ${level} with ${score.toLocaleString()} points. ${copy.again}`);
         return;
       }
-      resetBall(true);
-      running = false;
-      started = false;
+      resetBall();
       startButton.textContent = 'Launch Ball';
-      showMessage('Life Lost', `${lives} ${lives === 1 ? 'life' : 'lives'} left. Press Launch Ball when ready.`);
+      showMessage('Life Lost', `${lives} ${lives === 1 ? 'life' : 'lives'} left. ${copy.relaunch}`);
     }
 
     function clearBoard() {
-      running = false;
-      started = false;
-      const bonus = lives * 250;
+      const perfectLevel = lives === livesAtLevelStart;
+      const bonus = lives * 250 * level;
       score += bonus;
-      if (score > best) {
-        best = score;
-        try { localStorage.setItem('cloudlab-breakout-best', String(best)); } catch (_) {}
-      }
+      saveBest();
+      const cleared = level;
+      level += 1;
+      livesAtLevelStart = lives;
+      makeBricks();
+      resetBall();
       updateStats();
-      startButton.textContent = 'Play Again';
-      showMessage('Board Cleared!', `Perfect run. Life bonus: ${bonus.toLocaleString()} points.`);
+      startButton.textContent = 'Launch Ball';
+      showMessage(perfectLevel ? 'Perfect level!' : `Level ${cleared} cleared!`, `${perfectLevel ? 'No lives lost. ' : ''}Life bonus +${bonus.toLocaleString()}. Level ${level} is faster with a new layout. ${copy.relaunch}`);
     }
 
     function circleRectCollision(rect) {
@@ -226,8 +275,57 @@
       return dx * dx + dy * dy <= ball.r * ball.r;
     }
 
+    function hitBrick(brick) {
+      brick.alive = false;
+      score += brick.points;
+      updateStats();
+    }
+
+    function stepBall(dt, hits) {
+      // X axis: move, then resolve at most one brick per frame on this axis.
+      const previousX = ball.x;
+      ball.x += ball.vx * dt;
+      if (ball.x - ball.r <= 0 && ball.vx < 0) { ball.x = ball.r; ball.vx *= -1; }
+      if (ball.x + ball.r >= W && ball.vx > 0) { ball.x = W - ball.r; ball.vx *= -1; }
+      for (const brick of bricks) {
+        if (!brick.alive || !circleRectCollision(brick)) continue;
+        if (!hits.x) {
+          hits.x = true;
+          hitBrick(brick);
+          ball.vx *= -1;
+        }
+        ball.x = previousX < brick.x + brick.w / 2 ? brick.x - ball.r - .01 : brick.x + brick.w + ball.r + .01;
+        break;
+      }
+
+      // Y axis: same idea.
+      const previousY = ball.y;
+      ball.y += ball.vy * dt;
+      if (ball.y - ball.r <= 0 && ball.vy < 0) { ball.y = ball.r; ball.vy *= -1; }
+      for (const brick of bricks) {
+        if (!brick.alive || !circleRectCollision(brick)) continue;
+        if (!hits.y) {
+          hits.y = true;
+          hitBrick(brick);
+          ball.vy *= -1;
+        }
+        ball.y = previousY < brick.y + brick.h / 2 ? brick.y - ball.r - .01 : brick.y + brick.h + ball.r + .01;
+        break;
+      }
+
+      if (ball.vy > 0 && circleRectCollision(paddle)) {
+        ball.y = paddle.y - ball.r - 1;
+        const relative = Math.max(-1, Math.min(1, (ball.x - (paddle.x + paddle.w / 2)) / (paddle.w / 2)));
+        const speed = Math.min(maxSpeed(), Math.hypot(ball.vx, ball.vy) * 1.025);
+        const angle = relative * 1.05;
+        ball.vx = Math.sin(angle) * speed;
+        ball.vy = -Math.cos(angle) * speed;
+      }
+    }
+
     function update(dt) {
       const move = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
+      if (move && ball.stuck && phase === 'ready') hideMessage();
       paddle.x = Math.max(0, Math.min(W - paddle.w, paddle.x + move * paddle.speed * dt));
       if (ball.stuck) {
         ball.x = paddle.x + paddle.w / 2;
@@ -235,37 +333,12 @@
         return;
       }
 
-      ball.x += ball.vx * dt;
-      ball.y += ball.vy * dt;
+      const distance = Math.hypot(ball.vx, ball.vy) * dt;
+      const steps = Math.max(1, Math.ceil(distance / (ball.r * .5)));
+      const hits = { x: false, y: false };
+      for (let i = 0; i < steps; i += 1) stepBall(dt / steps, hits);
 
-      if (ball.x - ball.r <= 0 && ball.vx < 0) { ball.x = ball.r; ball.vx *= -1; }
-      if (ball.x + ball.r >= W && ball.vx > 0) { ball.x = W - ball.r; ball.vx *= -1; }
-      if (ball.y - ball.r <= 0 && ball.vy < 0) { ball.y = ball.r; ball.vy *= -1; }
       if (ball.y - ball.r > H) { loseLife(); return; }
-
-      if (ball.vy > 0 && circleRectCollision(paddle)) {
-        ball.y = paddle.y - ball.r - 1;
-        const relative = (ball.x - (paddle.x + paddle.w / 2)) / (paddle.w / 2);
-        const speed = Math.min(620, Math.hypot(ball.vx, ball.vy) * 1.025);
-        const angle = relative * 1.05;
-        ball.vx = Math.sin(angle) * speed;
-        ball.vy = -Math.cos(angle) * speed;
-      }
-
-      for (const brick of bricks) {
-        if (!brick.alive || !circleRectCollision(brick)) continue;
-        brick.alive = false;
-        score += brick.points;
-        const centerX = brick.x + brick.w / 2;
-        const centerY = brick.y + brick.h / 2;
-        const dx = (ball.x - centerX) / (brick.w / 2);
-        const dy = (ball.y - centerY) / (brick.h / 2);
-        if (Math.abs(dx) > Math.abs(dy)) ball.vx *= -1;
-        else ball.vy *= -1;
-        updateStats();
-        break;
-      }
-
       if (bricks.every((brick) => !brick.alive)) clearBoard();
     }
 
@@ -285,6 +358,11 @@
       ctx.lineWidth = 1;
       for (let x = 0; x <= W; x += 42) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
       for (let y = 0; y <= H; y += 42) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+
+      ctx.font = '800 12px Inter, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillStyle = 'rgba(191,231,237,.5)';
+      ctx.fillText(`LEVEL ${level}`, 35, 34);
 
       for (const brick of bricks) {
         if (!brick.alive) continue;
@@ -316,23 +394,48 @@
       ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
+
+      if (ball.stuck && phase === 'ready' && !paused) {
+        const pulse = .55 + Math.sin(performance.now() / 260) * .25;
+        ctx.save();
+        ctx.globalAlpha = pulse;
+        ctx.fillStyle = '#d6f6fa';
+        ctx.font = '800 13px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(copy.launchHint, Math.max(70, Math.min(W - 70, ball.x)), ball.y - 26);
+        ctx.restore();
+      }
     }
 
     function loop(now) {
-      if (!running || paused) return;
       const dt = Math.min(.022, (now - last) / 1000 || 0);
       last = now;
-      update(dt);
+      if (!paused && phase !== 'over') update(dt);
       draw();
-      if (running && !paused) raf = requestAnimationFrame(loop);
+      requestAnimationFrame(loop);
+    }
+
+    function fitCanvas() {
+      const cssWidth = canvas.getBoundingClientRect().width || W;
+      const dpr = Math.min(2.5, window.devicePixelRatio || 1);
+      const scale = Math.max(.25, (cssWidth * dpr) / W);
+      const backingWidth = Math.round(W * scale);
+      const backingHeight = Math.round(H * scale);
+      if (canvas.width !== backingWidth || canvas.height !== backingHeight) {
+        canvas.width = backingWidth;
+        canvas.height = backingHeight;
+      }
+      ctx.setTransform(backingWidth / W, 0, 0, backingHeight / H, 0, 0);
+      draw();
+    }
+
+    function pointerX(event) {
+      const rect = canvas.getBoundingClientRect();
+      return (event.clientX - rect.left) * W / rect.width;
     }
 
     function pointerMove(event) {
-      const rect = canvas.getBoundingClientRect();
-      const clientX = event.touches ? event.touches[0].clientX : event.clientX;
-      const x = (clientX - rect.left) * W / rect.width;
-      paddle.x = Math.max(0, Math.min(W - paddle.w, x - paddle.w / 2));
-      if (ball.stuck) draw();
+      paddle.x = Math.max(0, Math.min(W - paddle.w, pointerX(event) - paddle.w / 2));
     }
 
     function bindHold(button, key) {
@@ -346,22 +449,68 @@
 
     document.querySelectorAll('[data-move]').forEach((button) => bindHold(button, button.dataset.move));
     window.addEventListener('keydown', (event) => {
+      if (event.ctrlKey || event.metaKey || event.altKey || isTypingTarget(event.target)) return;
       if (['ArrowLeft', 'a', 'A'].includes(event.key)) { keys.left = true; event.preventDefault(); }
       if (['ArrowRight', 'd', 'D'].includes(event.key)) { keys.right = true; event.preventDefault(); }
-      if (event.code === 'Space') { event.preventDefault(); if (!started) launch(); else togglePause(); }
+      if (event.code === 'Space' && !isActivatableTarget(event.target)) {
+        event.preventDefault();
+        if (event.repeat) return;
+        if (phase === 'play') togglePause();
+        else launch();
+      }
     });
     window.addEventListener('keyup', (event) => {
       if (['ArrowLeft', 'a', 'A'].includes(event.key)) keys.left = false;
       if (['ArrowRight', 'd', 'D'].includes(event.key)) keys.right = false;
     });
-    canvas.addEventListener('pointerdown', (event) => { canvas.setPointerCapture?.(event.pointerId); pointerMove(event); if (!started) launch(); });
-    canvas.addEventListener('pointermove', (event) => { if (event.buttons || event.pointerType === 'touch') pointerMove(event); });
-    startButton.addEventListener('click', () => { if (!started && bricks.every((b) => !b.alive)) resetGame(); if (!started && lives <= 0) resetGame(); launch(); });
+    window.addEventListener('blur', () => { keys.left = false; keys.right = false; });
+    document.addEventListener('visibilitychange', () => {
+      keys.left = false;
+      keys.right = false;
+      if (document.hidden) pauseGame('The game paused while this tab was away.');
+      last = performance.now();
+    });
+    canvas.addEventListener('pointerdown', (event) => {
+      canvas.setPointerCapture?.(event.pointerId);
+      pointerStart = { x: event.clientX, y: event.clientY, moved: 0 };
+      if (phase === 'over') { launch(); pointerStart = null; return; }
+      if (paused) { togglePause(); pointerStart = null; return; }
+      pointerMove(event);
+    });
+    canvas.addEventListener('pointermove', (event) => {
+      if (!(event.buttons || event.pointerType === 'touch')) return;
+      if (pointerStart) {
+        pointerStart.moved = Math.max(pointerStart.moved, Math.hypot(event.clientX - pointerStart.x, event.clientY - pointerStart.y));
+        if (pointerStart.moved > 10 && phase === 'ready') hideMessage();
+      }
+      if (!paused && phase !== 'over') pointerMove(event);
+    });
+    canvas.addEventListener('pointerup', () => {
+      // A tap launches; a drag only lines up the paddle.
+      if (pointerStart && pointerStart.moved <= 10 && ball.stuck && phase === 'ready') launch();
+      pointerStart = null;
+    });
+    canvas.addEventListener('pointercancel', () => { pointerStart = null; });
+    [startButton, pauseButton, restartButton].forEach((button) => {
+      button.addEventListener('click', (event) => { if (event.detail) button.blur(); });
+    });
+    startButton.addEventListener('click', launch);
     pauseButton.addEventListener('click', togglePause);
     restartButton.addEventListener('click', resetGame);
     difficulty.addEventListener('change', resetGame);
-    bestEl.textContent = best.toLocaleString();
+
+    let fitFrame = 0;
+    const scheduleFit = () => {
+      cancelAnimationFrame(fitFrame);
+      fitFrame = requestAnimationFrame(fitCanvas);
+    };
+    if (window.ResizeObserver) new ResizeObserver(scheduleFit).observe(stage);
+    window.addEventListener('resize', scheduleFit);
+    window.addEventListener('orientationchange', scheduleFit);
+
     resetGame();
+    fitCanvas();
+    requestAnimationFrame(loop);
   })();
   </script>
 </body>

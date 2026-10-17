@@ -22,6 +22,19 @@
   const accountSaveStatus = document.getElementById('flappySaveStatus');
   const accountSaveLink = document.getElementById('flappySaveLink');
   const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const touchUI = window.matchMedia?.('(pointer: coarse)').matches || false;
+  const RESTART_GUARD_MS = 600;
+  const copy = touchUI ? {
+    ready: 'Tap anywhere in the flight area to lift the cloud through each opening.',
+    paused: 'Tap the flight area or Resume to keep flying.',
+    away: 'The game paused while this tab was away. Tap the flight area to resume.',
+    again: 'Tap the flight area to fly again.'
+  } : {
+    ready: 'Tap, click, or press Space to lift the cloud through each opening.',
+    paused: 'Press Space, click the flight area, or Resume to keep flying.',
+    away: 'The game paused while this tab was away. Press Space to resume.',
+    again: 'Press Space or click to fly again.'
+  };
   const STORAGE_KEY = 'cloudlab-flappy-cloud-best-v1';
 
   function readLocalBest(key) {
@@ -50,6 +63,7 @@
   let raf = 0;
   let skyOffset = 0;
   let flash = 0;
+  let finishedAt = 0;
   let cloudCommunity = null;
   let cloudConnected = false;
   let cloudVersion = 0;
@@ -244,7 +258,7 @@
     startButton.textContent = 'Start Flight';
     pauseButton.textContent = 'Pause';
     updateHud();
-    showMessage('Ready to fly?', 'Tap, click, or press Space to lift the cloud through each opening.');
+    showMessage('Ready to fly?', copy.ready);
     draw(performance.now());
   }
 
@@ -263,7 +277,9 @@
   }
 
   function flap() {
-    if (paused) return;
+    if (paused) { resumeGame(); return; }
+    // Ignore the burst of taps that usually lands right after a crash so the result stays visible.
+    if (gameOver && performance.now() - finishedAt < RESTART_GUARD_MS) return;
     if (!started || gameOver) start();
     if (!running) return;
     player.vy = -590;
@@ -275,7 +291,7 @@
     if (!running || paused || gameOver) return;
     paused = true;
     pauseButton.textContent = 'Resume';
-    showMessage('Flight paused', fromVisibility ? 'The game paused while this tab was away.' : 'Press Resume when you are ready.');
+    showMessage('Flight paused', fromVisibility ? copy.away : copy.paused);
   }
 
   function resumeGame() {
@@ -352,13 +368,14 @@
     running = false;
     started = false;
     gameOver = true;
+    finishedAt = performance.now();
     best = Math.max(best, score);
     try { localStorage.setItem(activeStorageKey, String(best)); } catch (_) {}
     syncBestToAccount();
     updateHud();
     startButton.textContent = 'Fly Again';
     pauseButton.textContent = 'Pause';
-    showMessage('Flight over', `You cleared ${score} ${score === 1 ? 'point' : 'points'}. Best streak: ${maxStreak}.`);
+    showMessage('Flight over', `You cleared ${score} ${score === 1 ? 'point' : 'points'}. Best streak: ${maxStreak}. ${copy.again}`);
     announce(`Flight over. Score ${score}.`);
   }
 
@@ -588,14 +605,37 @@
     if (running && !paused) raf = requestAnimationFrame(loop);
   }
 
+  function isTypingTarget(target) {
+    return target instanceof Element && Boolean(target.closest('input, select, textarea, [contenteditable="true"]'));
+  }
+
+  function isActivatableTarget(target) {
+    return target instanceof Element && Boolean(target.closest('a[href], button, summary'));
+  }
+
+  function fitCanvas() {
+    const cssWidth = canvas.getBoundingClientRect().width || W;
+    const dpr = Math.min(2.5, window.devicePixelRatio || 1);
+    const scale = Math.max(.25, (cssWidth * dpr) / W);
+    const backingWidth = Math.round(W * scale);
+    const backingHeight = Math.round(H * scale);
+    if (canvas.width !== backingWidth || canvas.height !== backingHeight) {
+      canvas.width = backingWidth;
+      canvas.height = backingHeight;
+    }
+    ctx.setTransform(backingWidth / W, 0, 0, backingHeight / H, 0, 0);
+    draw(performance.now());
+  }
+
   stage.addEventListener('pointerdown', (event) => {
-    if (event.target.closest('button')) return;
+    if (event.target.closest('button, a')) return;
     event.preventDefault();
     flap();
   });
 
   window.addEventListener('keydown', (event) => {
-    if (event.code === 'Space' || event.key === 'ArrowUp') {
+    if (event.ctrlKey || event.metaKey || event.altKey || isTypingTarget(event.target)) return;
+    if ((event.code === 'Space' && !isActivatableTarget(event.target)) || event.key === 'ArrowUp') {
       event.preventDefault();
       flap();
     } else if (event.key.toLowerCase() === 'p') {
@@ -607,11 +647,24 @@
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) pauseGame(true);
   });
-  startButton.addEventListener('click', () => { start(); flap(); });
+  [startButton, pauseButton, restartButton].forEach((button) => {
+    button.addEventListener('click', (event) => { if (event.detail) button.blur(); });
+  });
+  startButton.addEventListener('click', () => { if (paused) { resumeGame(); return; } start(); flap(); });
   pauseButton.addEventListener('click', togglePause);
   restartButton.addEventListener('click', resetGame);
 
+  let fitFrame = 0;
+  const scheduleFit = () => {
+    cancelAnimationFrame(fitFrame);
+    fitFrame = requestAnimationFrame(fitCanvas);
+  };
+  if (window.ResizeObserver) new ResizeObserver(scheduleFit).observe(stage);
+  window.addEventListener('resize', scheduleFit);
+  window.addEventListener('orientationchange', scheduleFit);
+
   bestEl.textContent = String(best);
   resetGame();
+  fitCanvas();
   initializeCloudSave();
 })();

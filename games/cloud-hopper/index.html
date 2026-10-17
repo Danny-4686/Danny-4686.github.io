@@ -21,7 +21,7 @@
   <link rel="stylesheet" href="/assets/css/site-quality.css?v=20260808">
   <style>
     .hopper-stage{position:relative;width:min(620px,100%);margin:0 auto;overflow:hidden;border:1px solid var(--line);border-radius:24px;background:#07151c;box-shadow:inset 0 0 0 1px rgba(255,255,255,.025),0 20px 50px rgba(0,0,0,.24)}
-    #hopperCanvas{display:block;width:100%;height:auto;aspect-ratio:4/5;touch-action:none}.hopper-touch{display:flex;justify-content:center;gap:12px;margin-top:16px}.hopper-touch .touch-button{width:92px;height:58px}.game-message{background:rgba(4,13,18,.58);backdrop-filter:blur(8px);transition:opacity .2s ease,visibility .2s ease}.game-message.hidden{display:grid;opacity:0;visibility:hidden;pointer-events:none}.game-message h2{font-size:clamp(2rem,7vw,3.5rem)}
+    #hopperCanvas{display:block;width:100%;height:auto;aspect-ratio:4/5;touch-action:none}.hopper-touch{display:flex;justify-content:center;gap:12px;margin-top:16px}.hopper-touch .touch-button{width:92px;height:58px;touch-action:none;user-select:none}.game-message{background:rgba(4,13,18,.58);backdrop-filter:blur(8px);transition:opacity .2s ease,visibility .2s ease}.game-message.hidden{display:grid;opacity:0;visibility:hidden;pointer-events:none}.game-message h2{font-size:clamp(2rem,7vw,3.5rem)}
   </style>
   <link rel="stylesheet" href="/assets/css/premium.css?v=20261015.1">
   <script src="/assets/js/premium.js?v=20261015.1" defer></script>
@@ -32,7 +32,7 @@
     <a class="back-link reveal" href="/games/">← Back to Browser Games</a>
     <div class="game-heading reveal"><div><p class="eyebrow">CLOUDLAB ARCADE</p><h1>Cloud Hopper</h1><p>Bounce from platform to platform, collect Cloud Coins, and climb as high as possible.</p></div><div class="score-row"><div class="score-chip"><small>SCORE</small><strong id="heightScore">0</strong></div><div class="score-chip"><small>COINS</small><strong id="coins">0</strong></div><div class="score-chip"><small>BEST</small><strong id="best">0</strong></div></div></div>
     <section class="game-panel reveal" aria-label="Cloud Hopper game">
-      <div class="hopper-stage"><canvas id="hopperCanvas" width="640" height="800" role="img" aria-label="Cloud Hopper board"></canvas><div class="game-message" id="gameMessage"><div><h2 id="messageTitle">Ready to hop?</h2><p id="messageText">Press Start and steer with A/D, the arrow keys, or the touch buttons.</p></div></div></div>
+      <div class="hopper-stage"><canvas id="hopperCanvas" width="640" height="800" role="img" aria-label="Cloud Hopper board"></canvas><div class="game-message" id="gameMessage"><div><h2 id="messageTitle">Ready to hop?</h2><p id="messageText">Press Start or Space, then steer with A/D or the arrow keys.</p></div></div></div>
       <div class="game-toolbar"><button class="game-button primary" id="startButton" type="button">Start Run</button><button class="game-button" id="pauseButton" type="button">Pause</button><button class="game-button" id="restartButton" type="button">Restart</button></div>
       <div class="hopper-touch" role="group" aria-label="Touch movement controls"><button class="touch-button" type="button" data-move="left" aria-label="Move left">←</button><button class="touch-button" type="button" data-move="right" aria-label="Move right">→</button></div>
       <p class="control-note"><span class="desktop-only">Use A/D or the arrow keys.</span> The cloud bounces automatically when it lands.</p>
@@ -54,7 +54,20 @@
     const messageText = document.getElementById('messageText');
     const startButton = document.getElementById('startButton');
     const pauseButton = document.getElementById('pauseButton');
+    const restartButton = document.getElementById('restartButton');
+    const stage = canvas.parentElement;
     const keys = { left: false, right: false };
+    const touchUI = window.matchMedia?.('(pointer: coarse)').matches || false;
+    const copy = touchUI ? {
+      ready: 'Tap Start Run or hold the ← → buttons to begin. The cloud bounces automatically.',
+      paused: 'Tap Resume when you are ready.'
+    } : {
+      ready: 'Press Start or Space, then steer with A/D or the arrow keys.',
+      paused: 'Press Space or Resume when you are ready.'
+    };
+    const coinSprite = new Image();
+    coinSprite.decoding = 'async';
+    coinSprite.src = '/assets/images/memory/optimized/clgold-256.webp';
     let player;
     let platforms = [];
     let particles = [];
@@ -107,7 +120,7 @@
       startButton.textContent = 'Start Run';
       pauseButton.textContent = 'Pause';
       updateStats();
-      showMessage('Ready to hop?', 'Press Start and steer with A/D, the arrow keys, or the touch buttons.');
+      showMessage('Ready to hop?', copy.ready);
       draw();
     }
 
@@ -125,12 +138,17 @@
       raf = requestAnimationFrame(loop);
     }
 
-    function togglePause() {
+    function togglePause(text = copy.paused) {
       if (!started || !running) return;
       paused = !paused;
       pauseButton.textContent = paused ? 'Resume' : 'Pause';
-      if (paused) showMessage('Paused', 'Press Resume when you are ready.');
-      else { hideMessage(); last = performance.now(); raf = requestAnimationFrame(loop); }
+      if (paused) { keys.left = false; keys.right = false; showMessage('Paused', text); }
+      else { hideMessage(); last = performance.now(); cancelAnimationFrame(raf); raf = requestAnimationFrame(loop); }
+    }
+
+    function restart() {
+      resetGame();
+      start();
     }
 
     function spawnBurst(x, y, color) {
@@ -224,6 +242,28 @@
       ctx.restore();
     }
 
+    function drawCoin(x, y) {
+      const now = performance.now();
+      const spin = Math.cos(now / 380);
+      const bob = Math.sin(now / 520 + x) * 2.5;
+      const size = 28;
+      ctx.save();
+      ctx.translate(x, y + bob);
+      ctx.scale(Math.max(.18, Math.abs(spin)), 1);
+      ctx.shadowColor = 'rgba(242,199,92,.62)';
+      ctx.shadowBlur = 18;
+      if (coinSprite.complete && coinSprite.naturalWidth > 0) {
+        ctx.drawImage(coinSprite, -size / 2, -size / 2, size, size);
+      } else {
+        ctx.fillStyle = '#f2c75c';
+        ctx.beginPath(); ctx.arc(0, 0, size / 2 - 2, 0, Math.PI * 2); ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = '#b8862a'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(0, 0, size / 2 - 6, 0, Math.PI * 2); ctx.stroke();
+      }
+      ctx.restore();
+    }
+
     function draw() {
       const bg = ctx.createLinearGradient(0, 0, 0, H);
       bg.addColorStop(0, '#0b3140');
@@ -251,15 +291,7 @@
         ctx.fillStyle = grad;
         ctx.beginPath(); ctx.roundRect(p.x, y, p.w, p.h, 9); ctx.fill();
         ctx.restore();
-        if (p.coin) {
-          ctx.save();
-          ctx.translate(p.x + p.w / 2, y - 22);
-          ctx.rotate(performance.now() / 500);
-          ctx.shadowColor = '#f2c75c'; ctx.shadowBlur = 16; ctx.fillStyle = '#f2c75c';
-          ctx.beginPath(); ctx.roundRect(-9, -12, 18, 24, 7); ctx.fill();
-          ctx.fillStyle = '#8b6514'; ctx.font = '900 13px Inter'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('C', 0, 1);
-          ctx.restore();
-        }
+        if (p.coin) drawCoin(p.x + p.w / 2, y - 24);
       }
 
       particles.forEach((p) => { ctx.globalAlpha = Math.max(0, p.life / .65); ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y - camera, 4, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; });
@@ -275,23 +307,69 @@
       if (running && !paused) raf = requestAnimationFrame(loop);
     }
 
+    function isTypingTarget(target) {
+      return target instanceof Element && Boolean(target.closest('input, select, textarea, [contenteditable="true"]'));
+    }
+
+    function isActivatableTarget(target) {
+      return target instanceof Element && Boolean(target.closest('a[href], button, summary'));
+    }
+
+    function fitCanvas() {
+      const cssWidth = canvas.getBoundingClientRect().width || W;
+      const dpr = Math.min(2.5, window.devicePixelRatio || 1);
+      const scale = Math.max(.25, (cssWidth * dpr) / W);
+      const backingWidth = Math.round(W * scale);
+      const backingHeight = Math.round(H * scale);
+      if (canvas.width !== backingWidth || canvas.height !== backingHeight) {
+        canvas.width = backingWidth;
+        canvas.height = backingHeight;
+      }
+      ctx.setTransform(backingWidth / W, 0, 0, backingHeight / H, 0, 0);
+      draw();
+    }
+
     function bindHold(button, key) {
-      const on = (event) => { event.preventDefault(); keys[key] = true; };
+      const on = (event) => {
+        event.preventDefault();
+        keys[key] = true;
+        if (!running) start();
+      };
       const off = () => { keys[key] = false; };
       button.addEventListener('pointerdown', on); button.addEventListener('pointerup', off); button.addEventListener('pointercancel', off); button.addEventListener('pointerleave', off);
     }
     document.querySelectorAll('[data-move]').forEach((button) => bindHold(button, button.dataset.move));
     window.addEventListener('keydown', (event) => {
+      if (event.ctrlKey || event.metaKey || event.altKey || isTypingTarget(event.target)) return;
       if (['ArrowLeft','a','A'].includes(event.key)) { keys.left = true; event.preventDefault(); }
       if (['ArrowRight','d','D'].includes(event.key)) { keys.right = true; event.preventDefault(); }
-      if (event.code === 'Space') { event.preventDefault(); if (!started) start(); else togglePause(); }
+      if (event.code === 'Space' && !isActivatableTarget(event.target)) { event.preventDefault(); if (event.repeat) return; if (!started) start(); else togglePause(); }
     });
     window.addEventListener('keyup', (event) => { if (['ArrowLeft','a','A'].includes(event.key)) keys.left = false; if (['ArrowRight','d','D'].includes(event.key)) keys.right = false; });
-    startButton.addEventListener('click', start);
-    pauseButton.addEventListener('click', togglePause);
-    document.getElementById('restartButton').addEventListener('click', resetGame);
+    window.addEventListener('blur', () => { keys.left = false; keys.right = false; });
+    document.addEventListener('visibilitychange', () => {
+      keys.left = false;
+      keys.right = false;
+      if (document.hidden && running && !paused) togglePause('The run paused while this tab was away.');
+    });
+    [startButton, pauseButton, restartButton].forEach((button) => {
+      button.addEventListener('click', (event) => { if (event.detail) button.blur(); });
+    });
+    startButton.addEventListener('click', () => { if (paused) togglePause(); else start(); });
+    pauseButton.addEventListener('click', () => togglePause());
+    restartButton.addEventListener('click', restart);
+    let fitFrame = 0;
+    const scheduleFit = () => {
+      cancelAnimationFrame(fitFrame);
+      fitFrame = requestAnimationFrame(fitCanvas);
+    };
+    if (window.ResizeObserver) new ResizeObserver(scheduleFit).observe(stage);
+    window.addEventListener('resize', scheduleFit);
+    window.addEventListener('orientationchange', scheduleFit);
+    coinSprite.addEventListener('load', () => { if (!running) draw(); });
     bestEl.textContent = best;
     resetGame();
+    fitCanvas();
   })();
   </script>
 </body>

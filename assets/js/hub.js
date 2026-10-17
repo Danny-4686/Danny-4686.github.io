@@ -58,31 +58,6 @@
     }
   }
 
-  if (path.startsWith('/games/cloud-hopper/') && window.CanvasRenderingContext2D) {
-    const coinSprite = new Image();
-    coinSprite.decoding = 'async';
-    coinSprite.src = '/assets/images/memory/optimized/clgold-256.webp';
-    const prototype = window.CanvasRenderingContext2D.prototype;
-    const originalFillText = prototype.fillText;
-
-    if (!prototype.__cloudLabGoldCoinPatch) {
-      Object.defineProperty(prototype, '__cloudLabGoldCoinPatch', { value: true });
-      prototype.fillText = function patchedCloudCoin(text, x, y, maxWidth) {
-        if (text === 'C' && this.canvas?.id === 'hopperCanvas' && coinSprite.complete && coinSprite.naturalWidth > 0) {
-          const size = 25;
-          this.save();
-          this.shadowColor = 'rgba(242, 199, 92, .58)';
-          this.shadowBlur = 18;
-          this.drawImage(coinSprite, x - size / 2, y - size / 2, size, size);
-          this.restore();
-          return;
-        }
-        if (maxWidth === undefined) return originalFillText.call(this, text, x, y);
-        return originalFillText.call(this, text, x, y, maxWidth);
-      };
-    }
-  }
-
   if (!document.querySelector('link[data-premium-game-effects]')) {
     const gameStyles = document.createElement('link');
     gameStyles.rel = 'stylesheet';
@@ -93,7 +68,7 @@
 
   if (!document.querySelector('script[data-premium-game-effects]')) {
     const gameScript = document.createElement('script');
-    gameScript.src = '/games/premium-game-effects.js?v=20261012';
+    gameScript.src = '/games/premium-game-effects.js?v=20261017';
     gameScript.dataset.premiumGameEffects = 'true';
     document.head.append(gameScript);
   }

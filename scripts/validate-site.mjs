@@ -177,7 +177,7 @@ for (const gameId of arcadeGameIds) {
 }
 
 const requiredGameControls = new Map([
-  ['flappy-cloud', ['id="flappyCanvas"', 'id="startButton"', 'id="pauseButton"', 'id="flappySaveStatus"', 'game.js?v=3']],
+  ['flappy-cloud', ['id="flappyCanvas"', 'id="startButton"', 'id="pauseButton"', 'id="flappySaveStatus"', 'game.js?v=4']],
   ['cloudlab-clicker', ['id="cloudCore"', 'id="buildingList"', 'id="boostList"', 'id="buyModes"', 'id="productionNetwork"', 'id="activeResearch"', 'id="clickerTabs"', 'id="cloudSignIn"', 'id="clickRateStatus"', 'rate-limiter.js?v=1', 'save-policy.js?v=1', 'icons.js?v=1', 'game.js?v=7']],
   ['launcher', ['id="launcherCanvas"', 'id="launchButton"', 'id="launcherUpgradeGrid"', 'id="angleButtons"', 'id="phaseLabel"', 'id="launcherToastLayer"', 'id="launcherSaveStatus"', 'game.js']]
 ]);

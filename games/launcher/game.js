@@ -3,18 +3,17 @@
   const ctx = canvas?.getContext('2d');
   if (!canvas || !ctx) return;
 
-  if (window.matchMedia?.('(max-width: 700px)').matches) {
-    canvas.width = 860;
-    canvas.height = 630;
-  }
-
-  const W = canvas.width;
-  const H = canvas.height;
+  const compactQuery = window.matchMedia?.('(max-width: 700px)');
+  // Logical board size; the backing store is scaled separately for crisp high-DPI rendering.
+  let W = compactQuery?.matches ? 860 : 1120;
+  const H = 630;
   const GROUND_Y = H - 82;
+  const CAMERA_TOP_MARGIN = 120;
   const EARTH_RADIUS = 31;
   const START_X = 102;
   const STORAGE_KEY = 'cloudlab-launcher-save-v1';
   const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const touchUI = window.matchMedia?.('(pointer: coarse)').matches || false;
 
   const distanceEl = document.getElementById('distance');
   const bestEl = document.getElementById('bestDistance');
@@ -125,6 +124,7 @@
   let shockwaves = [];
   let floatingLabels = [];
   let cameraX = 0;
+  let cameraY = 0;
   let status = 'ready';
   let paused = false;
   let angle = 35;
@@ -435,6 +435,7 @@
   function resetFlight() {
     earth = { x: START_X, y: EARTH_RADIUS, vx: 0, vy: 0, rotation: 0, grounded: false };
     cameraX = 0;
+    cameraY = 0;
     status = 'ready';
     paused = false;
     power = .25;
@@ -551,7 +552,7 @@
     applyPendingCloudPayload();
     launchButton.textContent = 'New Flight';
     angleButtons.querySelectorAll('button').forEach((button) => { button.disabled = false; });
-    showMessage(newBest ? 'New distance record!' : endedEarly ? 'Run ended' : 'Flight complete', `${format(distance)} m · ${bounces} ${bounces === 1 ? 'bounce' : 'bounces'} · ${ringHits} ${ringHits === 1 ? 'ring' : 'rings'} · +${format(reward)} credits`);
+    showMessage(newBest ? 'New distance record!' : endedEarly ? 'Run ended' : 'Flight complete', `${format(distance)} m · ${bounces} ${bounces === 1 ? 'bounce' : 'bounces'} · ${ringHits} ${ringHits === 1 ? 'ring' : 'rings'} · +${format(reward)} credits. ${touchUI ? 'Tap the stage or New Flight to go again.' : 'Press Space or New Flight to go again.'}`);
     flightReport.querySelector('p').textContent = `${format(distance)} m traveled · ${airtime.toFixed(1)}s airborne · ${format(rollingDistance)} m rolling · ${bounces} ${bounces === 1 ? 'bounce' : 'bounces'} · ${ringHits} sky ${ringHits === 1 ? 'ring' : 'rings'} · +${format(reward)} credits.`;
     addFloatingLabel(earth.x, earth.y + 68, `+${format(reward)} CREDITS`, '#9fe1ab');
     spawnShockwave(earth.x, EARTH_RADIUS, '#8bcf9b', 92);
@@ -726,11 +727,21 @@
 
     const targetCamera = Math.max(0, earth.x - W * .28);
     cameraX += (targetCamera - cameraX) * Math.min(1, dt * 4.2);
+    updateCameraY(dt);
     updateHud();
   }
 
+  function updateCameraY(dt) {
+    // Follow altitude smoothly, but never let the Earth leave the top of the stage.
+    const targetY = Math.max(0, earth.y - (GROUND_Y - CAMERA_TOP_MARGIN));
+    cameraY += (targetY - cameraY) * Math.min(1, dt * 5);
+    cameraY = Math.max(cameraY, earth.y - (GROUND_Y - 48));
+    if (cameraY < .05) cameraY = 0;
+  }
+
   function worldToScreenX(x) { return x - cameraX; }
-  function worldToScreenY(y) { return GROUND_Y - y; }
+  function worldToScreenY(y) { return GROUND_Y - y + cameraY; }
+  function groundScreenY() { return GROUND_Y + cameraY; }
 
   function drawSky(now) {
     const horizonShift = Math.min(1, distanceMeters() / 2200);
@@ -754,7 +765,7 @@
     for (let i = 0; i < 58; i += 1) {
       const layer = .03 + (i % 4) * .018;
       const x = ((i * 193 - cameraX * layer) % (W + 80) + W + 80) % (W + 80) - 40;
-      const y = 25 + ((i * 131) % (H - 180));
+      const y = ((25 + ((i * 131) % (H - 180)) + cameraY * layer * 2) % H + H) % H;
       const size = i % 9 === 0 ? 2.2 : 1.1;
       ctx.globalAlpha = .3 + (i % 5) * .1;
       ctx.fillRect(x, y, size, size);
@@ -764,7 +775,7 @@
     for (let index = 0; index < 9; index += 1) {
       const layer = .07 + (index % 3) * .035;
       const x = ((index * 311 - cameraX * layer) % (W + 280) + W + 280) % (W + 280) - 140;
-      const y = 105 + (index * 97) % 225;
+      const y = 105 + (index * 97) % 225 + cameraY * layer * 1.6;
       const scale = .7 + (index % 4) * .18;
       ctx.save();
       ctx.translate(x, y);
@@ -785,21 +796,31 @@
     ctx.shadowBlur = 40;
     ctx.fillStyle = '#f6df93';
     ctx.beginPath();
-    ctx.arc(sunX, 105, 36, 0, Math.PI * 2);
+    ctx.arc(sunX, 105 + cameraY * .06, 36, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
 
-    ctx.fillStyle = 'rgba(79,145,157,.19)';
-    ctx.beginPath();
-    ctx.moveTo(0, GROUND_Y);
-    for (let x = 0; x <= W + 80; x += 80) {
-      const world = x + cameraX * .18;
-      const y = GROUND_Y - 70 - Math.sin(world / 230) * 38 - Math.sin(world / 89) * 12;
-      ctx.lineTo(x, y);
+    const hillBase = GROUND_Y + cameraY * .55;
+    if (hillBase - 130 < H) {
+      ctx.fillStyle = 'rgba(79,145,157,.19)';
+      ctx.beginPath();
+      ctx.moveTo(0, hillBase);
+      for (let x = 0; x <= W + 80; x += 80) {
+        const world = x + cameraX * .18;
+        const y = hillBase - 70 - Math.sin(world / 230) * 38 - Math.sin(world / 89) * 12;
+        ctx.lineTo(x, y);
+      }
+      ctx.lineTo(W, hillBase);
+      ctx.lineTo(W, H);
+      ctx.lineTo(0, H);
+      ctx.closePath();
+      ctx.fill();
     }
-    ctx.lineTo(W, GROUND_Y);
-    ctx.closePath();
-    ctx.fill();
+
+    if (cameraY > 0) {
+      ctx.fillStyle = `rgba(6,10,28,${Math.min(.32, cameraY / 1800)})`;
+      ctx.fillRect(0, 0, W, H);
+    }
 
     if (!reducedMotion && status === 'flying' && !earth.grounded) {
       const speed = Math.min(1, Math.hypot(earth.vx, earth.vy) / 900);
@@ -817,22 +838,24 @@
   }
 
   function drawGround() {
-    const groundGradient = ctx.createLinearGradient(0, GROUND_Y, 0, H);
+    const groundY = groundScreenY();
+    if (groundY >= H) return;
+    const groundGradient = ctx.createLinearGradient(0, groundY, 0, groundY + (H - GROUND_Y));
     groundGradient.addColorStop(0, '#2d6870');
     groundGradient.addColorStop(.08, '#163943');
     groundGradient.addColorStop(1, '#07151c');
     ctx.fillStyle = groundGradient;
-    ctx.fillRect(0, GROUND_Y, W, H - GROUND_Y);
+    ctx.fillRect(0, groundY, W, H - groundY);
     ctx.fillStyle = '#77c992';
-    ctx.fillRect(0, GROUND_Y, W, 5);
+    ctx.fillRect(0, groundY, W, 5);
 
     ctx.strokeStyle = 'rgba(104,208,223,.055)';
     ctx.lineWidth = 1;
     const tileOffset = -((cameraX * .82) % 54);
     for (let x = tileOffset; x < W + 54; x += 54) {
       ctx.beginPath();
-      ctx.moveTo(x, GROUND_Y + 7);
-      ctx.lineTo(x - 28, H);
+      ctx.moveTo(x, groundY + 7);
+      ctx.lineTo(x - 28, groundY + (H - GROUND_Y));
       ctx.stroke();
     }
 
@@ -845,11 +868,11 @@
       const meters = Math.max(0, Math.floor((worldX - START_X) / 3));
       ctx.strokeStyle = 'rgba(104,208,223,.22)';
       ctx.beginPath();
-      ctx.moveTo(x, GROUND_Y);
-      ctx.lineTo(x, GROUND_Y + 18);
+      ctx.moveTo(x, groundY);
+      ctx.lineTo(x, groundY + 18);
       ctx.stroke();
       ctx.fillStyle = 'rgba(191,231,237,.55)';
-      ctx.fillText(`${meters} m`, x, GROUND_Y + 35);
+      ctx.fillText(`${meters} m`, x, groundY + 35);
     }
   }
 
@@ -857,7 +880,7 @@
     const x = worldToScreenX(START_X - 34);
     if (x < -160 || x > W + 160) return;
     ctx.save();
-    ctx.translate(x, GROUND_Y - 6);
+    ctx.translate(x, groundScreenY() - 6);
     ctx.fillStyle = '#173c48';
     ctx.strokeStyle = 'rgba(104,208,223,.45)';
     ctx.lineWidth = 3;
@@ -960,8 +983,9 @@
     const height = Math.max(0, earth.y - EARTH_RADIUS);
     const opacity = Math.max(.04, .3 - height / 1150);
     const scale = Math.max(.22, 1 - height / 850);
+    if (groundScreenY() > H + 20) return;
     ctx.save();
-    ctx.translate(worldToScreenX(earth.x), GROUND_Y + 3);
+    ctx.translate(worldToScreenX(earth.x), groundScreenY() + 3);
     ctx.scale(scale, scale);
     ctx.fillStyle = `rgba(0,0,0,${opacity})`;
     ctx.filter = `blur(${Math.min(13, 3 + height / 80)}px)`;
@@ -1020,6 +1044,38 @@
     });
   }
 
+  function drawAltitudeMarker() {
+    if (!earth || cameraY < 1) return;
+    const altitude = Math.max(0, Math.floor((earth.y - EARTH_RADIUS) / 3));
+    const x = Math.max(70, Math.min(W - 70, worldToScreenX(earth.x)));
+    const groundVisible = groundScreenY() < H - 12;
+    ctx.save();
+    ctx.font = '900 12px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const label = groundVisible ? `ALT ${format(altitude)} m` : `▼ GROUND · ALT ${format(altitude)} m`;
+    const width = ctx.measureText(label).width + 22;
+    const y = H - 22;
+    ctx.fillStyle = 'rgba(3,14,19,.72)';
+    ctx.strokeStyle = 'rgba(104,208,223,.42)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(x - width / 2, y - 13, width, 26, 13);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#c6f5fa';
+    ctx.fillText(label, x, y + .5);
+    if (!groundVisible) {
+      ctx.strokeStyle = 'rgba(104,208,223,.22)';
+      ctx.setLineDash([4, 6]);
+      ctx.beginPath();
+      ctx.moveTo(worldToScreenX(earth.x), worldToScreenY(earth.y) + EARTH_RADIUS + 8);
+      ctx.lineTo(x, y - 15);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
   function draw(now) {
     ctx.save();
     if (cameraShake > 0 && !reducedMotion) ctx.translate((Math.random() - .5) * cameraShake, (Math.random() - .5) * cameraShake * .65);
@@ -1033,7 +1089,36 @@
     drawParticles();
     drawEarth();
     drawFloatingLabels();
+    drawAltitudeMarker();
     ctx.restore();
+  }
+
+  function fitCanvas() {
+    const nextW = compactQuery?.matches ? 860 : 1120;
+    if (nextW !== W) {
+      W = nextW;
+      if (earth && status === 'flying') cameraX = Math.max(0, earth.x - W * .28);
+    }
+    canvas.style.aspectRatio = `${W} / ${H}`;
+    const cssWidth = canvas.getBoundingClientRect().width || W;
+    const dpr = Math.min(2.5, window.devicePixelRatio || 1);
+    const scale = Math.max(.25, (cssWidth * dpr) / W);
+    const backingWidth = Math.round(W * scale);
+    const backingHeight = Math.round(H * scale);
+    if (canvas.width !== backingWidth || canvas.height !== backingHeight) {
+      canvas.width = backingWidth;
+      canvas.height = backingHeight;
+    }
+    ctx.setTransform(backingWidth / W, 0, 0, backingHeight / H, 0, 0);
+    if (earth) draw(performance.now());
+  }
+
+  function isTypingTarget(target) {
+    return target instanceof Element && Boolean(target.closest('input, select, textarea, [contenteditable="true"]'));
+  }
+
+  function isActivatableTarget(target) {
+    return target instanceof Element && Boolean(target.closest('a[href], button, summary'));
   }
 
   function renderUpgrades() {
@@ -1145,22 +1230,46 @@
     else resetFlight();
   });
   stage.addEventListener('pointerdown', (event) => {
-    if (status !== 'flying' || event.target.closest('button')) return;
+    if (event.target.closest('button, a')) return;
+    if (status === 'landed') {
+      event.preventDefault();
+      resetFlight();
+      return;
+    }
+    if (status !== 'flying') return;
     event.preventDefault();
     useBoost();
   });
 
+  function ignoreKey(event) {
+    if (event.ctrlKey || event.metaKey || event.altKey || isTypingTarget(event.target)) return true;
+    // The launch button is the game's own hold-to-charge control; other buttons and links keep native Space activation.
+    return isActivatableTarget(event.target) && !launchButton.contains(event.target);
+  }
+
   window.addEventListener('keydown', (event) => {
-    if (event.code !== 'Space' || event.repeat) return;
+    if (event.code !== 'Space' || ignoreKey(event)) return;
     event.preventDefault();
+    if (event.repeat) return;
     if (status === 'flying') useBoost();
     else if (status === 'ready') startCharge();
+    else if (status === 'landed') resetFlight();
   });
   window.addEventListener('keyup', (event) => {
-    if (event.code !== 'Space') return;
+    if (event.code !== 'Space' || ignoreKey(event)) return;
     event.preventDefault();
     if (status === 'charging') launch();
   });
+  window.addEventListener('blur', cancelCharge);
+  if (compactQuery?.addEventListener) compactQuery.addEventListener('change', fitCanvas);
+  let fitFrame = 0;
+  const scheduleFit = () => {
+    cancelAnimationFrame(fitFrame);
+    fitFrame = requestAnimationFrame(fitCanvas);
+  };
+  if (window.ResizeObserver) new ResizeObserver(scheduleFit).observe(stage);
+  window.addEventListener('resize', scheduleFit);
+  window.addEventListener('orientationchange', scheduleFit);
   document.addEventListener('visibilitychange', () => {
     last = performance.now();
     if (document.hidden) {
@@ -1179,6 +1288,7 @@
 
   renderUpgrades();
   resetFlight();
+  fitCanvas();
   initializeCloudSave();
   requestAnimationFrame(loop);
 })();
