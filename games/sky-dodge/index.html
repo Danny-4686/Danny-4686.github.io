@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script src="/assets/js/site-gate.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Play Sky Dodge in the CloudLab Arcade: steer a glowing cloud ship through falling hail, lightning, and storm debris.">
+  <meta name="theme-color" content="#061117">
+  <meta name="author" content="Danny4686"><meta name="application-name" content="CloudLab"><meta name="apple-mobile-web-app-title" content="CloudLab">
+  <link rel="canonical" href="https://danny4686.com/games/sky-dodge/">
+  <meta property="og:site_name" content="CloudLab"><meta property="og:title" content="Sky Dodge | CloudLab Arcade"><meta property="og:description" content="Steer a glowing cloud ship through falling hail, lightning, and storm debris."><meta property="og:type" content="website"><meta property="og:url" content="https://danny4686.com/games/sky-dodge/"><meta property="og:image" content="https://danny4686.com/assets/images/cloudlab-logo.png"><meta property="og:image:alt" content="CloudLab Earth logo">
+  <meta name="twitter:card" content="summary"><meta name="twitter:title" content="Sky Dodge | CloudLab Arcade"><meta name="twitter:description" content="Steer a glowing cloud ship through falling hail, lightning, and storm debris."><meta name="twitter:image" content="https://danny4686.com/assets/images/cloudlab-logo.png">
+  <title>Sky Dodge | CloudLab Arcade</title>
+  <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="icon" href="/assets/icons/favicon-48x48.png" type="image/png" sizes="48x48">
+  <link rel="icon" href="/assets/icons/favicon-32x32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" sizes="180x180">
+  <link rel="manifest" href="/site.webmanifest"><link rel="stylesheet" href="/assets/css/site-loader.css?v=20260808"><script src="/assets/js/site-loader.js?v=20260808"></script>
+  <link rel="preload" href="/assets/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/assets/css/hub.css">
+  <link rel="stylesheet" href="/assets/css/site-quality.css?v=20260808">
+  <style>
+    .dodge-stage{position:relative;width:min(100%,560px,max(300px,calc((100svh - 150px) * .8)));margin:0 auto;overflow:hidden;border:1px solid var(--line);border-radius:24px;background:#07151c;box-shadow:inset 0 0 0 1px rgba(255,255,255,.025),0 24px 58px rgba(0,0,0,.3);isolation:isolate}
+    #dodgeCanvas{display:block;width:100%;height:auto;aspect-ratio:4/5;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+    #dodgeCanvas.is-steering{cursor:grabbing}
+    .dodge-status{position:absolute;top:12px;left:12px;right:12px;z-index:2;display:flex;justify-content:space-between;gap:8px;pointer-events:none}
+    .dodge-status span{padding:6px 9px;border:1px solid rgba(104,208,223,.26);border-radius:999px;color:#c6f5fa;background:rgba(3,14,19,.62);box-shadow:0 8px 20px rgba(0,0,0,.18);backdrop-filter:blur(8px);font-size:.7rem;font-weight:900;letter-spacing:.07em}
+    .dodge-status #shieldLabel.is-active{border-color:rgba(139,207,155,.5);color:#d4ffe0;background:rgba(14,58,34,.42);box-shadow:0 0 22px rgba(139,207,155,.16)}
+    .dodge-stage .game-message{z-index:3;background:rgba(3,12,17,.36);backdrop-filter:blur(5px);transition:opacity .2s ease,visibility .2s ease}
+    .dodge-stage .game-message.hidden{display:grid;opacity:0;visibility:hidden;pointer-events:none}
+    .dodge-stage .game-message > div{max-width:340px}
+    .dodge-stage .game-message .eyebrow{margin-bottom:7px}
+    .dodge-stage .game-message h2{font-size:clamp(2rem,7vw,3.2rem)}
+    .dodge-legend{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 12px;margin:12px 0 0;padding:0;list-style:none;color:var(--muted);font-size:.74rem;font-weight:750}
+    .dodge-legend li{display:flex;align-items:center;gap:6px}
+    .dodge-legend i{width:9px;height:9px;border-radius:50%;background:var(--dot);box-shadow:0 0 10px var(--dot)}
+    .dot-star{--dot:#f2c75c}.dot-shield{--dot:#8bcf9b}.dot-hail{--dot:#68d0df}.dot-bolt{--dot:#f7e27a}.dot-debris{--dot:#ed8b45}
+    @media (max-width:620px){.dodge-stage{border-radius:19px}.dodge-status{top:9px;left:9px;right:9px}.dodge-status span{padding:5px 8px;letter-spacing:.04em}.dodge-stage .game-message > div{width:calc(100% - 34px);padding:16px}}
+    @media (prefers-reduced-motion:reduce){.dodge-stage .game-message{transition:none}}
+  </style>
+  <link rel="stylesheet" href="/assets/css/premium.css?v=20261015.1">
+  <script src="/assets/js/premium.js?v=20261015.1" defer></script>
+</head>
+<body>
+  <header class="hub-header"><a class="hub-brand" href="/" aria-label="Return to Danny4686.com"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>Danny4686</strong><small>CloudLab Studio</small></span></a><nav class="hub-nav" aria-label="Site navigation"><a href="/#about">About</a><a href="/#projects">Projects</a><a class="active" href="/games/" aria-current="page">Games</a><a href="/journal/">Journal</a><a href="/#connect">Connect</a></nav><a class="header-action" href="/games/">All Games</a></header>
+  <main class="page-shell game-page">
+    <a class="back-link reveal" href="/games/">← Back to Browser Games</a>
+    <div class="game-heading reveal"><div><p class="eyebrow">CLOUDLAB ARCADE</p><h1>Sky Dodge</h1><p>Steer your cloud ship through falling hail, lightning, and storm debris while grabbing stars.</p></div><div class="score-row"><div class="score-chip"><small>SCORE</small><strong id="score">0</strong></div><div class="score-chip"><small>STARS</small><strong id="stars">0</strong></div><div class="score-chip"><small>BEST</small><strong id="best">0</strong></div></div></div>
+    <section class="game-panel reveal" aria-label="Sky Dodge game">
+      <div class="dodge-stage" id="dodgeStage">
+        <canvas id="dodgeCanvas" width="640" height="800" role="img" aria-label="Sky Dodge storm field"></canvas>
+        <div class="dodge-status" aria-hidden="true"><span id="levelLabel">CALM SKIES</span><span id="shieldLabel">NO SHIELD</span></div>
+        <div class="game-message" id="gameMessage"><div><p class="eyebrow">STORM RUN</p><h2 id="messageTitle">Ready to dodge?</h2><p id="messageText">Press Space or Start Run, then steer with the arrow keys or A/D.</p></div></div>
+      </div>
+      <div class="game-toolbar"><button class="game-button primary" id="startButton" type="button">Start Run</button><button class="game-button" id="restartButton" type="button">Restart</button></div>
+      <ul class="dodge-legend"><li><i class="dot-star" aria-hidden="true"></i>Star +50</li><li><i class="dot-shield" aria-hidden="true"></i>Shield blocks one hit</li><li><i class="dot-hail" aria-hidden="true"></i>Hail</li><li><i class="dot-bolt" aria-hidden="true"></i>Lightning</li><li><i class="dot-debris" aria-hidden="true"></i>Debris</li></ul>
+      <p class="control-note" id="controlNote">Arrow keys or A/D steer, or drag anywhere on the sky. P or Esc pauses. You earn 10 points every second you survive.</p>
+      <p class="sr-only" id="gameAnnouncement" aria-live="polite"></p>
+    </section>
+  </main>
+  <footer class="site-footer"><a class="footer-brand" href="/"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>Sky Dodge</small></span></a><p>© <span id="year"></span> Danny4686.</p></footer>
+  <script src="/assets/js/hub.js?v=20261015.1"></script>
+  <script src="game.js?v=1"></script>
+</body>
+</html>

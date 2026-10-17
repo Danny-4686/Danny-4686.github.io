@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script src="/assets/js/site-gate.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Play Reflex Lab in the CloudLab Arcade. Test your reaction time over five signals.">
+  <meta name="theme-color" content="#061117">
+  <meta name="author" content="Danny4686"><meta name="application-name" content="CloudLab"><meta name="apple-mobile-web-app-title" content="CloudLab">
+  <link rel="canonical" href="https://danny4686.com/games/reflex-lab/">
+  <meta property="og:site_name" content="CloudLab"><meta property="og:title" content="Reflex Lab | CloudLab Arcade"><meta property="og:description" content="Play Reflex Lab in the CloudLab Arcade. Test your reaction time over five signals."><meta property="og:type" content="website"><meta property="og:url" content="https://danny4686.com/games/reflex-lab/"><meta property="og:image" content="https://danny4686.com/assets/images/cloudlab-logo.png"><meta property="og:image:alt" content="CloudLab Earth logo">
+  <meta name="twitter:card" content="summary"><meta name="twitter:title" content="Reflex Lab | CloudLab Arcade"><meta name="twitter:description" content="Play Reflex Lab in the CloudLab Arcade. Test your reaction time over five signals."><meta name="twitter:image" content="https://danny4686.com/assets/images/cloudlab-logo.png">
+  <title>Reflex Lab | CloudLab Arcade</title>
+  <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="icon" href="/assets/icons/favicon-48x48.png" type="image/png" sizes="48x48">
+  <link rel="icon" href="/assets/icons/favicon-32x32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" sizes="180x180">
+  <link rel="manifest" href="/site.webmanifest"><link rel="stylesheet" href="/assets/css/site-loader.css?v=20260808"><script src="/assets/js/site-loader.js?v=20260808"></script>
+  <link rel="preload" href="/assets/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/assets/css/hub.css">
+  <link rel="stylesheet" href="/assets/css/site-quality.css?v=20260808">
+  <style>
+    .reflex-stage{--signal:#68d0df;--signal-soft:rgba(104,208,223,.14);--signal-glow:rgba(104,208,223,.32);position:relative;display:grid;place-items:center;width:min(760px,100%);height:clamp(360px,52vw,470px);margin:0 auto;overflow:hidden;border:1px solid var(--line);border-radius:28px;background:radial-gradient(circle at 50% 50%,var(--signal-soft),transparent 62%),linear-gradient(180deg,#0a1f28,#07151c 55%,#050f14);box-shadow:inset 0 0 0 1px rgba(255,255,255,.025),inset 0 0 90px rgba(0,0,0,.35),0 20px 50px rgba(0,0,0,.24);cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;transition:border-color .25s ease,background .25s ease}
+    .reflex-stage::before{content:"";position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(104,208,223,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(104,208,223,.05) 1px,transparent 1px);background-size:40px 40px;background-position:center;mask-image:radial-gradient(circle at 50% 50%,#000 30%,transparent 75%);-webkit-mask-image:radial-gradient(circle at 50% 50%,#000 30%,transparent 75%)}
+    .reflex-stage[data-state="waiting"]{--signal:#f2c75c;--signal-soft:rgba(242,199,92,.08);--signal-glow:rgba(242,199,92,.2)}
+    .reflex-stage[data-state="go"]{--signal:#8bcf9b;--signal-soft:rgba(139,207,155,.3);--signal-glow:rgba(118,226,205,.65);border-color:rgba(139,207,155,.7);transition:none}
+    .reflex-stage[data-state="foul"]{--signal:#ef6d68;--signal-soft:rgba(239,109,104,.16);--signal-glow:rgba(239,109,104,.4);border-color:rgba(239,109,104,.45)}
+    .reflex-stage[data-state="hit"]{--signal:var(--band,#68d0df);--signal-soft:rgba(104,208,223,.12);--signal-glow:rgba(104,208,223,.3)}
+    .reflex-stage[data-state="done"]{--signal:#9e8cff;--signal-soft:rgba(158,140,255,.16);--signal-glow:rgba(158,140,255,.38);border-color:rgba(158,140,255,.4)}
+    .reflex-stage[data-state="paused"]{--signal:#91a7ae;--signal-soft:rgba(145,167,174,.08);--signal-glow:rgba(145,167,174,.15)}
+    .reflex-stage:focus-visible{outline:2px solid var(--signal);outline-offset:4px}
+    .reflex-orb{position:relative;z-index:1;display:grid;place-items:center;width:min(300px,74vw,66%);aspect-ratio:1;border:2px solid color-mix(in srgb,var(--signal) 55%,transparent);border-radius:50%;background:radial-gradient(circle at 50% 38%,color-mix(in srgb,var(--signal) 22%,#0b222b),#06131a 72%);box-shadow:0 0 0 10px color-mix(in srgb,var(--signal) 7%,transparent),0 0 60px var(--signal-glow),inset 0 0 50px rgba(0,0,0,.4);text-align:center;transition:background .25s ease,border-color .25s ease,box-shadow .25s ease}
+    .reflex-stage[data-state="go"] .reflex-orb{border-color:#d9fff2;background:radial-gradient(circle at 50% 38%,#c8ffe9,#8bcf9b 46%,#68d0df 100%);box-shadow:0 0 0 14px rgba(139,207,155,.22),0 0 120px rgba(118,226,205,.75),inset 0 0 30px rgba(255,255,255,.35);transition:none}
+    .reflex-stage[data-state="waiting"] .reflex-orb{background:radial-gradient(circle at 50% 38%,rgba(242,199,92,.16),#081419 72%)}
+    .reflex-ring{position:absolute;inset:-2px;border:2px solid var(--signal);border-radius:50%;opacity:0;pointer-events:none}
+    .reflex-stage[data-state="idle"] .reflex-ring,.reflex-stage[data-state="done"] .reflex-ring{animation:reflexPulse 2.6s ease-out infinite}
+    .reflex-stage[data-state="waiting"] .reflex-ring{animation:reflexPulse 1.4s ease-out infinite;opacity:.4}
+    .reflex-ring.two{animation-delay:1.3s!important}
+    .reflex-stage[data-state="waiting"] .reflex-ring.two{animation-delay:.7s!important}
+    .reflex-stage[data-state="go"] .reflex-ring{animation:none}
+    @keyframes reflexPulse{0%{transform:scale(1);opacity:.55}100%{transform:scale(1.32);opacity:0}}
+    .reflex-readout{position:relative;display:grid;gap:6px;padding:0 18px;max-width:100%}
+    .reflex-kicker{color:color-mix(in srgb,var(--signal) 80%,#fff);font-size:.72rem;font-weight:850;letter-spacing:.16em;text-transform:uppercase}
+    .reflex-state{margin:0;color:#f4fbfc;font-size:clamp(2.2rem,8vw,3.6rem);font-weight:900;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums;text-shadow:0 0 28px var(--signal-glow)}
+    .reflex-stage[data-state="waiting"] .reflex-state{color:#f2c75c}
+    .reflex-stage[data-state="foul"] .reflex-state{color:#ff9a95}
+    .reflex-stage[data-state="go"] .reflex-state,.reflex-stage[data-state="go"] .reflex-kicker{color:#05231d;text-shadow:none}
+    .reflex-stage[data-state="go"] .reflex-state{font-size:clamp(3rem,11vw,4.6rem)}
+    .reflex-sub{max-width:220px;margin:0 auto;color:var(--muted);font-size:.86rem;line-height:1.4}
+    .reflex-stage[data-state="go"] .reflex-sub{color:rgba(5,35,29,.75)}
+    .reflex-hud{position:absolute;z-index:2;top:14px;left:14px;right:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;pointer-events:none}
+    .reflex-dots{display:flex;gap:7px}
+    .reflex-dot{width:11px;height:11px;border:1px solid rgba(145,190,202,.4);border-radius:50%;background:rgba(255,255,255,.04);transition:background .2s ease,box-shadow .2s ease,border-color .2s ease}
+    .reflex-dot.current{border-color:var(--signal);box-shadow:0 0 0 3px color-mix(in srgb,var(--signal) 22%,transparent)}
+    .reflex-dot.done{border-color:transparent;background:var(--dot,#68d0df);box-shadow:0 0 10px var(--dot,#68d0df)}
+    .reflex-fouls{padding:5px 10px;border:1px solid var(--line);border-radius:999px;color:var(--muted);background:rgba(4,13,18,.6);font-size:.7rem;font-weight:800;letter-spacing:.08em}
+    .reflex-fouls.has-fouls{color:#ffb2ae;border-color:rgba(239,109,104,.45);background:rgba(239,109,104,.1)}
+    .reflex-stage.shake{animation:reflexShake .32s ease}
+    @keyframes reflexShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}50%{transform:translateX(5px)}75%{transform:translateX(-3px)}}
+    .reflex-results{width:min(760px,100%);margin:16px auto 0;padding:16px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(180deg,rgba(255,255,255,.025),rgba(255,255,255,.01))}
+    .reflex-results-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;margin-bottom:14px}
+    .reflex-results-head h2{margin:0;font-size:1rem;letter-spacing:.01em}
+    .reflex-results-head p{margin:2px 0 0;color:var(--muted);font-size:.82rem}
+    .reflex-verdict{display:flex;align-items:center;gap:10px}
+    .reflex-rating{padding:6px 12px;border:1px solid color-mix(in srgb,var(--band,#68d0df) 50%,transparent);border-radius:999px;color:var(--band,#68d0df);background:color-mix(in srgb,var(--band,#68d0df) 10%,transparent);font-size:.78rem;font-weight:850;letter-spacing:.06em;white-space:nowrap}
+    .reflex-rating[hidden],.reflex-newbest[hidden]{display:none}
+    .reflex-newbest{padding:6px 11px;border-radius:999px;color:#1d1503;background:#f2c75c;font-size:.72rem;font-weight:900;letter-spacing:.08em;box-shadow:0 0 18px rgba(242,199,92,.4)}
+    .reflex-bars{position:relative;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;align-items:end;height:150px;padding-top:6px}
+    .reflex-bar{display:grid;grid-template-rows:auto 1fr auto;gap:6px;height:100%;min-width:0;text-align:center}
+    .reflex-bar-value{color:var(--text);font-size:.82rem;font-weight:850;font-variant-numeric:tabular-nums;white-space:nowrap}
+    .reflex-bar-track{position:relative;display:flex;align-items:flex-end;overflow:hidden;border:1px dashed rgba(145,190,202,.18);border-radius:10px;background:rgba(255,255,255,.015)}
+    .reflex-bar-fill{width:100%;height:0;border-radius:9px 9px 0 0;background:linear-gradient(180deg,var(--bar,#68d0df),color-mix(in srgb,var(--bar,#68d0df) 30%,#07151c));box-shadow:0 0 16px color-mix(in srgb,var(--bar,#68d0df) 45%,transparent);transition:height .45s cubic-bezier(.2,.9,.3,1.2)}
+    .reflex-bar.filled .reflex-bar-track{border-style:solid;border-color:color-mix(in srgb,var(--bar,#68d0df) 30%,transparent)}
+    .reflex-bar-label{color:var(--muted);font-size:.68rem;font-weight:800;letter-spacing:.08em}
+    .reflex-avg-line{position:absolute;left:0;right:0;height:0;border-top:1px dashed rgba(244,251,252,.55);pointer-events:none;transition:bottom .4s ease;z-index:1}
+    .reflex-avg-line[hidden]{display:none}
+    .reflex-avg-line span{position:absolute;right:4px;top:4px;padding:1px 6px;border-radius:6px;color:#061117;background:rgba(244,251,252,.85);font-size:.62rem;font-weight:900;letter-spacing:.06em}
+    .reflex-legend{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 14px;margin:14px 0 0;padding:0;list-style:none;color:var(--muted);font-size:.74rem}
+    .reflex-legend li{display:flex;align-items:center;gap:6px}
+    .reflex-legend i{width:9px;height:9px;border-radius:50%;background:var(--c)}.band-lightning{--c:#9e8cff}.band-sharp{--c:#8bcf9b}.band-steady{--c:#f2c75c}.band-warm{--c:#ed8b45}
+    .start-button{width:min(280px,100%);min-height:54px;font-size:1rem}
+    @media (max-width:640px){.reflex-stage{height:clamp(340px,96vw,420px);border-radius:22px}.reflex-results{padding:13px}.reflex-bars{gap:6px;height:130px}.reflex-bar-value{font-size:.74rem}}
+    @media (prefers-reduced-motion:reduce){.reflex-ring,.reflex-stage.shake{animation:none!important}.reflex-ring{display:none}.reflex-bar-fill,.reflex-avg-line{transition:none}}
+  </style>
+  <link rel="stylesheet" href="/assets/css/premium.css?v=20261015.1">
+  <script src="/assets/js/premium.js?v=20261015.1" defer></script>
+</head>
+<body>
+  <header class="hub-header"><a class="hub-brand" href="/" aria-label="Return to Danny4686.com"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>Danny4686</strong><small>CloudLab Studio</small></span></a><nav class="hub-nav" aria-label="Site navigation"><a href="/#about">About</a><a href="/#projects">Projects</a><a class="active" href="/games/" aria-current="page">Games</a><a href="/journal/">Journal</a><a href="/#connect">Connect</a></nav><a class="header-action" href="/games/">All Games</a></header>
+  <main class="page-shell game-page">
+    <a class="back-link reveal" href="/games/">← Back to Browser Games</a>
+    <div class="game-heading reveal"><div><p class="eyebrow">CLOUDLAB ARCADE</p><h1>Reflex Lab</h1><p>Wait for the signal, then hit it as fast as you can. Five clean trials, lowest average wins.</p></div><div class="score-row"><div class="score-chip"><small>LAST</small><strong id="last">--</strong></div><div class="score-chip"><small>AVERAGE</small><strong id="average">--</strong></div><div class="score-chip"><small>TRIAL</small><strong id="trial">0/5</strong></div><div class="score-chip"><small>BEST</small><strong id="best">--</strong></div></div></div>
+    <section class="game-panel reveal" aria-label="Reflex Lab game">
+      <div class="reflex-stage" id="reflexStage" data-state="idle">
+        <div class="reflex-hud" aria-hidden="true"><div class="reflex-dots" id="reflexDots"><span class="reflex-dot"></span><span class="reflex-dot"></span><span class="reflex-dot"></span><span class="reflex-dot"></span><span class="reflex-dot"></span></div><span class="reflex-fouls" id="foulCount">FOULS 0</span></div>
+        <div class="reflex-orb"><span class="reflex-ring"></span><span class="reflex-ring two"></span><div class="reflex-readout" aria-live="polite"><span class="reflex-kicker" id="stateKicker">Signal lab</span><p class="reflex-state" id="stateText">Ready?</p><p class="reflex-sub" id="stateSub">Press Start, wait for the glow, then react.</p></div></div>
+      </div>
+      <div class="reflex-results" id="reflexResults">
+        <div class="reflex-results-head"><div><h2 id="resultsTitle">Run breakdown</h2><p id="resultsText">Your five reaction times will appear here.</p></div><div class="reflex-verdict"><span class="reflex-newbest" id="newBest" hidden>NEW BEST</span><span class="reflex-rating" id="rating" hidden></span></div></div>
+        <div class="reflex-bars" id="reflexBars"><div class="reflex-avg-line" id="avgLine" hidden><span id="avgLineLabel">AVG</span></div></div>
+        <ul class="reflex-legend"><li><i class="band-lightning"></i>Lightning &lt; 200</li><li><i class="band-sharp"></i>Sharp &lt; 250</li><li><i class="band-steady"></i>Steady &lt; 320</li><li><i class="band-warm"></i>Warming up</li></ul>
+      </div>
+      <div class="game-toolbar"><button class="game-button primary start-button" id="startButton" type="button">Start Test</button><button class="game-button" id="resetButton" type="button">Reset</button></div>
+      <p class="control-note" id="controlNote">Click the signal or press Space / Enter when it turns mint. Pressing early is a foul and the trial restarts.</p>
+    </section>
+  </main>
+  <footer class="site-footer"><a class="footer-brand" href="/"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>Reflex Lab</small></span></a><p>© <span id="year"></span> Danny4686.</p></footer>
+  <script src="/assets/js/hub.js?v=20261015.1"></script>
+  <script src="game.js?v=1"></script>
+</body>
+</html>

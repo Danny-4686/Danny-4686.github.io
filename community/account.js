@@ -326,7 +326,9 @@
     snake: 'Snake', '2048': '2048', 'memory-match': 'Memory Match', pong: 'Pong',
     'tic-tac-toe': 'Tic-Tac-Toe', minesweeper: 'Minesweeper', breakout: 'Breakout',
     'connect-four': 'Connect Four', 'cloud-hopper': 'Cloud Hopper', 'flappy-cloud': 'Flappy Cloud',
-    'cloudlab-clicker': 'CloudLab Clicker', launcher: 'Launcher', 'tower-stacker': 'Tower Stacker'
+    'cloudlab-clicker': 'CloudLab Clicker', launcher: 'Launcher', 'tower-stacker': 'Tower Stacker',
+    'whack-a-cloud': 'Whack-a-Cloud', 'reflex-lab': 'Reflex Lab', 'pattern-pulse': 'Pattern Pulse',
+    'sky-dodge': 'Sky Dodge', 'slide-puzzle': 'Slide Puzzle'
   };
 
   function formatRecord(record) {
@@ -334,7 +336,9 @@
       const time = Number(record.secondary || 0);
       return `${record.value} moves · ${Math.floor(time / 60)}:${String(time % 60).padStart(2, '0')}`;
     }
-    if (record.gameId === 'minesweeper') return `${record.value}s`;
+    if (record.gameId === 'minesweeper' || record.gameId === 'slide-puzzle') return `${record.value}s`;
+    if (record.gameId === 'reflex-lab') return `${record.value} ms`;
+    if (record.gameId === 'pattern-pulse') return `${record.value} rounds`;
     if (record.gameId === 'cloudlab-clicker') return `${Number(record.value).toLocaleString('en-US')} Clouds`;
     if (record.gameId === 'launcher') return `${Number(record.value).toLocaleString('en-US')} m`;
     return Number(record.value).toLocaleString('en-US');

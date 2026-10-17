@@ -29,7 +29,7 @@ const PROJECT_ACCENTS = new Set(['cyan', 'gold', 'mint', 'orange']);
 const PROJECT_LAYOUTS = new Set(['media-left', 'media-top', 'compact']);
 const PROJECT_FITS = new Set(['cover', 'contain']);
 
-export const FEATURED_GAME_IDS = Object.freeze(['breakout','connect-four','cloud-hopper','cloudlab-clicker','launcher','flappy-cloud','tower-stacker','snake','2048','memory-match','pong','tic-tac-toe','minesweeper']);
+export const FEATURED_GAME_IDS = Object.freeze(['breakout','connect-four','cloud-hopper','cloudlab-clicker','launcher','flappy-cloud','tower-stacker','snake','2048','memory-match','pong','tic-tac-toe','minesweeper','whack-a-cloud','reflex-lab','pattern-pulse','sky-dodge','slide-puzzle']);
 export const DEFAULT_FEATURED_GAMES = Object.freeze(['cloud-hopper', 'cloudlab-clicker', 'launcher']);
 const FEATURED_GAME_ID_SET = new Set(FEATURED_GAME_IDS);
 let siteSettingsCache = null;

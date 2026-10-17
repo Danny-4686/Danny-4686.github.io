@@ -108,6 +108,15 @@ test('Clicker and Launcher have descending leaderboard rules', () => {
   });
 });
 
+test('New arcade games rank in the right direction', () => {
+  assert.equal(GAME_RULES['whack-a-cloud'].direction, 'desc');
+  assert.equal(GAME_RULES['pattern-pulse'].direction, 'desc');
+  assert.equal(GAME_RULES['sky-dodge'].direction, 'desc');
+  assert.equal(GAME_RULES['reflex-lab'].direction, 'asc');
+  assert.equal(GAME_RULES['reflex-lab'].min, 90);
+  assert.equal(GAME_RULES['slide-puzzle'].direction, 'asc');
+});
+
 test('durable game saves persist by user and game, update the leaderboard, and reject stale writes', async () => {
   const { store } = createStore();
 
