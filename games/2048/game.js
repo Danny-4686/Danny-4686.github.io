@@ -12,10 +12,17 @@
   const newGameButton = document.getElementById('newGameButton');
   const overlayRestartButton = document.getElementById('overlayRestartButton');
   const undoButton = document.getElementById('undoButton');
+  const overlayUndoButton = document.getElementById('overlayUndoButton');
 
   const size = 4;
   const bestKey = 'cloudlab-2048-best';
-  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // Read live so the Motion Effects toggle applies without a reload. hub.js stores the real system
+  // preference in a data attribute because it may patch matchMedia when motion was switched off.
+  const root = document.documentElement;
+  const systemReduced = root.dataset.systemReducedMotion
+    ? root.dataset.systemReducedMotion === 'true'
+    : window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const motionOff = () => systemReduced || root.classList.contains('game-motion-off');
   const motionDuration = 190;
   let board = [];
   let score = 0;
@@ -24,6 +31,7 @@
   let winShown = false;
   let touchStart = null;
   let inputLocked = false;
+  let halted = false;
   let motionTimer = null;
 
   bestElement.textContent = formatNumber(bestScore);
@@ -83,6 +91,7 @@
   function startNewGame() {
     window.clearTimeout(motionTimer);
     inputLocked = false;
+    halted = false;
     boardElement.classList.remove('is-moving', 'is-blocked', 'is-undoing', 'move-left', 'move-right', 'move-up', 'move-down');
     board = emptyBoard();
     score = 0;
@@ -127,7 +136,7 @@
   }
 
   function move(direction) {
-    if (inputLocked) return;
+    if (inputLocked || halted) return;
 
     const before = cloneBoard();
     const scoreBefore = score;
@@ -184,7 +193,7 @@
     }
     if (bestImproved) bumpScore(bestElement);
 
-    if (reducedMotion) {
+    if (motionOff()) {
       inputLocked = false;
       undoButton.disabled = !previousState;
       checkGameState();
@@ -204,7 +213,7 @@
   }
 
   function showBlockedMove(direction) {
-    if (reducedMotion) return;
+    if (motionOff()) return;
     inputLocked = true;
     undoButton.disabled = true;
     boardElement.classList.remove('is-moving', 'is-blocked', 'move-left', 'move-right', 'move-up', 'move-down');
@@ -217,14 +226,14 @@
   }
 
   function bumpScore(element) {
-    if (reducedMotion) return;
+    if (motionOff()) return;
     element.classList.remove('score-bump');
     requestAnimationFrame(() => element.classList.add('score-bump'));
     window.setTimeout(() => element.classList.remove('score-bump'), 360);
   }
 
   function showScoreGain(gained) {
-    if (!scoreChip || reducedMotion) return;
+    if (!scoreChip || motionOff()) return;
     const gain = document.createElement('span');
     gain.className = 'score-gain';
     gain.textContent = `+${formatNumber(gained)}`;
@@ -258,14 +267,14 @@
     const reached2048 = board.some((row) => row.some((value) => value >= 2048));
     if (reached2048 && !winShown) {
       winShown = true;
-      inputLocked = true;
+      halted = true;
       showMessage('You reached 2048', 'Keep playing for a higher score or begin a new board.', true);
       return;
     }
 
     if (!canMove()) {
-      inputLocked = true;
-      showMessage('No moves left', `Final score: ${formatNumber(score)}. Start a new game to try again.`, false);
+      halted = true;
+      showMessage('No moves left', `Final score: ${formatNumber(score)}. Undo your last move or start a new game.`, false);
     }
   }
 
@@ -300,6 +309,8 @@
     messageTitle.textContent = title;
     messageText.textContent = text;
     continueButton.hidden = !allowContinue;
+    overlayUndoButton.hidden = allowContinue || !previousState;
+    undoButton.disabled = !previousState;
     message.classList.remove('hidden');
   }
 
@@ -312,10 +323,11 @@
     board = cloneBoard(previousState.board);
     score = previousState.score;
     previousState = null;
+    halted = false;
     hideMessage();
     render();
 
-    if (reducedMotion) return;
+    if (motionOff()) return;
     boardElement.classList.remove('is-undoing');
     requestAnimationFrame(() => boardElement.classList.add('is-undoing'));
     window.setTimeout(() => boardElement.classList.remove('is-undoing'), 300);
@@ -331,7 +343,20 @@
     return map[key] || null;
   }
 
+  // Leave typing, menus, and browser shortcuts alone; Space/Enter still activate a focused button.
+  function ignoreKey(event) {
+    if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey) return true;
+    const target = event.target instanceof Element ? event.target : null;
+    if (target?.closest('input, select, textarea, [contenteditable="true"]')) return true;
+    return Boolean(target?.closest('a, button')) && (event.key === ' ' || event.key === 'Enter');
+  }
+
   window.addEventListener('keydown', (event) => {
+    if (ignoreKey(event)) return;
+    if (event.key === ' ') {
+      event.preventDefault();
+      return;
+    }
     const direction = directionFromKey(event.key);
     if (!direction) return;
     event.preventDefault();
@@ -363,10 +388,11 @@
   newGameButton.addEventListener('click', startNewGame);
   overlayRestartButton.addEventListener('click', startNewGame);
   continueButton.addEventListener('click', () => {
-    inputLocked = false;
+    halted = false;
     hideMessage();
   });
   undoButton.addEventListener('click', undo);
+  overlayUndoButton.addEventListener('click', undo);
 
   startNewGame();
 })();

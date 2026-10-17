@@ -23,9 +23,9 @@
     .connect-shell{width:min(760px,100%);margin:0 auto}.turn-banner{display:flex;align-items:center;justify-content:center;gap:9px;margin:0 auto 14px;color:var(--muted);font-weight:800}.turn-dot{width:14px;height:14px;border-radius:50%;background:var(--cyan);box-shadow:0 0 16px rgba(104,208,223,.55)}
     .connect-board{position:relative;display:grid;grid-template-columns:repeat(7,1fr);gap:clamp(5px,1vw,10px);padding:clamp(10px,2vw,18px);border:1px solid var(--line-strong);border-radius:24px;background:linear-gradient(145deg,#123746,#09212b);box-shadow:inset 0 1px rgba(255,255,255,.08),0 24px 60px rgba(0,0,0,.28)}
     .connect-cell{position:relative;aspect-ratio:1;padding:0;border:0;border-radius:50%;background:#041016;box-shadow:inset 0 8px 18px rgba(0,0,0,.55),0 1px rgba(255,255,255,.08);cursor:pointer;overflow:hidden}.connect-cell::after{content:"";position:absolute;inset:8%;border-radius:50%;background:rgba(255,255,255,.025)}.connect-cell.player::after,.connect-cell.cpu::after{animation:discDrop .32s cubic-bezier(.2,.8,.25,1.15)}.connect-cell.player::after{background:linear-gradient(145deg,#90eaf4,#45b8cd);box-shadow:inset 0 5px rgba(255,255,255,.28),0 0 18px rgba(104,208,223,.4)}.connect-cell.cpu::after{background:linear-gradient(145deg,#ffe289,#edaa35);box-shadow:inset 0 5px rgba(255,255,255,.25),0 0 18px rgba(242,199,92,.38)}.connect-cell.win::after{animation:winPulse .8s ease infinite alternate}
-    .column-buttons{display:grid;grid-template-columns:repeat(7,1fr);gap:clamp(5px,1vw,10px);margin-bottom:8px;padding:0 clamp(10px,2vw,18px)}.column-button{min-width:0;height:36px;border:1px solid var(--line);border-radius:10px;color:var(--cyan);background:rgba(104,208,223,.045);cursor:pointer;font-weight:900}.column-button:hover{background:rgba(104,208,223,.12)}
+    .column-buttons{display:grid;grid-template-columns:repeat(7,1fr);gap:clamp(5px,1vw,10px);margin-bottom:8px;padding:0 clamp(10px,2vw,18px)}.column-button{min-width:0;min-height:44px;border:1px solid var(--line);border-radius:10px;color:var(--cyan);background:rgba(104,208,223,.045);cursor:pointer;font-weight:900;touch-action:manipulation}.column-button:hover{background:rgba(104,208,223,.12)}.column-button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px;background:rgba(104,208,223,.16)}.column-button[aria-disabled="true"]{opacity:.4;cursor:not-allowed}.column-button small{display:block;font-size:.62rem;opacity:.65;line-height:1}.connect-cell{touch-action:manipulation}
     @keyframes discDrop{from{transform:translateY(-130%);opacity:.2}to{transform:none;opacity:1}}@keyframes winPulse{to{filter:brightness(1.35);transform:scale(.9)}}
-    @media(max-width:620px){.connect-board{border-radius:17px}.column-button{height:32px}.connect-cell::after{inset:9%}}
+    @media(max-width:620px){.connect-board{border-radius:17px}.column-button{border-radius:8px}.connect-cell::after{inset:9%}}
   </style>
   <link rel="stylesheet" href="/assets/css/premium.css?v=20261015.1">
   <script src="/assets/js/premium.js?v=20261015.1" defer></script>
@@ -42,7 +42,7 @@
         <div class="connect-board" id="board" role="group" aria-label="Connect Four board"></div>
       </div>
       <div class="game-toolbar"><button class="game-button primary" id="newRound" type="button">New Round</button><button class="game-button" id="resetScores" type="button">Reset Scores</button><select class="difficulty-select" id="mode" aria-label="Game mode"><option value="cpu">Vs CPU</option><option value="two">Two Players</option></select><select class="difficulty-select" id="difficulty" aria-label="CPU difficulty"><option value="easy">Easy CPU</option><option value="normal" selected>Normal CPU</option><option value="hard">Hard CPU</option></select></div>
-      <p class="control-note">Tap a column arrow or any open space in that column. Cyan always starts a new round.</p>
+      <p class="control-note">Tap a column arrow or any open space in that column. <span class="desktop-only">Keys 1–7 drop a disc; on the arrow row, ←/→ then Enter also work.</span> Cyan always starts. Mode or difficulty changes made mid-round apply to the next round.</p>
     </section>
   </main>
   <footer class="site-footer"><a class="footer-brand" href="/"><img src="../../assets/images/cloudlab-logo.png" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>Connect Four</small></span></a><p>© <span id="year"></span> Danny4686.</p></footer>
@@ -66,6 +66,9 @@
     let finished = false;
     let cpuTimer = null;
     let roundId = 0;
+    // Mode/difficulty are locked in per round; select changes made mid-round wait for the next one.
+    let activeMode = mode.value;
+    let activeDifficulty = difficulty.value;
 
     function loadScores() {
       try {
@@ -98,9 +101,15 @@
         const button = document.createElement('button');
         button.type = 'button';
         button.className = 'column-button';
-        button.textContent = '↓';
+        button.innerHTML = `↓<small>${col + 1}</small>`;
         button.setAttribute('aria-label', `Drop in column ${col + 1}`);
         button.addEventListener('click', () => playColumn(col));
+        button.addEventListener('keydown', (event) => {
+          const moves = { ArrowLeft: col - 1, ArrowRight: col + 1, Home: 0, End: COLS - 1 };
+          if (!(event.key in moves) || event.altKey || event.ctrlKey || event.metaKey) return;
+          event.preventDefault();
+          columnButtons.children[(moves[event.key] + COLS) % COLS].focus();
+        });
         columnButtons.appendChild(button);
       }
       for (let row = 0; row < ROWS; row += 1) {
@@ -110,6 +119,7 @@
           cell.className = 'connect-cell';
           cell.dataset.row = row;
           cell.dataset.col = col;
+          cell.tabIndex = -1;
           cell.setAttribute('aria-label', `Row ${row + 1}, column ${col + 1}`);
           cell.addEventListener('click', () => playColumn(col));
           boardEl.appendChild(cell);
@@ -119,11 +129,17 @@
 
     function updateTurn() {
       if (finished) return;
-      const cpuTurn = mode.value === 'cpu' && turn === 2;
-      turnText.textContent = cpuTurn ? 'Gold CPU is thinking…' : turn === 1 ? 'Cyan’s turn' : 'Gold’s turn';
+      const cpuTurn = activeMode === 'cpu' && turn === 2;
+      turnText.textContent = (cpuTurn ? 'Gold CPU is thinking…' : turn === 1 ? 'Cyan’s turn' : 'Gold’s turn') + pendingNote();
       turnDot.style.background = turn === 1 ? 'var(--cyan)' : 'var(--gold)';
       turnDot.style.boxShadow = turn === 1 ? '0 0 16px rgba(104,208,223,.55)' : '0 0 16px rgba(242,199,92,.55)';
       difficulty.disabled = mode.value !== 'cpu';
+    }
+
+    function pendingNote() {
+      const changed = mode.value !== activeMode || (mode.value === 'cpu' && difficulty.value !== activeDifficulty);
+      if (!changed) return '';
+      return ` · ${mode.value === 'cpu' ? difficulty.selectedOptions[0].textContent : 'Two Players'} next round`;
     }
 
     function render(winCells = []) {
@@ -132,7 +148,8 @@
         cell.className = `connect-cell${value === 1 ? ' player' : value === 2 ? ' cpu' : ''}${winCells.includes(i) ? ' win' : ''}`;
         cell.setAttribute('aria-label', value === 1 ? 'Cyan disc' : value === 2 ? 'Gold disc' : `Empty column ${(i % COLS) + 1}`);
       });
-      for (let col = 0; col < COLS; col += 1) columnButtons.children[col].disabled = get(0, col) !== 0 || locked || finished;
+      // aria-disabled (not disabled) keeps keyboard focus on the arrow row while the CPU moves.
+      for (let col = 0; col < COLS; col += 1) columnButtons.children[col].setAttribute('aria-disabled', String(get(0, col) !== 0 || locked || finished));
     }
 
     function availableRow(col, state = board) {
@@ -216,19 +233,30 @@
       return value;
     }
 
+    // True when Cyan could win immediately after Gold plays this column (e.g. by stacking on top of it).
+    function givesAwayWin(col, state = board) {
+      const after = simulate(col, 2, state);
+      return validColumns(after).some((reply) => winningCells(1, simulate(reply, 1, after)).length);
+    }
+
     function chooseCpuColumn() {
       const valid = validColumns();
       if (!valid.length) return -1;
-      if (difficulty.value === 'easy') return valid[Math.floor(Math.random() * valid.length)];
+      if (activeDifficulty === 'easy') return valid[Math.floor(Math.random() * valid.length)];
       for (const col of valid) if (winningCells(2, simulate(col, 2)).length) return col;
       for (const col of valid) if (winningCells(1, simulate(col, 1)).length) return col;
-      if (difficulty.value === 'normal') {
-        const weighted = [3, 2, 4, 1, 5, 0, 6].filter((col) => valid.includes(col));
-        return Math.random() < .72 ? weighted[0] : valid[Math.floor(Math.random() * valid.length)];
+      const safe = valid.filter((col) => !givesAwayWin(col));
+      const pool = safe.length ? safe : valid;
+      if (activeDifficulty === 'normal') {
+        // Centre-leaning weighted pick among safe columns, nudged toward moves that build Gold lines.
+        const weights = pool.map((col) => Math.max(1, (4 - Math.abs(col - 3)) ** 2 + Math.max(0, scorePosition(simulate(col, 2)) - scorePosition(board)) / 8));
+        let pick = Math.random() * weights.reduce((sum, weight) => sum + weight, 0);
+        for (let i = 0; i < pool.length; i += 1) { pick -= weights[i]; if (pick <= 0) return pool[i]; }
+        return pool[pool.length - 1];
       }
       let bestScore = -Infinity;
       let choices = [];
-      for (const col of valid) {
+      for (const col of pool) {
         const value = minimax(simulate(col, 2), 4, false, -Infinity, Infinity);
         if (value > bestScore) { bestScore = value; choices = [col]; }
         else if (value === bestScore) choices.push(col);
@@ -243,7 +271,7 @@
         locked = true;
         if (player === 1) scores.cyan += 1; else scores.gold += 1;
         saveScores();
-        turnText.textContent = player === 1 ? 'Cyan wins!' : mode.value === 'cpu' ? 'Gold CPU wins!' : 'Gold wins!';
+        turnText.textContent = player === 1 ? (activeMode === 'cpu' ? 'You win! Cyan connects four.' : 'Cyan wins!') : activeMode === 'cpu' ? 'Gold CPU wins!' : 'Gold wins!';
         render(cells);
         return true;
       }
@@ -268,19 +296,19 @@
     }
 
     function playColumn(col) {
-      if (locked || finished || (mode.value === 'cpu' && turn === 2)) return;
+      if (locked || finished || (activeMode === 'cpu' && turn === 2)) return;
       if (!drop(col, turn)) return;
       if (finish(turn)) return;
       turn = turn === 1 ? 2 : 1;
       updateTurn();
       render();
-      if (mode.value === 'cpu' && turn === 2) {
+      if (activeMode === 'cpu' && turn === 2) {
         locked = true;
         render();
         const scheduledRound = roundId;
         window.clearTimeout(cpuTimer);
         cpuTimer = window.setTimeout(() => {
-          if (scheduledRound !== roundId || mode.value !== 'cpu' || turn !== 2 || finished) return;
+          if (scheduledRound !== roundId || activeMode !== 'cpu' || turn !== 2 || finished) return;
           const cpuCol = chooseCpuColumn();
           if (cpuCol >= 0) drop(cpuCol, 2);
           locked = false;
@@ -296,19 +324,37 @@
       window.clearTimeout(cpuTimer);
       cpuTimer = null;
       roundId += 1;
+      activeMode = mode.value;
+      activeDifficulty = difficulty.value;
       board = Array(ROWS * COLS).fill(0);
       turn = 1;
       locked = false;
       finished = false;
-      turnText.textContent = 'Cyan moves first';
       updateTurn();
+      turnText.textContent = activeMode === 'cpu' ? `Cyan moves first · ${difficulty.selectedOptions[0].textContent}` : 'Cyan moves first';
       render();
     }
 
+    // Apply straight away between rounds; a round in progress finishes under its original settings.
+    function settingsChanged() {
+      difficulty.disabled = mode.value !== 'cpu';
+      if (finished || board.every((value) => value === 0)) newRound();
+      else updateTurn();
+    }
+
+    window.addEventListener('keydown', (event) => {
+      if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey) return;
+      if (event.target instanceof Element && event.target.closest('input, select, textarea, [contenteditable="true"]')) return;
+      const col = Number(event.key) - 1;
+      if (!Number.isInteger(col) || col < 0 || col >= COLS) return;
+      event.preventDefault();
+      playColumn(col);
+    });
+
     document.getElementById('newRound').addEventListener('click', newRound);
     document.getElementById('resetScores').addEventListener('click', () => { scores = { cyan: 0, gold: 0, draws: 0 }; saveScores(); newRound(); });
-    mode.addEventListener('change', newRound);
-    difficulty.addEventListener('change', newRound);
+    mode.addEventListener('change', settingsChanged);
+    difficulty.addEventListener('change', settingsChanged);
     buildBoard();
     saveScores();
     newRound();

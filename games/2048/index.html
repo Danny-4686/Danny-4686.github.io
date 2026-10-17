@@ -19,7 +19,7 @@
   <link rel="preload" href="/assets/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/assets/css/hub.css">
   <link rel="stylesheet" href="/assets/css/site-quality.css?v=20260808">
-  <link rel="stylesheet" href="game.css?v=3">
+  <link rel="stylesheet" href="game.css?v=4">
   <link rel="stylesheet" href="../game-overlay-controls.css?v=1">
   <link rel="stylesheet" href="/assets/css/premium.css?v=20261015.1">
   <script src="/assets/js/premium.js?v=20261015.1" defer></script>
@@ -64,6 +64,7 @@
             <p id="messageText">Keep playing or start a fresh board.</p>
             <div class="overlay-actions">
               <button class="game-button primary" id="continueButton" type="button">Keep Playing</button>
+              <button class="game-button" id="overlayUndoButton" type="button" hidden>Undo Last Move</button>
               <button class="game-button" id="overlayRestartButton" type="button">New Game</button>
             </div>
           </div>
@@ -82,7 +83,7 @@
         <button class="touch-button" type="button" data-direction="right" aria-label="Move right">→</button>
       </div>
 
-      <p class="control-note"><span class="desktop-only">Use the arrow keys or WASD.</span> Swipe the board or use the buttons on mobile.</p>
+      <p class="control-note"><span class="desktop-only">Use the arrow keys or WASD.</span> Swipe the board or use the arrow pad on touch screens.</p>
     </section>
   </main>
 
@@ -92,6 +93,6 @@
   </footer>
 
   <script src="/assets/js/hub.js?v=20261015.1"></script>
-  <script src="game.js?v=4"></script>
+  <script src="game.js?v=5"></script>
 </body>
 </html>

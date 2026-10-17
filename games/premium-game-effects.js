@@ -11,12 +11,13 @@
     '/games/minesweeper/'
   ];
   const isLegacyGame = legacyGames.some((route) => path.startsWith(route));
-  const systemReduced = document.documentElement.dataset.systemReducedMotion === 'true'
-    || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const motionDisabled = document.documentElement.classList.contains('game-motion-off') || systemReduced;
+  // hub.js records the real system preference before it may patch matchMedia for the 2048 toggle.
+  const systemFlag = document.documentElement.dataset.systemReducedMotion;
+  const systemReduced = systemFlag ? systemFlag === 'true' : window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const motionDisabled = () => document.documentElement.classList.contains('game-motion-off') || systemReduced;
 
   function replay(element, className, duration = 520) {
-    if (!element || motionDisabled) return;
+    if (!element || motionDisabled()) return;
     element.classList.remove(className);
     void element.offsetWidth;
     element.classList.add(className);
@@ -127,11 +128,13 @@
         return;
       }
 
+      // Apply live: 2048 reads the html class on every move, so the board and score survive the switch.
       const next = readSetting() === 'off' ? 'on' : 'off';
       try { localStorage.setItem(key, next); } catch (_) {}
-      button.textContent = next === 'off' ? 'Turning Motion Off…' : 'Turning Motion On…';
-      button.disabled = true;
-      window.setTimeout(() => window.location.reload(), 170);
+      document.documentElement.classList.toggle('game-motion-off', next === 'off');
+      document.documentElement.dataset.gameMotion = next;
+      updateButton();
+      window.dispatchEvent(new CustomEvent('cloudlab:motionchange', { detail: { off: next === 'off' } }));
     });
 
     toolbar.append(button);

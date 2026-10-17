@@ -18,16 +18,21 @@
   let cells = [];
   let started = false;
   let over = false;
+  let lost = false;
   let flagMode = false;
   let seconds = 0;
   let timer = null;
-  let best = 0;
+  let longPress = null;
+  let suppressClickUntil = 0;
+  // null means "no record yet" so a genuine 0-second clear still counts and displays.
+  let best = null;
   try {
-    const savedBest = Number.parseInt(localStorage.getItem(storageKey) || '0', 10);
-    best = Number.isSafeInteger(savedBest) && savedBest > 0 ? savedBest : 0;
+    const saved = localStorage.getItem(storageKey);
+    const savedBest = saved === null ? NaN : Number.parseInt(saved, 10);
+    best = Number.isSafeInteger(savedBest) && savedBest >= 0 ? savedBest : null;
   } catch (_) {}
 
-  bestElement.textContent = best ? `${best}s` : '--';
+  bestElement.textContent = best === null ? '--' : `${best}s`;
 
   function createCell(index) {
     const row = Math.floor(index / size);
@@ -74,6 +79,7 @@
     seconds = 0;
     started = false;
     over = false;
+    lost = false;
     flagMode = false;
     cells = Array.from({ length: size * size }, (_, index) => createCell(index));
     boardElement.replaceChildren();
@@ -176,13 +182,17 @@
     element.classList.toggle('revealed', cell.revealed);
     element.classList.toggle('flagged', cell.flagged && !cell.revealed);
     element.classList.toggle('mine', cell.revealed && cell.mine);
-    element.disabled = cell.revealed || over;
+    const wrongFlag = lost && cell.flagged && !cell.mine;
+    element.classList.toggle('wrong-flag', wrongFlag);
+    element.classList.toggle('chordable', cell.revealed && cell.number > 0 && !over);
+    // Revealed numbers stay clickable so they can be chorded.
+    element.disabled = over || (cell.revealed && !cell.number);
     element.removeAttribute('data-number');
     element.replaceChildren();
 
     if (cell.flagged && !cell.revealed) {
       element.append(createCellImage(flagImageSource, 'flag-icon'));
-      element.setAttribute('aria-label', `Flagged tile ${cell.row + 1}, ${cell.column + 1}`);
+      element.setAttribute('aria-label', `${wrongFlag ? 'Wrong flag, no mine at' : 'Flagged tile'} ${cell.row + 1}, ${cell.column + 1}`);
     } else if (cell.revealed && cell.mine) {
       element.append(createCellImage(bombImageSource, 'bomb-icon'));
       element.setAttribute('aria-label', 'Mine');
@@ -197,15 +207,33 @@
     }
   }
 
+  // Clicking a revealed number whose flag count matches opens the rest of its neighbours.
+  function chord(cell) {
+    if (over || !cell.revealed || !cell.number) return;
+    const around = neighbors(cell);
+    if (around.filter((neighbor) => neighbor.flagged).length !== cell.number) return;
+    const hidden = around.filter((neighbor) => !neighbor.revealed && !neighbor.flagged);
+    const mine = hidden.find((neighbor) => neighbor.mine);
+    if (mine) {
+      lose(mine);
+      return;
+    }
+    hidden.forEach((neighbor) => revealSafeArea(neighbor));
+    if (hidden.length) checkWin();
+  }
+
   function lose(hitCell) {
     over = true;
+    lost = true;
     window.clearInterval(timer);
+    timer = null;
     cells.forEach((cell) => {
-      if (cell.mine) cell.revealed = true;
+      if (cell.mine && !cell.flagged) cell.revealed = true;
       renderCell(cell);
     });
     hitCell.element.classList.add('triggered');
-    statusElement.textContent = 'A mine was triggered. Start a new board to try again.';
+    const wrongFlags = cells.filter((cell) => cell.flagged && !cell.mine).length;
+    statusElement.textContent = `A mine was triggered${wrongFlags ? ` and ${wrongFlags} flag${wrongFlags === 1 ? ' was' : 's were'} wrong (crossed out)` : ''}. Start a new board to try again.`;
   }
 
   function checkWin() {
@@ -215,6 +243,7 @@
 
     over = true;
     window.clearInterval(timer);
+    timer = null;
     cells.forEach((cell) => {
       if (cell.mine) cell.flagged = true;
       renderCell(cell);
@@ -222,7 +251,7 @@
     updateMineCounter();
     statusElement.textContent = `Board cleared in ${seconds} seconds.`;
 
-    if (!best || seconds < best) {
+    if (best === null || seconds < best) {
       best = seconds;
       bestElement.textContent = `${best}s`;
       try { localStorage.setItem(storageKey, String(best)); } catch (_) {}
@@ -232,8 +261,10 @@
   boardElement.addEventListener('click', (event) => {
     const button = event.target.closest('.mine-cell');
     if (!button) return;
+    if (Date.now() < suppressClickUntil) return;
     const cell = cells[Number(button.dataset.index)];
-    if (flagMode) toggleFlag(cell);
+    if (cell.revealed) chord(cell);
+    else if (flagMode) toggleFlag(cell);
     else reveal(cell);
   });
 
@@ -241,7 +272,49 @@
     const button = event.target.closest('.mine-cell');
     if (!button) return;
     event.preventDefault();
+    // A touch long-press already flagged this tile; ignore the browser's own long-press menu event.
+    if (Date.now() < suppressClickUntil) return;
     toggleFlag(cells[Number(button.dataset.index)]);
+  });
+
+  // Touch long-press (~400ms) flags a tile without needing Flag Mode.
+  function cancelLongPress() {
+    if (!longPress) return;
+    window.clearTimeout(longPress.timer);
+    longPress = null;
+  }
+
+  boardElement.addEventListener('pointerdown', (event) => {
+    if (event.pointerType === 'mouse') return;
+    const button = event.target.closest('.mine-cell');
+    if (!button || button.disabled) return;
+    const cell = cells[Number(button.dataset.index)];
+    if (cell.revealed) return;
+    cancelLongPress();
+    longPress = {
+      x: event.clientX,
+      y: event.clientY,
+      timer: window.setTimeout(() => {
+        longPress = null;
+        suppressClickUntil = Date.now() + 700;
+        toggleFlag(cell);
+        if ('vibrate' in navigator) navigator.vibrate(18);
+      }, 400)
+    };
+  });
+
+  boardElement.addEventListener('pointermove', (event) => {
+    if (longPress && Math.hypot(event.clientX - longPress.x, event.clientY - longPress.y) > 10) cancelLongPress();
+  });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach((type) => boardElement.addEventListener(type, cancelLongPress));
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      window.clearInterval(timer);
+      timer = null;
+    } else if (started && !over) {
+      startTimer();
+    }
   });
 
   flagModeButton.addEventListener('click', () => {

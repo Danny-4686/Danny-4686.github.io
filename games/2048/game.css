@@ -133,12 +133,13 @@
 .overlay-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 18px; }
 .game-message:not(.hidden) > div { animation: messageIn .42s cubic-bezier(.2, .82, .2, 1) both; }
 .game-message.hidden { display: none; }
+.overlay-actions [hidden] { display: none; }
 .direction-pad { width: min(250px, 100%); margin: 20px auto 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .direction-pad button:nth-child(1) { grid-column: 2; }
 .direction-pad button:nth-child(2) { grid-column: 1; }
 .direction-pad button:nth-child(3) { grid-column: 2; }
 .direction-pad button:nth-child(4) { grid-column: 3; }
-.direction-pad .touch-button { transition: transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease; }
+.direction-pad .touch-button { min-height: 52px; touch-action: manipulation; transition: transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease; }
 .direction-pad .touch-button:active { transform: translateY(1px) scale(.94); }
 
 @keyframes boardGlow { to { transform: rotate(360deg); } }
@@ -160,6 +161,11 @@
 
 @media (hover: hover) and (pointer: fine) {
   .direction-pad .touch-button:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0, 0, 0, .2); }
+}
+
+/* Keyboard and mouse screens get the arrow keys; the pad is for touch and small screens. */
+@media (hover: hover) and (pointer: fine) and (min-width: 621px) {
+  .direction-pad { display: none; }
 }
 
 @media (max-width: 620px) {

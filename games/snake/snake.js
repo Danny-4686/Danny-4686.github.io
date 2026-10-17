@@ -23,7 +23,7 @@
   let snake = [];
   let food = { x: 17, y: 10 };
   let direction = { x: 1, y: 0 };
-  let queuedDirection = { x: 1, y: 0 };
+  let inputQueue = [];
   let score = 0;
   let bestScore = 0;
   try {
@@ -45,7 +45,7 @@
       { x: 7, y: 12 }
     ];
     direction = { x: 1, y: 0 };
-    queuedDirection = { x: 1, y: 0 };
+    inputQueue = [];
     score = 0;
     particles = [];
     scoreElement.textContent = '0';
@@ -77,38 +77,42 @@
     }
   }
 
-  function endGame() {
+  function endGame(won = false) {
     state = 'over';
     if (score > bestScore) {
       bestScore = score;
       bestElement.textContent = String(bestScore);
       try { localStorage.setItem(storageKey, String(bestScore)); } catch (_) {}
     }
-    showMessage('Game Over', `You scored ${score}. Press Restart or choose a direction to play again.`);
+    if (won) showMessage('Board Filled!', `Perfect run: you filled every tile and scored ${score}. Press Restart to play again.`);
+    else showMessage('Game Over', `You scored ${score}. Press Restart or choose a direction to play again.`);
     startButton.textContent = 'Start Game';
     pauseButton.textContent = 'Pause';
   }
 
+  // Picks from the free tiles directly so a nearly full board never spins; returns false when none are left.
   function placeFood() {
-    let candidate;
-    do {
-      candidate = {
-        x: Math.floor(Math.random() * gridSize),
-        y: Math.floor(Math.random() * gridSize)
-      };
-    } while (snake.some((segment) => segment.x === candidate.x && segment.y === candidate.y));
-    food = candidate;
+    const occupied = new Set(snake.map((segment) => segment.y * gridSize + segment.x));
+    const free = [];
+    for (let cell = 0; cell < gridSize * gridSize; cell += 1) if (!occupied.has(cell)) free.push(cell);
+    if (!free.length) {
+      food = null;
+      return false;
+    }
+    const cell = free[Math.floor(Math.random() * free.length)];
+    food = { x: cell % gridSize, y: Math.floor(cell / gridSize) };
+    return true;
   }
 
   function moveSnake() {
-    direction = queuedDirection;
+    if (inputQueue.length) direction = inputQueue.shift();
     const head = {
       x: snake[0].x + direction.x,
       y: snake[0].y + direction.y
     };
 
     const hitWall = head.x < 0 || head.y < 0 || head.x >= gridSize || head.y >= gridSize;
-    const eating = head.x === food.x && head.y === food.y;
+    const eating = Boolean(food) && head.x === food.x && head.y === food.y;
     const collisionBody = eating ? snake : snake.slice(0, -1);
     const hitSelf = collisionBody.some((segment) => segment.x === head.x && segment.y === head.y);
     if (hitWall || hitSelf) {
@@ -122,18 +126,21 @@
       score += 1;
       scoreElement.textContent = String(score);
       createFoodParticles(food.x, food.y);
-      placeFood();
+      if (!placeFood()) endGame(true);
     } else {
       snake.pop();
     }
   }
 
+  // Reset before reading the key so the first press from idle/game over steers the fresh snake, then
+  // queue up to two turns per tick, each checked against the turn before it so it can never reverse.
   function setDirection(nextDirection) {
-    const opposite = nextDirection.x === -direction.x && nextDirection.y === -direction.y;
-    if (opposite) return;
-
-    queuedDirection = nextDirection;
     if (state === 'idle' || state === 'over') startGame();
+    const last = inputQueue[inputQueue.length - 1] || direction;
+    const same = nextDirection.x === last.x && nextDirection.y === last.y;
+    const opposite = nextDirection.x === -last.x && nextDirection.y === -last.y;
+    if (same || opposite || inputQueue.length >= 2) return;
+    inputQueue.push(nextDirection);
   }
 
   function createFoodParticles(x, y) {
@@ -200,6 +207,7 @@
   }
 
   function drawFood(time) {
+    if (!food) return;
     const pulse = 1 + Math.sin(time / 180) * 0.055;
     const centerX = food.x * tileSize + tileSize / 2;
     const centerY = food.y * tileSize + tileSize / 2;
@@ -326,7 +334,16 @@
     D: { x: 1, y: 0 }
   };
 
+  // Leave typing, menus, and browser shortcuts alone; Space/Enter still activate a focused button.
+  function ignoreKey(event) {
+    if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey) return true;
+    const target = event.target instanceof Element ? event.target : null;
+    if (target?.closest('input, select, textarea, [contenteditable="true"]')) return true;
+    return Boolean(target?.closest('a, button')) && (event.key === ' ' || event.key === 'Enter');
+  }
+
   window.addEventListener('keydown', (event) => {
+    if (ignoreKey(event)) return;
     if (keyDirections[event.key]) {
       event.preventDefault();
       setDirection(keyDirections[event.key]);
@@ -374,6 +391,10 @@
     hideMessage();
     startButton.textContent = 'Playing';
     pauseButton.textContent = 'Pause';
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && state === 'running') togglePause();
   });
 
   difficulty.addEventListener('change', () => {

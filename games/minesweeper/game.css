@@ -52,7 +52,29 @@
   box-shadow: inset 0 1px 5px rgba(0,0,0,.2);
 }
 
+.mine-cell {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.mine-cell.chordable { cursor: pointer; }
+.mine-cell.revealed:hover:not(:disabled) { transform: none; background: rgba(255,255,255,.05); }
+.mine-cell.chordable:hover { border-color: var(--line-strong); }
 .mine-cell.flagged { color: var(--gold); background: rgba(242,199,92,.1); }
+.mine-cell.wrong-flag { position: relative; border-color: rgba(239,109,104,.6); background: rgba(239,109,104,.12); }
+.mine-cell.wrong-flag .mine-cell-icon { opacity: .55; }
+.mine-cell.wrong-flag::after {
+  content: "";
+  position: absolute;
+  inset: 16%;
+  pointer-events: none;
+  background:
+    linear-gradient(45deg, transparent 44%, #ef6d68 44%, #ef6d68 56%, transparent 56%),
+    linear-gradient(-45deg, transparent 44%, #ef6d68 44%, #ef6d68 56%, transparent 56%);
+  filter: drop-shadow(0 0 4px rgba(239,109,104,.6));
+}
 .mine-cell.mine { color: #fff; background: rgba(239,109,104,.22); border-color: rgba(239,109,104,.42); }
 .mine-cell.triggered {
   border-color: rgba(239,109,104,.85);

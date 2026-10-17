@@ -25,6 +25,8 @@
   ];
 
   const bestKey = 'cloudlab-memory-image-best';
+  const peekPenaltySeconds = 5;
+  const peekLabel = `Quick Peek (+${peekPenaltySeconds}s, +1 move)`;
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let firstCard = null;
   let secondCard = null;
@@ -34,6 +36,8 @@
   let startedAt = null;
   let elapsedSeconds = 0;
   let timer = null;
+  let pausedAt = null;
+  let peeked = false;
   let roundId = 0;
   let best = loadBest();
 
@@ -86,13 +90,24 @@
     bestEl.textContent = best ? `${best.moves} / ${formatTime(best.time)}` : '--';
   }
 
+  // Elapsed time always comes from Date.now(), so the final result never uses a stale tick.
+  function currentElapsed() {
+    if (startedAt === null) return elapsedSeconds;
+    return Math.max(0, Math.floor(((pausedAt ?? Date.now()) - startedAt) / 1000));
+  }
+
+  function runTicker() {
+    window.clearInterval(timer);
+    timer = window.setInterval(() => {
+      elapsedSeconds = currentElapsed();
+      timeEl.textContent = formatTime(elapsedSeconds);
+    }, 250);
+  }
+
   function startTimer() {
     if (startedAt !== null) return;
     startedAt = Date.now() - elapsedSeconds * 1000;
-    timer = window.setInterval(() => {
-      elapsedSeconds = Math.floor((Date.now() - startedAt) / 1000);
-      timeEl.textContent = formatTime(elapsedSeconds);
-    }, 250);
+    runTicker();
   }
 
   function stopTimer() {
@@ -154,9 +169,12 @@
     matchedPairs = 0;
     locked = false;
     startedAt = null;
+    pausedAt = null;
     elapsedSeconds = 0;
+    peeked = false;
     message.classList.add('hidden');
     peekButton.disabled = false;
+    peekButton.textContent = peekLabel;
 
     const pairs = shuffle(images.flatMap((image) => [{ ...image }, { ...image }]));
     const fragment = document.createDocumentFragment();
@@ -204,6 +222,8 @@
 
     if (matchedPairs === images.length) {
       locked = true;
+      elapsedSeconds = currentElapsed();
+      stopTimer();
       const activeRound = roundId;
       window.setTimeout(() => {
         if (activeRound === roundId) finishGame();
@@ -228,7 +248,6 @@
   }
 
   function finishGame() {
-    stopTimer();
     locked = false;
 
     const isNewBest = !best || moves < best.moves || (moves === best.moves && elapsedSeconds < best.time);
@@ -239,16 +258,27 @@
     }
 
     updateStats();
-    completionText.textContent = `${isNewBest ? 'New best! ' : ''}Matched all 10 designs in ${moves} moves and ${formatTime(elapsedSeconds)}.`;
+    const peekNote = peeked ? ` Includes the Quick Peek penalty (+${peekPenaltySeconds}s, +1 move).` : '';
+    completionText.textContent = `${isNewBest ? 'New best! ' : ''}Matched all 10 designs in ${moves} moves and ${formatTime(elapsedSeconds)}.${peekNote}`;
     message.classList.remove('hidden');
   }
 
   function quickPeek() {
     if (locked || matchedPairs === images.length) return;
 
+    // Peeking is never free: it starts the clock, adds a time penalty, and counts as a move.
     const activeRound = roundId;
     locked = true;
+    peeked = true;
     peekButton.disabled = true;
+    peekButton.textContent = `Peek used (+${peekPenaltySeconds}s, +1 move)`;
+    startTimer();
+    startedAt -= peekPenaltySeconds * 1000;
+    elapsedSeconds = currentElapsed();
+    moves += 1;
+    updateStats();
+    bumpStat(movesEl);
+    bumpStat(timeEl);
     board.classList.add('is-peeking');
     const unmatched = [...board.querySelectorAll('.memory-card:not(.is-matched)')];
     unmatched.forEach((card) => card.classList.add('is-flipped'));
@@ -267,5 +297,17 @@
   newGameButton.addEventListener('click', newGame);
   playAgainButton.addEventListener('click', newGame);
   peekButton.addEventListener('click', quickPeek);
+  // Pause the clock while the tab is hidden.
+  document.addEventListener('visibilitychange', () => {
+    if (startedAt === null || matchedPairs === images.length) return;
+    if (document.hidden && pausedAt === null) {
+      pausedAt = Date.now();
+      stopTimer();
+    } else if (!document.hidden && pausedAt !== null) {
+      startedAt += Date.now() - pausedAt;
+      pausedAt = null;
+      runTicker();
+    }
+  });
   newGame();
 })();

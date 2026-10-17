@@ -4,12 +4,16 @@
 
   const status = document.getElementById('status');
   const mode = document.getElementById('mode');
+  const difficulty = document.getElementById('difficulty');
+  const xLabel = document.getElementById('xLabel');
+  const oLabel = document.getElementById('oLabel');
   const newRoundButton = document.getElementById('newRoundButton');
   const resetStatsButton = document.getElementById('resetStatsButton');
   const xWinsEl = document.getElementById('xWins');
   const oWinsEl = document.getElementById('oWins');
   const drawsEl = document.getElementById('draws');
-  const storageKey = 'cloudlab-tic-tac-toe-stats';
+  const legacyStorageKey = 'cloudlab-tic-tac-toe-stats';
+  const storageKey = 'cloudlab-tic-tac-toe-stats-v2';
   const wins = [
     [0,1,2],[3,4,5],[6,7,8],
     [0,3,6],[1,4,7],[2,5,8],
@@ -22,13 +26,30 @@
   let cpuThinking = false;
   let cpuTimer = null;
   let roundId = 0;
+  // Mode/difficulty are locked in per round; select changes made mid-round wait for the next one.
+  let activeMode = mode.value;
+  let activeDifficulty = difficulty.value;
+  let cpuStarts = false;
   let stats = loadStats();
 
+  function cleanStats(value) {
+    const output = { x: 0, o: 0, draws: 0 };
+    Object.keys(output).forEach((key) => {
+      const number = Number(value?.[key]);
+      output[key] = Number.isSafeInteger(number) && number >= 0 ? number : 0;
+    });
+    return output;
+  }
+
+  // Separate tallies per mode; the old single tally (default mode was vs computer) seeds the computer one.
   function loadStats() {
     try {
-      return { x: 0, o: 0, draws: 0, ...JSON.parse(localStorage.getItem(storageKey) || '{}') };
+      const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
+      if (saved) return { computer: cleanStats(saved.computer), local: cleanStats(saved.local) };
+      const legacy = JSON.parse(localStorage.getItem(legacyStorageKey) || 'null');
+      return { computer: cleanStats(legacy), local: cleanStats(null) };
     } catch (_) {
-      return { x: 0, o: 0, draws: 0 };
+      return { computer: cleanStats(null), local: cleanStats(null) };
     }
   }
 
@@ -37,9 +58,24 @@
   }
 
   function renderStats() {
-    xWinsEl.textContent = String(stats.x);
-    oWinsEl.textContent = String(stats.o);
-    drawsEl.textContent = String(stats.draws);
+    const tally = stats[activeMode];
+    xLabel.textContent = activeMode === 'computer' ? 'YOU' : 'X WINS';
+    oLabel.textContent = activeMode === 'computer' ? 'CPU' : 'O WINS';
+    xWinsEl.textContent = String(tally.x);
+    oWinsEl.textContent = String(tally.o);
+    drawsEl.textContent = String(tally.draws);
+  }
+
+  // Only the human's own moves make a round worth protecting; a lone CPU opener can be replayed.
+  function roundInProgress() {
+    return !over && board.includes('X');
+  }
+
+  function pendingNote() {
+    const changed = mode.value !== activeMode || (mode.value === 'computer' && difficulty.value !== activeDifficulty);
+    if (!changed) return '';
+    const label = mode.value === 'computer' ? `${difficulty.selectedOptions[0].textContent} vs Computer` : 'Two Players';
+    return ` · ${label} starts next round`;
   }
 
   function evaluate(state) {
@@ -56,14 +92,23 @@
   function finish(result) {
     over = true;
     cpuThinking = false;
+    const tally = stats[activeMode];
+    const vsComputer = activeMode === 'computer';
     if (result.winner === 'draw') {
-      stats.draws += 1;
+      tally.draws += 1;
       status.textContent = 'Draw. Nobody takes the round.';
     } else {
-      stats[result.winner.toLowerCase()] += 1;
-      status.textContent = `${result.winner} wins the round.`;
+      tally[result.winner.toLowerCase()] += 1;
+      status.textContent = vsComputer
+        ? (result.winner === 'X' ? 'You win the round!' : 'The computer wins the round.')
+        : `${result.winner} wins the round.`;
       result.combo.forEach((index) => cells[index].classList.add('win'));
     }
+    if (vsComputer) {
+      cpuStarts = !cpuStarts;
+      if (mode.value === 'computer') status.textContent += cpuStarts ? ' Computer starts next.' : ' You start next.';
+    }
+    status.textContent += pendingNote();
     saveStats();
     renderStats();
     cells.forEach((cell) => { cell.disabled = true; });
@@ -71,11 +116,13 @@
 
   function updateStatus() {
     if (over) return;
-    if (mode.value === 'computer') {
-      status.textContent = current === 'X' ? 'Your turn as X' : 'Computer is thinking...';
+    let text;
+    if (activeMode === 'computer') {
+      text = current === 'X' ? 'Your turn as X' : board.some(Boolean) ? 'Computer is thinking...' : 'Computer starts this round...';
     } else {
-      status.textContent = `${current}'s turn`;
+      text = `${current}'s turn`;
     }
+    status.textContent = text + pendingNote();
   }
 
   function place(index, mark) {
@@ -124,8 +171,40 @@
     return best;
   }
 
+  function openCells() {
+    return board.map((value, index) => value ? null : index).filter((value) => value !== null);
+  }
+
+  function findCompletingMove(mark) {
+    return openCells().find((index) => {
+      board[index] = mark;
+      const won = evaluate(board)?.winner === mark;
+      board[index] = '';
+      return won;
+    });
+  }
+
+  // Easy: mostly random. Normal: wins and usually blocks, but sometimes misplays. Hard: perfect minimax.
   function chooseCpuMove() {
-    const available = board.map((value, index) => value ? null : index).filter((value) => value !== null);
+    const available = openCells();
+    const randomMove = () => available[Math.floor(Math.random() * available.length)];
+    if (activeDifficulty === 'easy') {
+      const win = findCompletingMove('O');
+      if (win !== undefined && Math.random() < .5) return win;
+      return Math.random() < .85 ? randomMove() : bestCpuMove();
+    }
+    if (activeDifficulty === 'normal') {
+      const win = findCompletingMove('O');
+      if (win !== undefined) return win;
+      const block = findCompletingMove('X');
+      if (block !== undefined && Math.random() < .85) return block;
+      return Math.random() < .3 ? randomMove() : bestCpuMove();
+    }
+    return bestCpuMove();
+  }
+
+  function bestCpuMove() {
+    const available = openCells();
     let bestScore = -Infinity;
     let bestMoves = [];
 
@@ -145,7 +224,7 @@
   }
 
   function cpuTurn() {
-    if (mode.value !== 'computer' || current !== 'O' || over) return;
+    if (activeMode !== 'computer' || current !== 'O' || over) return;
     cpuThinking = true;
     cells.forEach((cell, index) => { cell.disabled = Boolean(board[index]) || cpuThinking; });
     updateStatus();
@@ -153,20 +232,23 @@
     const scheduledRound = roundId;
     window.clearTimeout(cpuTimer);
     cpuTimer = window.setTimeout(() => {
-      if (scheduledRound !== roundId || mode.value !== 'computer' || current !== 'O' || over) return;
+      if (scheduledRound !== roundId || activeMode !== 'computer' || current !== 'O' || over) return;
       const move = chooseCpuMove();
       cpuThinking = false;
       if (move !== undefined) place(move, 'O');
       cells.forEach((cell, index) => { cell.disabled = Boolean(board[index]) || over; });
-    }, 360);
+    }, board.some(Boolean) ? 360 : 520);
   }
 
   function newRound() {
     window.clearTimeout(cpuTimer);
     cpuTimer = null;
     roundId += 1;
+    activeMode = mode.value;
+    activeDifficulty = difficulty.value;
+    difficulty.disabled = activeMode !== 'computer';
     board = Array(9).fill('');
-    current = 'X';
+    current = activeMode === 'computer' && cpuStarts ? 'O' : 'X';
     over = false;
     cpuThinking = false;
     cells.forEach((cell) => {
@@ -174,22 +256,32 @@
       cell.disabled = false;
       cell.className = '';
     });
+    renderStats();
     updateStatus();
+    if (current === 'O') cpuTurn();
   }
 
   cells.forEach((cell) => {
     cell.addEventListener('click', () => {
       if (cpuThinking || over) return;
       const index = Number(cell.dataset.cell);
-      const mark = mode.value === 'computer' ? 'X' : current;
-      if (place(index, mark) && mode.value === 'computer' && !over) cpuTurn();
+      const mark = activeMode === 'computer' ? 'X' : current;
+      if (place(index, mark) && activeMode === 'computer' && !over) cpuTurn();
     });
   });
 
-  mode.addEventListener('change', newRound);
+  // Apply straight away between rounds; a round in progress finishes under its original settings.
+  function settingsChanged() {
+    difficulty.disabled = mode.value !== 'computer';
+    if (roundInProgress()) updateStatus();
+    else newRound();
+  }
+
+  mode.addEventListener('change', settingsChanged);
+  difficulty.addEventListener('change', settingsChanged);
   newRoundButton.addEventListener('click', newRound);
   resetStatsButton.addEventListener('click', () => {
-    stats = { x: 0, o: 0, draws: 0 };
+    stats[activeMode] = cleanStats(null);
     saveStats();
     renderStats();
     newRound();
