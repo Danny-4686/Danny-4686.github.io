@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <script src="/assets/js/site-gate.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="description" content="Manage your CloudLab account, profile, and saved records.">
   <meta name="robots" content="noindex,nofollow,noarchive">
   <meta name="author" content="Danny4686">
@@ -21,7 +22,7 @@
   <script src="/assets/js/site-loader.js?v=20260808"></script>
   <link rel="preload" href="/assets/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/community/account.css?v=4">
-  <link rel="stylesheet" href="/community/profile-settings.css?v=3">
+  <link rel="stylesheet" href="/community/profile-settings.css?v=4">
   <link rel="stylesheet" href="/community/account-nav.css?v=20260811.2">
   <link rel="stylesheet" href="/assets/css/site-quality.css?v=20260811.2">
   <link rel="stylesheet" href="/assets/css/premium.css?v=20261015.1">
@@ -98,7 +99,7 @@
             <form id="usernameSettingsForm" class="settings-form" method="post" action="/account/" autocomplete="on">
               <label class="field">
                 <span>New username</span>
-                <input id="settingsUsername" name="username" type="text" autocomplete="username" maxlength="20" required placeholder="Your new username">
+                <input id="settingsUsername" name="username" type="text" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" minlength="3" maxlength="20" pattern="[A-Za-z0-9_]{3,20}" title="3–20 letters, numbers, or underscores" required aria-describedby="settingsUsernameHint" placeholder="Your new username">
                 <small id="settingsUsernameHint" class="field-hint">3–20 characters using letters, numbers, or underscores.</small>
               </label>
               <label id="settingsPasswordField" class="field username-password-field" hidden style="display:none">
@@ -136,7 +137,7 @@
 
   <footer class="account-footer"><span>© <span id="year"></span> Danny4686.</span><a href="/">Back to Danny4686.com</a></footer>
   <script>document.getElementById('year').textContent=new Date().getFullYear()</script>
-  <script src="/community/account.js?v=20261017"></script>
-  <script src="/community/profile-settings.js?v=20260808"></script>
+  <script src="/community/account.js?v=20261017.2"></script>
+  <script src="/community/profile-settings.js?v=20261017"></script>
 </body>
 </html>

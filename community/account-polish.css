@@ -429,3 +429,15 @@ body[data-account-page="signup"] .auth-switch-card::before{
     transition:none!important;
   }
 }
+
+/* Password inputs sit inside a .field>span wrapper; keep them at the regular input size (16px also stops iOS zoom on focus). */
+.field>.password-wrap{font-size:1rem;font-weight:400}
+
+@media(max-width:760px){
+  /* The single "Home" link must not stretch across and overlap the brand on small screens. */
+  body[data-account-page="login"] .account-header-nav,
+  body[data-account-page="signup"] .account-header-nav{
+    width:auto;
+    flex:0 0 auto;
+  }
+}

@@ -31,6 +31,7 @@ Run the same checks used by GitHub before publishing:
 
 ```bash
 node scripts/validate-site.mjs
+node scripts/validate-journal.mjs
 
 cd cloudflare-admin
 npm ci

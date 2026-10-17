@@ -34,7 +34,13 @@
     const headers = new Headers(options.headers || {});
     if (options.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
     if (options.method && options.method !== 'GET' && csrfToken) headers.set('X-CloudLab-CSRF', csrfToken);
-    const response = await fetch(`${API}${path}`, { ...options, headers, credentials: 'include' });
+    let response;
+    try {
+      response = await fetch(`${API}${path}`, { ...options, headers, credentials: 'include' });
+    } catch (error) {
+      if (error.name === 'AbortError') throw error;
+      throw new Error('The account service could not be reached. Check your connection and try again.');
+    }
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
       const error = new Error(data.error || 'The account service could not complete that request.');

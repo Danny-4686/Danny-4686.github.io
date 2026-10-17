@@ -61,7 +61,7 @@
     media.classList.add('is-media-error');
   }
 
-  function createMedia(post) {
+  function createMedia(post, eager = false) {
     const media = document.createElement('div');
     media.className = 'card-media is-media-loading';
     const loader = document.createElement('div');
@@ -81,7 +81,8 @@
       media.append(video);
     } else {
       const image = document.createElement('img');
-      image.alt = `${post.title} thumbnail`; image.loading = 'lazy'; image.decoding = 'async';
+      image.alt = `${post.title} thumbnail`; image.loading = eager ? 'eager' : 'lazy'; image.decoding = 'async';
+      if (eager) image.fetchPriority = 'high';
       if (post.fit === 'contain') image.classList.add('contain-media');
       image.addEventListener('load', () => finishMedia(media, loader), { once: true });
       image.addEventListener('error', () => failMedia(media), { once: true });
@@ -119,20 +120,34 @@
     modal.querySelector('#journalReaderText').textContent = readerText(post);
     media.replaceChildren();
     if (post.mediaType !== 'video' && post.thumbnail) {
-      const image = document.createElement('img'); image.src = post.thumbnail; image.alt = `${post.title} thumbnail`;
+      const image = document.createElement('img'); image.decoding = 'async'; image.src = post.thumbnail; image.alt = `${post.title} thumbnail`;
       if (post.fit === 'contain') image.style.objectFit = 'contain';
       media.append(image);
     }
     if (mode === 'article') { open.hidden = false; open.href = `/journal/posts/${encodeURIComponent(post.slug)}/`; }
     else { open.hidden = true; open.removeAttribute('href'); }
     modal.hidden = false; document.body.classList.add('journal-modal-open');
+    if (post.slug && postFromHash() !== post) history.replaceState(null, '', `#${encodeURIComponent(post.slug)}`);
     requestAnimationFrame(() => modal.querySelector('.journal-reader-close')?.focus());
+  }
+
+  // Shareable links: /journal/#<slug> opens that post in the reader.
+  function postFromHash() {
+    let slug = '';
+    try { slug = decodeURIComponent(location.hash.slice(1)); } catch { return null; }
+    return slug ? posts.find((post) => post.slug === slug) || null : null;
+  }
+
+  function openPostFromHash() {
+    const post = postFromHash();
+    if (post) openReaderModal(post, document.activeElement);
   }
 
   function closeReaderModal() {
     const modal = document.getElementById('journalReaderModal');
     if (!modal || modal.hidden) return;
     modal.hidden = true; document.body.classList.remove('journal-modal-open');
+    if (postFromHash()) history.replaceState(null, '', `${location.pathname}${location.search}`);
     if (lastModalTrigger && typeof lastModalTrigger.focus === 'function') lastModalTrigger.focus();
     lastModalTrigger = null;
   }
@@ -160,13 +175,13 @@
 
   function updateVisibleOverflows() { grid.querySelectorAll('.journal-card').forEach(updateOverflowForCard); }
 
-  function createPostCard(post, index) {
+  function createPostCard(post, index, eager = false) {
     const mode = postMode(post), isArticle = mode === 'article', isComingSoon = mode === 'coming-soon', isCardOnly = mode === 'card';
     const card = document.createElement('article');
     card.className = `journal-card reveal${isArticle ? ' is-article' : ''}${isComingSoon ? ' coming-soon is-static' : ''}${isCardOnly ? ' post-only is-static' : ''}`;
     card._journalPost = post;
     card.style.setProperty('--delay', `${Math.min(index, 3) * 55}ms`);
-    card.append(createMedia(post));
+    card.append(createMedia(post, eager));
     const body = document.createElement('div'); body.className = 'card-body';
     const meta = document.createElement('div'); meta.className = 'card-meta';
     const badge = document.createElement('span'); badge.className = 'badge'; badge.textContent = isComingSoon ? 'COMING SOON' : isCardOnly ? 'POST' : (post.tags?.[0] || 'JOURNAL');
@@ -214,7 +229,7 @@
   function revealCards(cards) { requestAnimationFrame(() => cards.forEach((card) => { card.classList.add('visible'); updateOverflowForCard(card); })); }
   function renderNextBatch() {
     removeBatchSentinel(); const batch = filteredPosts.slice(renderedCount, renderedCount + BATCH_SIZE); if (!batch.length) return;
-    const cards = batch.map((post, index) => createPostCard(post, index)); cards.forEach((card) => grid.append(card)); renderedCount += batch.length; revealCards(cards); observeVideos(); addBatchSentinel();
+    const firstBatch = renderedCount === 0; const cards = batch.map((post, index) => createPostCard(post, index, firstBatch && index < 2)); cards.forEach((card) => grid.append(card)); renderedCount += batch.length; revealCards(cards); observeVideos(); addBatchSentinel();
   }
 
   function renderPosts() {
@@ -233,5 +248,5 @@
   search.addEventListener('input', renderPosts);
   window.addEventListener('resize', () => { window.clearTimeout(resizeTimer); resizeTimer = window.setTimeout(updateVisibleOverflows, 120); }, { passive: true });
 
-  fetch('posts.json', { cache: 'no-cache' }).then((response) => { if (!response.ok) throw new Error(`Journal data returned ${response.status}`); return response.json(); }).then((data) => { posts = [...data].sort((a, b) => new Date(b.date) - new Date(a.date)); buildFilters(); renderPosts(); }).catch((error) => { console.error(error); removeBatchSentinel(); grid.replaceChildren(); const empty = document.createElement('div'); empty.className = 'empty-state'; empty.textContent = 'The journal could not be loaded right now.'; grid.append(empty); });
+  fetch('posts.json', { cache: 'no-cache' }).then((response) => { if (!response.ok) throw new Error(`Journal data returned ${response.status}`); return response.json(); }).then((data) => { posts = [...data].sort((a, b) => new Date(b.date) - new Date(a.date)); buildFilters(); renderPosts(); openPostFromHash(); window.addEventListener('hashchange', openPostFromHash); }).catch((error) => { console.error(error); removeBatchSentinel(); grid.replaceChildren(); const empty = document.createElement('div'); empty.className = 'empty-state'; empty.textContent = 'The journal could not be loaded right now.'; grid.append(empty); });
 })();

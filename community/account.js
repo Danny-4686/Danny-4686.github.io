@@ -15,7 +15,13 @@
     const headers = new Headers(options.headers || {});
     if (options.body && !(options.body instanceof FormData) && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
     if (options.method && options.method !== 'GET' && csrfToken) headers.set('X-CloudLab-CSRF', csrfToken);
-    const response = await fetch(`${API}${path}`, { ...options, headers, credentials: 'include' });
+    let response;
+    try {
+      response = await fetch(`${API}${path}`, { ...options, headers, credentials: 'include' });
+    } catch (error) {
+      if (error.name === 'AbortError') throw error;
+      throw new Error('The account service could not be reached. Check your connection and try again.');
+    }
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data.error || 'The account service could not complete that request.');
     return data;
@@ -194,7 +200,7 @@
   }
 
   function updateAuthMetadata(mode) {
-    const title = mode === 'signup' ? 'Join CloudLab | CloudLab' : 'Sign In | CloudLab';
+    const title = mode === 'signup' ? 'Create Account | CloudLab' : 'Sign In | CloudLab';
     const description = mode === 'signup'
       ? 'Create your Danny4686.com CloudLab account.'
       : 'Sign in to your Danny4686.com CloudLab account.';
