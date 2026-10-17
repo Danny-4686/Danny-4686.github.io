@@ -17,9 +17,15 @@ const GAME_RULES = Object.freeze({
 const GAME_SAVE_SCHEMA_VERSION = 1;
 const GAME_SAVE_IDS = Object.freeze(['flappy-cloud', 'cloudlab-clicker', 'launcher']);
 const GAME_SAVE_ID_SET = new Set(GAME_SAVE_IDS);
-const CLICKER_BUILDING_IDS = Object.freeze(['drone', 'farm', 'station', 'factory', 'bank', 'portal', 'foundry']);
-const CLICKER_BOOST_IDS = Object.freeze(['tap-array', 'static-charge', 'drone-sync', 'weather-ai', 'golden-core', 'quantum-network']);
-const CLICKER_ACHIEVEMENT_IDS = Object.freeze(['first-front', 'sky-builder', 'cloud-city', 'weather-legend']);
+const CLICKER_BUILDING_IDS = Object.freeze(['drone', 'farm', 'station', 'factory', 'bank', 'portal', 'foundry', 'reactor', 'nexus']);
+const CLICKER_BOOST_IDS = Object.freeze([
+  'tap-array', 'static-charge', 'drone-sync', 'weather-ai', 'golden-core', 'quantum-network',
+  'cloud-seeding', 'storm-chaser', 'orbital-vault', 'stellar-forge', 'nexus-link'
+]);
+const CLICKER_ACHIEVEMENT_IDS = Object.freeze([
+  'first-front', 'sky-builder', 'cloud-city', 'weather-legend', 'storm-empire',
+  'hands-on', 'tireless', 'architect', 'golden-touch', 'full-research'
+]);
 const LAUNCHER_LEVEL_LIMITS = Object.freeze({ power: 10, bounce: 10, aero: 10, boost: 8, magnet: 10 });
 const MAX_GAME_SAVE_NUMBER = Number.MAX_SAFE_INTEGER;
 
@@ -233,7 +239,8 @@ function validateClickerSave(value) {
   if (!hasExactKeys(value, ['clouds', 'total', 'clicks', 'counts', 'boosts', 'achievements'])) {
     return { error: 'CloudLab Clicker save data has an invalid shape.' };
   }
-  if (!hasExactKeys(value.counts, CLICKER_BUILDING_IDS)) {
+  // Saves from before a building existed simply leave it out; it counts as zero.
+  if (!isRecord(value.counts) || !Object.keys(value.counts).every((key) => CLICKER_BUILDING_IDS.includes(key))) {
     return { error: 'CloudLab Clicker building data is invalid.' };
   }
 
@@ -246,7 +253,7 @@ function validateClickerSave(value) {
 
   const counts = {};
   for (const id of CLICKER_BUILDING_IDS) {
-    const count = cleanGameNumber(value.counts[id], { integer: true, max: 1000000000 });
+    const count = cleanGameNumber(value.counts[id] ?? 0, { integer: true, max: 1000000000 });
     if (count === null) return { error: 'CloudLab Clicker building data contains an invalid number.' };
     counts[id] = count;
   }

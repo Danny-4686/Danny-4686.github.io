@@ -14,7 +14,7 @@ const clickerState = (overrides = {}) => ({
   clouds: 125.25,
   total: 500.75,
   clicks: 40,
-  counts: { drone: 3, farm: 2, station: 1, factory: 0, bank: 0, portal: 0, foundry: 0 },
+  counts: { drone: 3, farm: 2, station: 1, factory: 0, bank: 0, portal: 0, foundry: 0, reactor: 0, nexus: 0 },
   boosts: ['tap-array'],
   achievements: ['first-front'],
   ...overrides
@@ -88,6 +88,9 @@ test('game save schemas accept only the exact known shape and bounded numbers', 
   assert.match(validateGameSaveState('cloudlab-clicker', clickerState({ clouds: 600 })).error, /number/i);
   assert.match(validateGameSaveState('cloudlab-clicker', clickerState({ boosts: ['tap-array', 'tap-array'] })).error, /unlock/i);
   assert.match(validateGameSaveState('cloudlab-clicker', clickerState({ counts: { ...clickerState().counts, drone: -1 } })).error, /number/i);
+  const { reactor, nexus, ...legacyCounts } = clickerState().counts;
+  assert.deepEqual(validateGameSaveState('cloudlab-clicker', clickerState({ counts: legacyCounts })).state, clickerState());
+  assert.match(validateGameSaveState('cloudlab-clicker', clickerState({ counts: { ...clickerState().counts, mystery: 1 } })).error, /building/i);
   assert.match(validateGameSaveState('launcher', launcherState({ levels: { ...launcherState().levels, boost: 9 } })).error, /level/i);
   assert.match(validateGameSaveState('launcher', launcherState({ best: Number.NaN })).error, /number/i);
   assert.match(validateGameSaveState('flappy-cloud', flappyState({ best: 1000001 })).error, /number/i);
