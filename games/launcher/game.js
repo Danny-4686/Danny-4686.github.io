@@ -1203,7 +1203,9 @@
     last = now;
     update(dt, now);
     draw(now);
-    if (sceneActive()) raf = requestAnimationFrame(loop);
+    // update() may already have queued the next frame through updateHud() -> wake(); queueing a
+    // second one here doubled the loop every frame until the page froze mid-flight.
+    if (sceneActive() && !raf) raf = requestAnimationFrame(loop);
   }
 
   function wake() {

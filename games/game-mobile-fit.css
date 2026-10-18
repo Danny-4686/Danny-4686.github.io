@@ -1,0 +1,76 @@
+/* Phone fit for CloudLab Arcade game pages: tighter top spacing on phones, and in
+   landscape the board sits beside its controls and is capped to the screen height
+   (below the sticky header) so a whole game fits without scrolling. */
+
+@media (max-width: 620px) {
+  .game-page { padding-top: 26px; }
+  .game-page > .back-link { margin-bottom: 14px; min-height: 40px; }
+}
+
+@media (orientation: landscape) and (max-height: 560px) {
+  .game-page { --fit-h: calc(100svh - 104px); padding-top: 18px; }
+  .game-page > .back-link { margin-bottom: 10px; }
+  .game-page .game-heading { flex-direction: row; align-items: end; gap: 16px; margin-bottom: 14px; }
+  .game-page .game-heading h1 { margin-bottom: 6px; font-size: clamp(2rem, 6vw, 2.8rem); }
+  .game-page .game-heading p:not(.eyebrow) { margin-bottom: 0; font-size: .86rem; line-height: 1.45; }
+  .game-page .game-heading .score-row { display: flex; flex-wrap: nowrap; gap: 8px; }
+  .game-page .game-heading .score-chip { min-width: 78px; padding: 8px 11px; }
+
+  /* Board on the left, everything else stacked on the right. */
+  .game-page > .game-panel {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: repeat(7, auto) 1fr;
+    align-items: start;
+    gap: 10px 16px;
+    padding: 10px;
+  }
+  .game-page > .game-panel > * { grid-column: 2; margin-top: 0; margin-bottom: 0; min-width: 0; }
+  .game-page > .game-panel > :is(.game-stage, .memory-stage, .breakout-stage, .pong-stage, .launcher-stage, .hopper-stage, .flappy-stage, .dodge-stage, .connect-shell, .mine-board, .ttt-board, .pulse-stage, .slide-stage, .stack-stage, .whack-stage, .reflex-stage) {
+    grid-column: 1;
+    grid-row: 1 / -1;
+    align-self: center;
+    margin: 0;
+    width: min(60vw, calc(var(--fit-h) * var(--fit-ratio, 1)));
+  }
+  .game-page > .game-panel > :is(.sr-only, .visually-hidden) { position: absolute; }
+  .game-page > .game-panel .game-toolbar { justify-content: flex-start; }
+  .game-page > .game-panel .control-note { text-align: left; font-size: .78rem; }
+  .game-page > .game-panel :is(.touch-controls, .direction-pad) { justify-content: start; margin-top: 0; }
+
+  .game-page .memory-stage { --fit-ratio: 1.24; }
+  .game-page .breakout-stage { --fit-ratio: 1.615; }
+  .game-page .pong-stage { --fit-ratio: 1.65; }
+  .game-page .launcher-stage { --fit-ratio: 1.776; }
+  .game-page :is(.hopper-stage, .flappy-stage, .dodge-stage) { --fit-ratio: .8; }
+  .game-page .connect-shell { --fit-ratio: .76; }
+  .game-page .whack-stage { --fit-ratio: .88; }
+  .game-page > .game-panel > .reflex-stage { --fit-ratio: 1.3; height: var(--fit-h); }
+  .game-page .reflex-stage .reflex-orb { width: min(220px, 70%); }
+  .game-page .reflex-stage .reflex-state { font-size: clamp(1.7rem, 4.6vw, 2.5rem); }
+  .game-page .reflex-stage .reflex-sub { font-size: .74rem; }
+  .game-page > .game-panel > :is(.mine-board, .ttt-board) { align-self: start; }
+  .game-page > .game-panel > .reflex-results { grid-column: 1 / -1; grid-row: 9; }
+
+  /* Overlay cards were sized for a full-width board; keep them inside the smaller one. */
+  .game-page > .game-panel .game-message > div { max-width: calc(100% - 24px); padding: 12px 14px; }
+  .game-page > .game-panel .game-message h2 { margin-bottom: 5px; font-size: clamp(1.25rem, 3.2vw, 1.7rem); line-height: 1.08; }
+  .game-page > .game-panel .game-message p { font-size: .76rem; line-height: 1.4; }
+  .game-page > .game-panel .game-message .eyebrow { margin-bottom: 5px; font-size: .6rem; }
+
+  /* Launcher: the upgrade lab and flight report are full-width rows under the stage. */
+  .game-page.launcher-page > .game-panel { grid-template-rows: repeat(3, auto) 1fr; }
+  .game-page.launcher-page > .game-panel > .launcher-stage { grid-row: 1 / 5; }
+  .game-page.launcher-page > .game-panel > :is(.launcher-upgrades, .flight-report, .control-note) { grid-column: 1 / -1; grid-row: auto; }
+  .game-page.launcher-page .launch-console { padding: 10px; grid-template-columns: 1fr; gap: 10px; }
+  .game-page.launcher-page .angle-control > div { width: 100%; }
+  .game-page.launcher-page .angle-control button { flex: 1; }
+  .game-page.launcher-page .launch-actions { grid-column: auto; display: grid; grid-template-columns: 1fr 1fr; }
+  .game-page.launcher-page .launch-actions .launch-button { grid-column: 1 / -1; min-width: 0; }
+}
+
+/* Tablets in portrait: the tall boards (and Snake with its arrow pad) fit under the header. */
+@media (min-width: 621px) and (orientation: portrait) {
+  .game-page > .game-panel > :is(.hopper-stage, .flappy-stage) { width: min(620px, 100%, calc((100svh - 335px) * .8)); }
+  .game-page > .game-panel > .game-stage:has(> #snakeCanvas) { width: min(680px, 100%, calc(100svh - 410px)); }
+}

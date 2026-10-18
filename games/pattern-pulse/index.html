@@ -15,10 +15,10 @@
   <link rel="icon" href="/assets/icons/favicon-48x48.png" type="image/png" sizes="48x48">
   <link rel="icon" href="/assets/icons/favicon-32x32.png" type="image/png" sizes="32x32">
   <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" sizes="180x180">
-  <link rel="manifest" href="/site.webmanifest"><script src="/assets/js/site-loader.js?v=20260808"></script><link rel="stylesheet" href="/assets/css/site-loader.css?v=20260808">
+  <link rel="manifest" href="/site.webmanifest"><script src="/assets/js/site-loader.js?v=20261018.1"></script><link rel="stylesheet" href="/assets/css/site-loader.css?v=20260808">
   <link rel="preload" href="/assets/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/assets/css/hub.css">
-  <link rel="stylesheet" href="/assets/css/site-quality.css?v=20260808">
+  <link rel="stylesheet" href="/assets/css/site-quality.css?v=20261018.1">
   <style>
     .pulse-stage{--pad-gap:clamp(8px,2.4vw,14px);position:relative;width:min(560px,100%);aspect-ratio:1;margin:0 auto;padding:clamp(14px,4vw,28px);overflow:hidden;border:1px solid var(--line);border-radius:24px;background:radial-gradient(circle at 50% 50%,rgba(104,208,223,.09),transparent 62%),linear-gradient(180deg,#0a2029,#07151c 55%,#040d12);box-shadow:inset 0 0 0 1px rgba(255,255,255,.025),0 20px 50px rgba(0,0,0,.24);touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
     .pulse-stage::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(104,208,223,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(104,208,223,.05) 1px,transparent 1px);background-size:32px 32px;mask-image:radial-gradient(circle,#000 30%,transparent 75%);-webkit-mask-image:radial-gradient(circle,#000 30%,transparent 75%);pointer-events:none}
@@ -62,6 +62,7 @@
     @media (max-width:420px){.pulse-stage{border-radius:20px}.pulse-pad{border-radius:12px}.pad-cyan{border-radius:100% 12px 12px 12px}.pad-mint{border-radius:12px 100% 12px 12px}.pad-gold{border-radius:12px 12px 12px 100%}.pad-orange{border-radius:12px 12px 100% 12px}.game-toolbar .game-button{flex:1 1 auto}}
     @media (prefers-reduced-motion:reduce){.pulse-pad,.pulse-pad::after,.pulse-hub{transition:none}.pulse-pad.pressed{transform:none}.pulse-pad.wrong.shake,.pulse-stage.cleared .pulse-hub{animation:none}.pulse-pad.hint{animation-duration:.8s;animation-timing-function:steps(1,end)}}
   </style>
+  <link rel="stylesheet" href="/games/game-mobile-fit.css?v=1">
   <link rel="stylesheet" href="/assets/css/premium.css?v=20261015.1">
   <script src="/assets/js/premium.js?v=20261015.1" defer></script>
 </head>
@@ -87,7 +88,7 @@
     </section>
   </main>
   <footer class="site-footer"><a class="footer-brand" href="/"><img src="../../assets/images/optimized/cloudlab-logo-256.webp" width="256" height="256" alt="CloudLab logo"><span><strong>CloudLab Studio</strong><small>Pattern Pulse</small></span></a><p>© <span id="year"></span> Danny4686.</p></footer>
-  <script src="/assets/js/hub.js?v=20261017.1"></script>
+  <script src="/assets/js/hub.js?v=20261018.1"></script>
   <script>
   (() => {
     const stage = document.getElementById('pulseStage');

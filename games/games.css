@@ -211,8 +211,12 @@
   .arcade-hero { padding-top: 86px; }
   .library-heading { align-items: flex-start; flex-direction: column; }
   .library-heading .search-box { width: 100%; }
-  .arcade-summary { grid-template-columns: 1fr; }
-  .arcade-summary div { min-height: 84px; }
+  .arcade-summary { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .arcade-summary div { min-height: 0; padding: 12px; justify-content: flex-start; border-radius: 15px; }
+  .arcade-summary strong { font-size: 1.4rem; }
+  .arcade-summary span { font-size: .7rem; }
+  .arcade-library .filters { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+  .arcade-library .filter-button { min-height: 42px; padding: 9px 2px; font-size: clamp(.72rem, 3.3vw, .86rem); text-align: center; white-space: nowrap; }
   .preview-2048,
   .memory-preview,
   .ttt-preview,
