@@ -94,6 +94,17 @@
     }).catch(() => {});
   }
 
+  // Leaving mid-intro and coming Back restores the page from the back/forward cache
+  // with the overlay frozen part-way; finish it at once instead of replaying the tail.
+  window.addEventListener('pageshow', (event) => {
+    if (!event.persisted) return;
+    const overlay = document.querySelector('.cloudlab-site-intro');
+    if (!overlay && !document.documentElement.classList.contains('cloudlab-intro-pending')) return;
+    released = true;
+    overlay?.remove();
+    document.documentElement.classList.remove('cloudlab-intro-pending', 'cloudlab-intro-active');
+  });
+
   // Never allow a loader failure to keep the page hidden.
   window.setTimeout(() => {
     if (!mounted && document.documentElement.classList.contains('cloudlab-intro-pending')) {

@@ -173,7 +173,7 @@ function ensureManagedProjectStyles() {
   if (document.querySelector('link[data-managed-projects]')) return;
   const link = document.createElement('link');
   link.rel = 'stylesheet';
-  link.href = '/assets/css/project-managed.css?v=20261017.1';
+  link.href = '/assets/css/project-managed.css?v=20261018.1';
   link.dataset.managedProjects = 'true';
   document.head.append(link);
 }
@@ -373,6 +373,12 @@ function setupProjectSlider(track) {
     });
     return best;
   };
+  // At the far right the last card can't snap to the start, so treat "at the end" as the last card.
+  const activeIndex = () => {
+    const items = cards();
+    const maxScroll = track.scrollWidth - track.clientWidth;
+    return maxScroll > 2 && track.scrollLeft >= maxScroll - 2 ? items.length - 1 : currentIndex();
+  };
   const goTo = (index) => {
     const items = cards();
     const target = items[Math.max(0, Math.min(items.length - 1, index))];
@@ -398,8 +404,7 @@ function setupProjectSlider(track) {
         return dot;
       }));
     }
-    // At the far right the last card can't snap to the start, so treat "at the end" as the last card.
-    const active = next.disabled && scrollable ? items.length - 1 : currentIndex();
+    const active = activeIndex();
     [...dots.children].forEach((dot, index) => dot.setAttribute('aria-current', String(index === active)));
   }
 
@@ -410,14 +415,14 @@ function setupProjectSlider(track) {
   };
   track.addEventListener('scroll', requestUpdate, { passive: true });
   window.addEventListener('resize', requestUpdate);
-  prev.addEventListener('click', () => goTo(currentIndex() - 1));
-  next.addEventListener('click', () => goTo(currentIndex() + 1));
+  prev.addEventListener('click', () => goTo(activeIndex() - 1));
+  next.addEventListener('click', () => goTo(activeIndex() + 1));
   track.addEventListener('keydown', (event) => {
     if (event.target !== track) return;
     const moves = { ArrowLeft: -1, ArrowRight: 1 };
     if (event.key in moves) {
       event.preventDefault();
-      goTo(currentIndex() + moves[event.key]);
+      goTo(activeIndex() + moves[event.key]);
     } else if (event.key === 'Home' || event.key === 'End') {
       event.preventDefault();
       goTo(event.key === 'Home' ? 0 : cards().length - 1);

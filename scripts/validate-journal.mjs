@@ -38,7 +38,7 @@ requireToken(journal, "if (mode === 'article') { open.hidden = false;", 'Journal
 requireToken(journal, 'else { open.hidden = true; open.removeAttribute(\'href\'); }', 'Journal reader Post Only action');
 requireToken(journalCss, '.journal-reader-open[hidden] { display: none !important; }', 'Journal reader hidden action');
 requireToken(journal, "${post.body || ''}", 'Journal search');
-requireToken(journalPage, 'journal-polish.css?v=20260817.1', 'Journal page styles');
+requireToken(journalPage, 'journal-polish.css?v=20261018.1', 'Journal page styles');
 requireToken(journalPage, 'journal.js?v=20260812', 'Journal page');
 
 let posts;

@@ -73,7 +73,7 @@ export function buildPostHtml(post) {
   <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" sizes="180x180">
   <link rel="manifest" href="/site.webmanifest">
   <link rel="preload" href="/assets/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <script src="/assets/js/site-loader.js?v=20260808"></script>
+  <script src="/assets/js/site-loader.js?v=20261018.1"></script>
   <link rel="stylesheet" href="/assets/css/site-loader.css?v=20260808">
   <link rel="stylesheet" href="/assets/css/hub.css">
   <link rel="stylesheet" href="/journal/post-layout.css?v=1">

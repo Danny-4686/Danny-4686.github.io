@@ -66,6 +66,9 @@
   .community-account-link.is-authenticated span:last-child{display:inline;max-width:82px}
   .header-cta.community-account-action{padding:9px 11px;font-size:.72rem}
   .header-cta.community-account-action span:last-child{max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  /* "Sign in / Sign up" does not fit beside the brand on phones; match the short "Sign in" used on every other page. */
+  .header-cta.community-account-action.is-signed-out span:last-child{max-width:none;font-size:0}
+  .header-cta.community-account-action.is-signed-out span:last-child::after{content:"Sign in";font-size:.76rem}
 }
 
 @media(prefers-reduced-motion:reduce){.community-account-link.is-checking .community-account-dot,.header-cta.community-account-action.is-checking .community-account-dot{animation:none}}

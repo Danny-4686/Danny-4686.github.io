@@ -101,6 +101,13 @@
     gap: 20px;
   }
 
+  /* Slimmer sticky header on phones, matching the Games and Journal header. */
+  .site-header {
+    row-gap: 2px !important;
+    padding-top: 8px !important;
+    padding-bottom: 5px !important;
+  }
+
   .site-header .header-cta {
     min-height: 40px;
     padding: 9px 11px;
@@ -219,10 +226,11 @@
   outline: 2px solid rgba(104, 208, 223, .7);
   outline-offset: 3px;
 }
-.project-slider-dots { display: flex; align-items: center; gap: 4px; }
+.project-slider-dots { display: flex; align-items: center; gap: 0; }
+/* Same 28px spacing as before, but a full-height touch target around each small dot. */
 .project-slider-dot {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 44px;
   padding: 0;
   display: grid;
   place-items: center;
@@ -500,4 +508,32 @@
   .managed-project-media img,
   .managed-project-button { transition: none; }
   .project-card.managed-project:hover { transform: none; }
+}
+
+/* Phones in landscape: one header row (brand, links, account) instead of two,
+   so the sticky header does not cover a quarter of a short screen. */
+@media (min-width: 621px) and (max-width: 900px) and (max-height: 500px) {
+  .site-header {
+    grid-template-columns: auto minmax(0, 1fr) auto !important;
+    grid-template-rows: auto !important;
+    padding-top: 7px !important;
+    padding-bottom: 7px !important;
+  }
+
+  .site-header .nav-links {
+    grid-column: 2;
+    grid-row: 1;
+    justify-content: center;
+    gap: 22px;
+    padding: 0 4px;
+  }
+
+  .site-header .header-cta {
+    grid-column: 3;
+  }
+}
+
+/* Touch screens: a tap leaves :hover stuck, which would leave a slide lifted mid-swipe. */
+@media (hover: none) {
+  .project-grid.project-track > .project-card.managed-project:hover { transform: none; }
 }

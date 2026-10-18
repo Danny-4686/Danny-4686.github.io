@@ -159,3 +159,18 @@ body.journal-modal-open { overflow: hidden; }
   .journal-card,.journal-card::after,.journal-read-more,.journal-reader-backdrop,.journal-reader-dialog { transition: none; animation: none; }
   .journal-card:hover,.journal-card:focus-within { transform: none; }
 }
+
+/* Posts render after load, so the browser restores the scroll position late on Back.
+   With smooth scrolling that restore animated down the page; keep it instant here. */
+html { scroll-behavior: auto; }
+
+/* Keep the close button pinned while a long post scrolls inside the reader. */
+.journal-reader-close { position: sticky; top: 15px; margin: 15px 15px -55px auto; }
+@media (max-width: 620px) {
+  .journal-reader-dialog { max-height: 88dvh; }
+}
+/* Phones in landscape: a full-width 16:7 image would fill the whole reader, so cap it and let the text show. */
+@media (max-height: 520px) {
+  .journal-reader-dialog { max-height: 92dvh; }
+  .journal-reader-media { aspect-ratio: auto; height: 46vh; }
+}
